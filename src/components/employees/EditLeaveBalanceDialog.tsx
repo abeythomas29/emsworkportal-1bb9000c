@@ -38,7 +38,7 @@ export function EditLeaveBalanceDialog({
   onSuccess,
 }: EditLeaveBalanceDialogProps) {
   const [casualLeave, setCasualLeave] = useState(leaveBalance?.casual_leave ?? 22);
-  const [earnedLeave, setEarnedLeave] = useState(leaveBalance?.earned_leave ?? 15);
+  const [earnedLeave, setEarnedLeave] = useState(leaveBalance?.earned_leave ?? 0);
   const [lwpTaken, setLwpTaken] = useState(leaveBalance?.lwp_taken ?? 0);
   const [consecutiveWorkDays, setConsecutiveWorkDays] = useState(leaveBalance?.consecutive_work_days ?? 0);
   const [isLoading, setIsLoading] = useState(false);
