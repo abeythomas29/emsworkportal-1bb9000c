@@ -125,6 +125,51 @@ export function useLeave() {
       return { error: daysError };
     }
 
+    // Probation rules: during first 6 months from joining_date,
+    // no earned leave allowed and casual leave capped at 1 per calendar month.
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('joining_date')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (profile?.joining_date) {
+      const join = new Date(profile.joining_date);
+      const probationEnd = new Date(join);
+      probationEnd.setMonth(probationEnd.getMonth() + 6);
+      const startDate = new Date(data.startDate);
+
+      if (startDate < probationEnd) {
+        if (data.leaveType === 'earned') {
+          const msg = 'Earned leave is not available during the 6-month probation period.';
+          toast.error(msg);
+          return { error: msg };
+        }
+        if (data.leaveType === 'casual') {
+          const monthStart = new Date(startDate.getFullYear(), startDate.getMonth(), 1)
+            .toISOString().slice(0, 10);
+          const monthEnd = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0)
+            .toISOString().slice(0, 10);
+
+          const { data: existing } = await supabase
+            .from('leave_requests')
+            .select('days, status')
+            .eq('user_id', user.id)
+            .eq('leave_type', 'casual')
+            .neq('status', 'rejected')
+            .gte('start_date', monthStart)
+            .lte('start_date', monthEnd);
+
+          const usedThisMonth = (existing || []).reduce((s, r: any) => s + Number(r.days || 0), 0);
+          if (usedThisMonth + days > 1) {
+            const msg = 'During probation you can take only 1 casual leave per month.';
+            toast.error(msg);
+            return { error: msg };
+          }
+        }
+      }
+    }
+
     const { error } = await supabase.from('leave_requests').insert({
       user_id: user.id,
       leave_type: data.leaveType,
