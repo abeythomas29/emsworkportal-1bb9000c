@@ -66,14 +66,14 @@ export default function LeavePage() {
     { 
       type: 'casual', 
       label: 'Casual Leave', 
-      remaining: leaveBalance?.casual_leave ?? 22, 
-      total: 22, 
+      remaining: leaveBalance?.casual_leave ?? 12, 
+      total: 12, 
       color: 'bg-info' 
     },
     { 
       type: 'earned', 
       label: 'Earned Leave', 
-      remaining: leaveBalance?.earned_leave ?? 15, 
+      remaining: leaveBalance?.earned_leave ?? 0, 
       total: 45, 
       color: 'bg-success' 
     },
@@ -141,10 +141,10 @@ export default function LeavePage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="casual">
-                        Casual Leave ({leaveBalance?.casual_leave ?? 22} remaining)
+                        Casual Leave ({leaveBalance?.casual_leave ?? 12} remaining)
                       </SelectItem>
                       <SelectItem value="earned">
-                        Earned Leave ({leaveBalance?.earned_leave ?? 15} remaining)
+                        Earned Leave ({leaveBalance?.earned_leave ?? 0} remaining)
                       </SelectItem>
                       <SelectItem value="lwp">Leave Without Pay</SelectItem>
                     </SelectContent>
