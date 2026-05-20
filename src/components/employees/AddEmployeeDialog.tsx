@@ -52,7 +52,7 @@ export function AddEmployeeDialog({ open, onOpenChange, onSuccess }: AddEmployee
       if (authData.user) {
         const { error: profileError } = await supabase
           .from('profiles')
-          .update({ department: formData.department || null, employee_id: formData.employeeId || null })
+          .update({ department: formData.department || null, employee_id: formData.employeeId || null, is_active: true })
           .eq('id', authData.user.id);
 
         if (profileError) {
