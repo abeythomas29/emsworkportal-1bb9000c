@@ -19,16 +19,39 @@ Deno.serve(async (req) => {
       ? { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageBase64}` } }
       : { type: 'image_url', image_url: { url: imageUrl } };
 
-    const sys = `You read shipping labels from Indian couriers. Identify the tracking/AWB/docket/consignment number (look for labels like AWB, CN No, C.N. No, Docket No, Consignment No) and the courier company name from the logo/header. Reply ONLY in JSON.`;
+    const sys = `You are an expert at reading shipping labels from Indian and international couriers. Carefully examine the image and identify:
+1. The tracking/AWB/docket/consignment number (look near labels: AWB, CN No, C.N. No, Docket No, Consignment No, Waybill, Tracking No).
+2. The courier company name — check the logo, header, branding colours, footer URL, phone number, and any company name printed on the label.
+Reply ONLY in valid JSON.`;
     const userText = `Extract from this shipping label.
 Return strict JSON: {"tracking_id":"...","courier":"...","confidence":"high|medium|low"}.
-Courier MUST be exactly one of: Delhivery, Bluedart, DTDC, Ekart, Ecom Express, XpressBees, Shadowfax, India Post, DHL, FedEx, ST Courier, Professional, Trackon, Gati, Shree Maruti, Maruti, Other.
-Notes:
-- "Shree Maruti" / "Shri Maruti" / "Sree Maruthi" / "SMCS" / "SMILe" all mean "Shree Maruti".
-- "Maruti" alone (Maruti Courier Service) is a different small courier; only use it if logo clearly says just "Maruti Courier".
-- Tracking ID is usually a long numeric/alphanumeric code near "C.N. No" or "AWB". Strip spaces.
-- If unsure of tracking id, return tracking_id as empty string.`;
-If unsure of tracking id, return tracking_id as empty string.`;
+
+Courier MUST be exactly one of these canonical names:
+Delhivery, Bluedart, DTDC, Ekart, Ecom Express, XpressBees, Shadowfax, India Post, DHL, FedEx, ST Courier, Professional, Trackon, Gati, Shree Maruti, Maruti, Other.
+
+Courier identification hints:
+- "Shree Maruti" / "Shri Maruti" / "Sree Maruthi" / "SMCS" / "SMILe" / "Shree Maruti Integrated Logistics" / "Shree Maruti Courier" → "Shree Maruti". The logo is usually red/orange with "Shree Maruti" text. Website shreemaruti.com.
+- "Maruti" alone (Maruti Courier Service) is a different small courier; only use it if the logo clearly says just "Maruti Courier".
+- "Blue Dart" / "BlueDart" → "Bluedart" (red/blue logo).
+- "DTDC" → DTDC (red logo).
+- "Delhivery" → Delhivery (red logo).
+- "India Post" / "Speed Post" / "EMS" → India Post.
+- "Ecom Express" / "ECOM" → Ecom Express.
+- "XpressBees" / "Xpress Bees" → XpressBees.
+- "Professional Couriers" / "TPC" → Professional.
+- "Trackon" → Trackon.
+- "Gati" / "Gati KWE" → Gati.
+- If you cannot read the courier name from the label even after looking at the logo, footer URL, and phone numbers, return "Other".
+
+Tracking ID rules:
+- Usually a long numeric or alphanumeric code printed near "C.N. No", "AWB", "Docket", or below a barcode.
+- Strip all spaces and dashes.
+- If unsure of tracking id, return empty string.
+
+Confidence:
+- "high" if you can clearly read both the courier name and tracking number.
+- "medium" if you are reasonably sure but parts are blurry.
+- "low" if you had to guess.`;
 
     const resp = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -37,13 +60,13 @@ If unsure of tracking id, return tracking_id as empty string.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: sys },
           { role: 'user', content: [{ type: 'text', text: userText }, imagePayload] },
         ],
-        max_tokens: 200,
+        max_tokens: 300,
       }),
     });
 
