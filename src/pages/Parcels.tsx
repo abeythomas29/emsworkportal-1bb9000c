@@ -131,6 +131,7 @@ export default function ParcelsPage() {
   const [search, setSearch] = useState('');
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Parcel | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const { data: parcels = [], isLoading } = useParcels();
 
   if (authLoading) {
@@ -138,7 +139,24 @@ export default function ParcelsPage() {
   }
   if (!user) return <Navigate to="/login" replace />;
 
-  const samples = parcels.filter((p) => p.is_sample);
+  const dateFiltered = useMemo(() => {
+    if (!dateRange?.from) return parcels;
+    const from = new Date(dateRange.from); from.setHours(0, 0, 0, 0);
+    const to = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
+    to.setHours(23, 59, 59, 999);
+    return parcels.filter((p) => {
+      const d = new Date(p.dispatched_date);
+      return d >= from && d <= to;
+    });
+  }, [parcels, dateRange]);
+
+  const samples = dateFiltered.filter((p) => p.is_sample);
+
+  const dateLabel = dateRange?.from
+    ? dateRange.to && dateRange.to.getTime() !== dateRange.from.getTime()
+      ? `${format(dateRange.from, 'dd MMM')} – ${format(dateRange.to, 'dd MMM yyyy')}`
+      : format(dateRange.from, 'dd MMM yyyy')
+    : 'Filter by date';
 
   return (
     <DashboardLayout>
@@ -161,19 +179,45 @@ export default function ParcelsPage() {
         <Card>
           <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <CardTitle className="text-lg font-semibold">Shipments</CardTitle>
-            <div className="relative w-full md:w-72">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input className="pl-9" placeholder="Search tracking, courier, client…" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn('justify-start text-left font-normal', !dateRange?.from && 'text-muted-foreground')}>
+                    <CalendarIcon className="w-4 h-4 mr-2" />
+                    {dateLabel}
+                    {dateRange?.from && (
+                      <X
+                        className="w-3 h-3 ml-2 opacity-60 hover:opacity-100"
+                        onClick={(e) => { e.stopPropagation(); e.preventDefault(); setDateRange(undefined); }}
+                      />
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="range"
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    numberOfMonths={2}
+                    initialFocus
+                    className={cn('p-3 pointer-events-auto')}
+                  />
+                </PopoverContent>
+              </Popover>
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input className="pl-9" placeholder="Search tracking, courier, client…" value={search} onChange={(e) => setSearch(e.target.value)} />
+              </div>
             </div>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="all">
               <TabsList>
-                <TabsTrigger value="all">All ({parcels.length})</TabsTrigger>
+                <TabsTrigger value="all">All ({dateFiltered.length})</TabsTrigger>
                 <TabsTrigger value="samples">Sample Dispatches ({samples.length})</TabsTrigger>
               </TabsList>
               <TabsContent value="all" className="mt-4">
-                <ParcelTable parcels={parcels} isLoading={isLoading} search={search} onEdit={setEditing} />
+                <ParcelTable parcels={dateFiltered} isLoading={isLoading} search={search} onEdit={setEditing} />
               </TabsContent>
               <TabsContent value="samples" className="mt-4">
                 <ParcelTable parcels={samples} isLoading={isLoading} search={search} onEdit={setEditing} />
