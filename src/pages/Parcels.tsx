@@ -125,6 +125,7 @@ export default function ParcelsPage() {
   const { isLoading: authLoading, user } = useAuth();
   const [search, setSearch] = useState('');
   const [addOpen, setAddOpen] = useState(false);
+  const [editing, setEditing] = useState<Parcel | null>(null);
   const { data: parcels = [], isLoading } = useParcels();
 
   if (authLoading) {
