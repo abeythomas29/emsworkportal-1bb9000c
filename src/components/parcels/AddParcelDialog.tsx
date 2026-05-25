@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Loader2, Camera, Sparkles, Upload } from 'lucide-react';
-import { COURIERS, getCourierTrackingUrl } from '@/lib/couriers';
+import { COURIERS, getCourierTrackingUrl, resolveCourierName } from '@/lib/couriers';
 import { extractParcelFromImage, uploadParcelPhoto, useCreateParcel } from '@/hooks/useParcels';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
