@@ -406,6 +406,62 @@ export type Database = {
         }
         Relationships: []
       }
+      parcels: {
+        Row: {
+          client_name: string | null
+          courier: string
+          courier_tracking_url: string | null
+          created_at: string
+          dispatched_date: string
+          id: string
+          is_sample: boolean
+          notes: string | null
+          photo_url: string | null
+          status: string
+          tracking_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_name?: string | null
+          courier: string
+          courier_tracking_url?: string | null
+          created_at?: string
+          dispatched_date?: string
+          id?: string
+          is_sample?: boolean
+          notes?: string | null
+          photo_url?: string | null
+          status?: string
+          tracking_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_name?: string | null
+          courier?: string
+          courier_tracking_url?: string | null
+          created_at?: string
+          dispatched_date?: string
+          id?: string
+          is_sample?: boolean
+          notes?: string | null
+          photo_url?: string | null
+          status?: string
+          tracking_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parcels_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       policies: {
         Row: {
           category: string

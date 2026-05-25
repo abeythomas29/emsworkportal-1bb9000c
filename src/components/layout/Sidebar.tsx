@@ -22,6 +22,7 @@ import {
   TrendingUp,
   ShoppingCart,
   Receipt,
+  Package,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
@@ -134,6 +135,12 @@ const navItems: NavItem[] = [
     icon: <Receipt size={20} />,
     label: 'Reimbursements',
     path: '/reimbursements',
+    roles: ['admin', 'manager', 'employee'],
+  },
+  {
+    icon: <Package size={20} />,
+    label: 'Parcels',
+    path: '/parcels',
     roles: ['admin', 'manager', 'employee'],
   },
   {
