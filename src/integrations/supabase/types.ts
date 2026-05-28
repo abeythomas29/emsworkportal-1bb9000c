@@ -794,6 +794,83 @@ export type Database = {
         }
         Relationships: []
       }
+      research_series: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      research_tests: {
+        Row: {
+          created_at: string
+          id: string
+          instructions: string
+          next_test_changes: string | null
+          observation: string | null
+          result_recorded_at: string | null
+          series_id: string | null
+          test_date: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          instructions: string
+          next_test_changes?: string | null
+          observation?: string | null
+          result_recorded_at?: string | null
+          series_id?: string | null
+          test_date?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          instructions?: string
+          next_test_changes?: string | null
+          observation?: string | null
+          result_recorded_at?: string | null
+          series_id?: string | null
+          test_date?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_tests_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "research_series"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales_invoices: {
         Row: {
           balance_due: number
@@ -1137,6 +1214,7 @@ export type Database = {
             Returns: boolean
           }
       is_production_user: { Args: { _user_id: string }; Returns: boolean }
+      is_research_user: { Args: { _user_id: string }; Returns: boolean }
       mark_absent_for_missing_checkins: {
         Args: { target_date?: string }
         Returns: number
