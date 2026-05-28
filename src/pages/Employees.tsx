@@ -178,6 +178,18 @@ export default function EmployeesPage() {
                       </Button>
                       <Button
                         size="sm"
+                        variant="destructive"
+                        onClick={() => {
+                          setEmployeeToDelete(emp);
+                          setShowDeleteDialog(true);
+                        }}
+                        title="Reject signup and remove account"
+                      >
+                        <UserX className="w-4 h-4 mr-1" />
+                        Reject
+                      </Button>
+                      <Button
+                        size="sm"
                         onClick={() => activateEmployee(emp.id)}
                         disabled={!emp.department}
                         title={!emp.department ? 'Assign a department first' : 'Approve and activate'}
