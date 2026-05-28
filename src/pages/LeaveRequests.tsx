@@ -34,11 +34,6 @@ export default function LeaveRequestsPage() {
   const [monthFilter, setMonthFilter] = useState<string>('all');
   const [employeeFilter, setEmployeeFilter] = useState<string>('all');
 
-  // Only admin and manager can access this
-  if (role !== 'admin' && role !== 'manager') {
-    return <Navigate to="/dashboard" replace />;
-  }
-
   // Get unique employees for the filter dropdown
   const uniqueEmployees = useMemo(() => {
     const employeeMap = new Map<string, { id: string; name: string }>();
