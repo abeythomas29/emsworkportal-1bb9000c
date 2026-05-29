@@ -62,12 +62,15 @@ export function AddParcelDialog({ open, onOpenChange }: Props) {
 
   const onSubmit = async () => {
     if (!user) return;
+    if (submitting || create.isPending) return;
     if (!trackingId.trim()) { toast.error('Tracking ID required'); return; }
+    setSubmitting(true);
     let photoPath: string | null = null;
     try {
       if (file) photoPath = await uploadParcelPhoto(file, user.id);
     } catch (e) {
       toast.error('Photo upload failed');
+      setSubmitting(false);
       return;
     }
     create.mutate(
@@ -87,6 +90,7 @@ export function AddParcelDialog({ open, onOpenChange }: Props) {
           reset();
           onOpenChange(false);
         },
+        onSettled: () => setSubmitting(false),
       }
     );
   };
