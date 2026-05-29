@@ -24,6 +24,7 @@ export function AddParcelDialog({ open, onOpenChange }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [extracting, setExtracting] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [trackingId, setTrackingId] = useState('');
   const [courier, setCourier] = useState<string>('Other');
   const [clientName, setClientName] = useState('');
@@ -61,12 +62,15 @@ export function AddParcelDialog({ open, onOpenChange }: Props) {
 
   const onSubmit = async () => {
     if (!user) return;
+    if (submitting || create.isPending) return;
     if (!trackingId.trim()) { toast.error('Tracking ID required'); return; }
+    setSubmitting(true);
     let photoPath: string | null = null;
     try {
       if (file) photoPath = await uploadParcelPhoto(file, user.id);
     } catch (e) {
       toast.error('Photo upload failed');
+      setSubmitting(false);
       return;
     }
     create.mutate(
@@ -86,6 +90,7 @@ export function AddParcelDialog({ open, onOpenChange }: Props) {
           reset();
           onOpenChange(false);
         },
+        onSettled: () => setSubmitting(false),
       }
     );
   };
@@ -166,8 +171,8 @@ export function AddParcelDialog({ open, onOpenChange }: Props) {
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={onSubmit} disabled={create.isPending}>
-            {create.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          <Button onClick={onSubmit} disabled={submitting || create.isPending}>
+            {(submitting || create.isPending) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Save Parcel
           </Button>
         </DialogFooter>
