@@ -336,12 +336,12 @@ export default function EmployeesPage() {
                               <DropdownMenuItem 
                                 onClick={() => {
                                   setEmployeeToDelete(employee);
-                                  setShowDeleteDialog(true);
+                                  setShowArchiveDialog(true);
                                 }}
                                 className="text-destructive"
                               >
                                 <Trash2 className="w-4 h-4 mr-2" />
-                                Delete Employee
+                                Archive Employee
                               </DropdownMenuItem>
                             </>
                           )}
