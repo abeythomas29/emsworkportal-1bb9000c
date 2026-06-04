@@ -60,7 +60,11 @@ interface TodayAttendance {
 
 export default function EmployeesPage() {
   const { role } = useAuth();
-  const { employees, isLoading, refetch, deactivateEmployee, activateEmployee, deleteEmployee } = useEmployees();
+  const {
+    employees, isLoading, refetch,
+    deactivateEmployee, activateEmployee,
+    deleteEmployee, restoreEmployee, rejectPendingSignup,
+  } = useEmployees({ includeArchived: true });
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
@@ -69,9 +73,14 @@ export default function EmployeesPage() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<typeof employees[0] | null>(null);
   const [todayAttendance, setTodayAttendance] = useState<TodayAttendance[]>([]);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState<typeof employees[0] | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const activeEmployees = employees.filter(e => !e.deleted_at);
+  const archivedEmployees = employees.filter(e => !!e.deleted_at);
+  const pendingEmployees = activeEmployees.filter(e => !e.is_active);
 
   // Fetch today's attendance for all employees
   useEffect(() => {
