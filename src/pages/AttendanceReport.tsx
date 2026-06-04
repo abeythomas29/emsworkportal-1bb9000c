@@ -45,7 +45,7 @@ const statusBadgeMap: Record<string, 'present' | 'absent' | 'leave' | 'pending'>
 export default function AttendanceReportPage() {
   const { role } = useAuth();
   const { allAttendance, isLoading, fetchAllAttendance, markAbsentForDate } = useAllAttendance();
-  const { employees, isLoading: employeesLoading } = useEmployees();
+  const { employees, isLoading: employeesLoading } = useEmployees({ includeArchived: true });
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -159,7 +159,9 @@ export default function AttendanceReportPage() {
               <SelectContent>
                 <SelectItem value="all">All Employees</SelectItem>
                 {employees.map(emp => (
-                  <SelectItem key={emp.id} value={emp.id}>{emp.full_name}</SelectItem>
+                  <SelectItem key={emp.id} value={emp.id}>
+                    {emp.full_name}{emp.deleted_at ? ' (archived)' : ''}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>

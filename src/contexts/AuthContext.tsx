@@ -62,6 +62,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userRole = (roleData?.role as UserRole) || 'employee';
       
       if (profileData) {
+        // Block archived (soft-deleted) employees from accessing the app
+        if ((profileData as any).deleted_at) {
+          await supabase.auth.signOut();
+          setProfile(null);
+          setRole(null);
+          setUser(null);
+          const { toast } = await import('sonner');
+          toast.error('This account has been archived. Contact an admin.');
+          return false;
+        }
         setProfile(profileData as Profile);
         setRole(userRole);
         setUser(mapProfileToUser(profileData as Profile, userRole));

@@ -611,6 +611,7 @@ export type Database = {
           base_salary: number
           birthday: string | null
           created_at: string
+          deleted_at: string | null
           department: string | null
           email: string
           employee_id: string | null
@@ -627,6 +628,7 @@ export type Database = {
           base_salary?: number
           birthday?: string | null
           created_at?: string
+          deleted_at?: string | null
           department?: string | null
           email: string
           employee_id?: string | null
@@ -643,6 +645,7 @@ export type Database = {
           base_salary?: number
           birthday?: string | null
           created_at?: string
+          deleted_at?: string | null
           department?: string | null
           email?: string
           employee_id?: string | null
