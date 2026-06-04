@@ -151,13 +151,13 @@ export default function EmployeesPage() {
         </div>
 
         {/* Pending Approvals */}
-        {role === 'admin' && employees.some(e => !e.is_active) && (
+        {role === 'admin' && pendingEmployees.length > 0 && (
           <Card className="border-warning/40 bg-warning/5">
             <CardContent className="pt-6 space-y-4">
               <div className="flex items-center gap-2">
                 <UserCheck className="w-5 h-5 text-warning" />
                 <h2 className="font-semibold text-foreground">
-                  Pending Approvals ({employees.filter(e => !e.is_active).length})
+                  Pending Approvals ({pendingEmployees.length})
                 </h2>
               </div>
               <p className="text-sm text-muted-foreground">
@@ -165,7 +165,7 @@ export default function EmployeesPage() {
                 assign a department.
               </p>
               <div className="space-y-2">
-                {employees.filter(e => !e.is_active).map((emp) => (
+                {pendingEmployees.map((emp) => (
                   <div key={emp.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg bg-background border border-border">
                     <div className="min-w-0">
                       <p className="font-medium text-foreground truncate">{emp.full_name}</p>
@@ -190,7 +190,7 @@ export default function EmployeesPage() {
                         variant="destructive"
                         onClick={() => {
                           setEmployeeToDelete(emp);
-                          setShowDeleteDialog(true);
+                          setShowRejectDialog(true);
                         }}
                         title="Reject signup and remove account"
                       >
