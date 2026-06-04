@@ -114,7 +114,7 @@ export default function EmployeesPage() {
 
   const departments = [...new Set(employees.map(e => e.department).filter(Boolean))];
 
-  const filteredEmployees = employees.filter(emp => {
+  const filteredEmployees = activeEmployees.filter(emp => {
     const matchesSearch = emp.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           emp.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (emp.employee_id?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
