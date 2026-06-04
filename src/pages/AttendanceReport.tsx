@@ -159,7 +159,9 @@ export default function AttendanceReportPage() {
               <SelectContent>
                 <SelectItem value="all">All Employees</SelectItem>
                 {employees.map(emp => (
-                  <SelectItem key={emp.id} value={emp.id}>{emp.full_name}</SelectItem>
+                  <SelectItem key={emp.id} value={emp.id}>
+                    {emp.full_name}{emp.deleted_at ? ' (archived)' : ''}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
