@@ -140,7 +140,7 @@ export default function EmployeesPage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Employees</h1>
-            <p className="text-muted-foreground">{employees.length} total employees</p>
+            <p className="text-muted-foreground">{activeEmployees.length} active employees{archivedEmployees.length > 0 ? ` • ${archivedEmployees.length} archived` : ''}</p>
           </div>
           {role === 'admin' && (
             <Button className="gap-2" onClick={() => setShowAddDialog(true)}>
