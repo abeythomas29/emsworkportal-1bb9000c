@@ -45,7 +45,7 @@ const statusBadgeMap: Record<string, 'present' | 'absent' | 'leave' | 'pending'>
 export default function AttendanceReportPage() {
   const { role } = useAuth();
   const { allAttendance, isLoading, fetchAllAttendance, markAbsentForDate } = useAllAttendance();
-  const { employees, isLoading: employeesLoading } = useEmployees();
+  const { employees, isLoading: employeesLoading } = useEmployees({ includeArchived: true });
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
