@@ -388,6 +388,53 @@ export default function EmployeesPage() {
             })}
           </div>
         )}
+
+        {/* Archived Employees (admin only) */}
+        {role === 'admin' && archivedEmployees.length > 0 && (
+          <Card className="border-muted bg-muted/10">
+            <CardContent className="pt-6 space-y-3">
+              <div className="flex items-center gap-2">
+                <Trash2 className="w-5 h-5 text-muted-foreground" />
+                <h2 className="font-semibold text-foreground">
+                  Archived Employees ({archivedEmployees.length})
+                </h2>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                These employees have been archived. Their attendance and history are preserved and
+                visible to admins in reports. They cannot sign in.
+              </p>
+              <div className="space-y-2">
+                {archivedEmployees.map((emp) => (
+                  <div key={emp.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg bg-background border border-border">
+                    <div className="min-w-0">
+                      <p className="font-medium text-foreground truncate">{emp.full_name}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {emp.email} • {emp.department || 'No dept'}
+                        {emp.deleted_at && ` • archived ${format(new Date(emp.deleted_at), 'MMM d, yyyy')}`}
+                      </p>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate(`/employee/${emp.id}?tab=attendance`)}
+                      >
+                        View Attendance
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => restoreEmployee(emp.id)}
+                      >
+                        <UserCheck className="w-4 h-4 mr-1" />
+                        Restore
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <AddEmployeeDialog
@@ -403,20 +450,16 @@ export default function EmployeesPage() {
         onSuccess={refetch}
       />
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      {/* Archive (soft-delete) dialog */}
+      <AlertDialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Employee</AlertDialogTitle>
+            <AlertDialogTitle>Archive Employee</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete <strong>{employeeToDelete?.full_name}</strong>? 
-              This will permanently remove the employee and all their records including:
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>All leave requests (approved, pending, rejected)</li>
-                <li>Leave balance</li>
-                <li>Attendance records</li>
-                <li>Work hours logs</li>
-              </ul>
-              <span className="block mt-2 text-destructive font-medium">This action cannot be undone.</span>
+              Archive <strong>{employeeToDelete?.full_name}</strong>? They will no longer be able to
+              sign in and will be removed from active employee lists. Their attendance, leave, and
+              work-hour history will be preserved and remain viewable to admins in reports. You can
+              restore them later.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -429,7 +472,7 @@ export default function EmployeesPage() {
                   setIsDeleting(true);
                   await deleteEmployee(employeeToDelete.id);
                   setIsDeleting(false);
-                  setShowDeleteDialog(false);
+                  setShowArchiveDialog(false);
                   setEmployeeToDelete(null);
                 }
               }}
@@ -438,10 +481,50 @@ export default function EmployeesPage() {
               {isDeleting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Deleting...
+                  Archiving...
                 </>
               ) : (
-                'Delete Employee'
+                'Archive Employee'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reject pending signup dialog (hard delete) */}
+      <AlertDialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reject Signup</AlertDialogTitle>
+            <AlertDialogDescription>
+              Reject and permanently remove <strong>{employeeToDelete?.full_name}</strong>'s account?
+              This signup has not been approved yet, so no attendance or leave history exists.
+              <span className="block mt-2 text-destructive font-medium">This action cannot be undone.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isDeleting}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (employeeToDelete) {
+                  setIsDeleting(true);
+                  await rejectPendingSignup(employeeToDelete.id);
+                  setIsDeleting(false);
+                  setShowRejectDialog(false);
+                  setEmployeeToDelete(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Rejecting...
+                </>
+              ) : (
+                'Reject Signup'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
