@@ -67,7 +67,7 @@ function ParcelPhoto({ path, onNotify }: { path: string | null; onNotify: () => 
   );
 }
 
-function ParcelTable({ parcels, isLoading, search, onEdit }: { parcels: Parcel[]; isLoading: boolean; search: string; onEdit: (p: Parcel) => void }) {
+function ParcelTable({ parcels, isLoading, search, onEdit, onNotify }: { parcels: Parcel[]; isLoading: boolean; search: string; onEdit: (p: Parcel) => void; onNotify: (p: Parcel) => void }) {
   const { role, user } = useAuth();
   const update = useUpdateParcel();
   const del = useDeleteParcel();
@@ -106,7 +106,7 @@ function ParcelTable({ parcels, isLoading, search, onEdit }: { parcels: Parcel[]
             const trackUrl = p.courier_tracking_url || getCourierTrackingUrl(p.courier, p.tracking_id);
             return (
               <TableRow key={p.id}>
-                <TableCell><ParcelPhoto path={p.photo_url} /></TableCell>
+                <TableCell><ParcelPhoto path={p.photo_url} onNotify={() => onNotify(p)} /></TableCell>
                 <TableCell className="whitespace-nowrap text-sm">{new Date(p.dispatched_date).toLocaleDateString('en-GB')}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
@@ -132,6 +132,9 @@ function ParcelTable({ parcels, isLoading, search, onEdit }: { parcels: Parcel[]
                   <div className="flex justify-end gap-1">
                     <Button asChild size="sm" variant="outline">
                       <a href={trackUrl} target="_blank" rel="noreferrer"><ExternalLink className="w-3 h-3 mr-1" />Track</a>
+                    </Button>
+                    <Button size="icon" variant="ghost" onClick={() => onNotify(p)} title="Notify recipient on WhatsApp">
+                      <MessageCircle className="w-4 h-4 text-emerald-500" />
                     </Button>
                     {canEdit && (
                       <>
