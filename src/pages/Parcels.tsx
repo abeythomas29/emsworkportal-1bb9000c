@@ -9,12 +9,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Package, Plus, Search, ExternalLink, Loader2, Trash2, Image as ImageIcon, Pencil, CalendarIcon, X } from 'lucide-react';
+import { Package, Plus, Search, ExternalLink, Loader2, Trash2, Image as ImageIcon, Pencil, CalendarIcon, X, MessageCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { EditParcelDialog } from '@/components/parcels/EditParcelDialog';
+import { NotifyRecipientDialog } from '@/components/parcels/NotifyRecipientDialog';
 import { useParcels, useUpdateParcel, useDeleteParcel, getSignedParcelUrl, Parcel } from '@/hooks/useParcels';
 import { PARCEL_STATUSES, getCourierTrackingUrl } from '@/lib/couriers';
 import { AddParcelDialog } from '@/components/parcels/AddParcelDialog';
@@ -27,15 +28,42 @@ const statusColors: Record<string, string> = {
   returned: 'bg-destructive/15 text-destructive',
 };
 
-function ParcelPhoto({ path }: { path: string | null }) {
+function ParcelPhoto({ path, onNotify }: { path: string | null; onNotify: () => void }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => { if (path) getSignedParcelUrl(path).then(setUrl); }, [path]);
-  if (!path) return <span className="text-muted-foreground text-xs">—</span>;
+  const badge = (
+    <button
+      type="button"
+      onClick={(e) => { e.preventDefault(); e.stopPropagation(); onNotify(); }}
+      title="Notify recipient on WhatsApp"
+      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow ring-2 ring-background"
+    >
+      <MessageCircle className="w-3 h-3" />
+    </button>
+  );
+  if (!path) {
+    return (
+      <div className="relative inline-block">
+        <button
+          type="button"
+          onClick={onNotify}
+          className="w-12 h-12 rounded border border-dashed border-border flex items-center justify-center text-muted-foreground hover:bg-muted"
+          title="No photo — notify recipient"
+        >
+          <ImageIcon className="w-4 h-4" />
+        </button>
+        {badge}
+      </div>
+    );
+  }
   if (!url) return <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />;
   return (
-    <a href={url} target="_blank" rel="noreferrer">
-      <img src={url} alt="label" className="w-12 h-12 object-cover rounded border border-border hover:opacity-80" />
-    </a>
+    <div className="relative inline-block">
+      <button type="button" onClick={onNotify} className="block">
+        <img src={url} alt="label" className="w-12 h-12 object-cover rounded border border-border hover:opacity-80" />
+      </button>
+      {badge}
+    </div>
   );
 }
 
