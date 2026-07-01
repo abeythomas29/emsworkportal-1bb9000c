@@ -162,6 +162,7 @@ export default function ParcelsPage() {
   const [search, setSearch] = useState('');
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Parcel | null>(null);
+  const [notifying, setNotifying] = useState<Parcel | null>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const { data: parcels = [], isLoading } = useParcels();
 
@@ -248,10 +249,10 @@ export default function ParcelsPage() {
                 <TabsTrigger value="samples">Sample Dispatches ({samples.length})</TabsTrigger>
               </TabsList>
               <TabsContent value="all" className="mt-4">
-                <ParcelTable parcels={dateFiltered} isLoading={isLoading} search={search} onEdit={setEditing} />
+                <ParcelTable parcels={dateFiltered} isLoading={isLoading} search={search} onEdit={setEditing} onNotify={setNotifying} />
               </TabsContent>
               <TabsContent value="samples" className="mt-4">
-                <ParcelTable parcels={samples} isLoading={isLoading} search={search} onEdit={setEditing} />
+                <ParcelTable parcels={samples} isLoading={isLoading} search={search} onEdit={setEditing} onNotify={setNotifying} />
               </TabsContent>
             </Tabs>
           </CardContent>
@@ -259,6 +260,7 @@ export default function ParcelsPage() {
       </div>
       <AddParcelDialog open={addOpen} onOpenChange={setAddOpen} />
       <EditParcelDialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)} parcel={editing} />
+      <NotifyRecipientDialog open={!!notifying} onOpenChange={(o) => !o && setNotifying(null)} parcel={notifying} />
     </DashboardLayout>
   );
 }
