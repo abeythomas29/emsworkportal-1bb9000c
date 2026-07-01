@@ -409,6 +409,7 @@ export type Database = {
       parcels: {
         Row: {
           client_name: string | null
+          client_phone: string | null
           courier: string
           courier_tracking_url: string | null
           created_at: string
@@ -424,6 +425,7 @@ export type Database = {
         }
         Insert: {
           client_name?: string | null
+          client_phone?: string | null
           courier: string
           courier_tracking_url?: string | null
           created_at?: string
@@ -439,6 +441,7 @@ export type Database = {
         }
         Update: {
           client_name?: string | null
+          client_phone?: string | null
           courier?: string
           courier_tracking_url?: string | null
           created_at?: string
