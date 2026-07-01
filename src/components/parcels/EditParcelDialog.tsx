@@ -23,6 +23,7 @@ export function EditParcelDialog({ open, onOpenChange, parcel }: Props) {
   const [courier, setCourier] = useState('Other');
   const [status, setStatus] = useState<string>('pending');
   const [clientName, setClientName] = useState('');
+  const [clientPhone, setClientPhone] = useState('');
   const [isSample, setIsSample] = useState(false);
   const [dispatchedDate, setDispatchedDate] = useState('');
   const [notes, setNotes] = useState('');
@@ -33,6 +34,7 @@ export function EditParcelDialog({ open, onOpenChange, parcel }: Props) {
       setCourier(parcel.courier || 'Other');
       setStatus(parcel.status);
       setClientName(parcel.client_name || '');
+      setClientPhone(parcel.client_phone || '');
       setIsSample(parcel.is_sample);
       setDispatchedDate(parcel.dispatched_date);
       setNotes(parcel.notes || '');
@@ -50,6 +52,7 @@ export function EditParcelDialog({ open, onOpenChange, parcel }: Props) {
         courier_tracking_url: getCourierTrackingUrl(courier, trackingId.trim()),
         status,
         client_name: clientName.trim() || null,
+        client_phone: clientPhone.trim() || null,
         is_sample: isSample,
         dispatched_date: dispatchedDate,
         notes: notes.trim() || null,
@@ -102,9 +105,15 @@ export function EditParcelDialog({ open, onOpenChange, parcel }: Props) {
             <Label htmlFor="edit-sample" className="cursor-pointer">Sample dispatch</Label>
           </div>
 
-          <div>
-            <Label>Client / Recipient Name</Label>
-            <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Optional" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Client / Recipient Name</Label>
+              <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Optional" />
+            </div>
+            <div>
+              <Label>Recipient WhatsApp Number</Label>
+              <Input value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} placeholder="Optional" inputMode="tel" />
+            </div>
           </div>
 
           <div>

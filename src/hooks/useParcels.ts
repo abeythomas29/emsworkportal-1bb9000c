@@ -11,6 +11,7 @@ export interface Parcel {
   courier_tracking_url: string | null;
   photo_url: string | null;
   client_name: string | null;
+  client_phone: string | null;
   is_sample: boolean;
   dispatched_date: string;
   status: string;

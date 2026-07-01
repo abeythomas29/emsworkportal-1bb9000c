@@ -28,13 +28,14 @@ export function AddParcelDialog({ open, onOpenChange }: Props) {
   const [trackingId, setTrackingId] = useState('');
   const [courier, setCourier] = useState<string>('Other');
   const [clientName, setClientName] = useState('');
+  const [clientPhone, setClientPhone] = useState('');
   const [isSample, setIsSample] = useState(true);
   const [dispatchedDate, setDispatchedDate] = useState(new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState('');
 
   const reset = () => {
     setFile(null); setPreview(null); setTrackingId(''); setCourier('Other');
-    setClientName(''); setIsSample(true); setNotes('');
+    setClientName(''); setClientPhone(''); setIsSample(true); setNotes('');
     setDispatchedDate(new Date().toISOString().slice(0, 10));
   };
 
@@ -80,6 +81,7 @@ export function AddParcelDialog({ open, onOpenChange }: Props) {
         courier_tracking_url: getCourierTrackingUrl(courier, trackingId.trim()),
         photo_url: photoPath,
         client_name: clientName.trim() || null,
+        client_phone: clientPhone.trim() || null,
         is_sample: isSample,
         dispatched_date: dispatchedDate,
         status: 'pending',
@@ -159,9 +161,15 @@ export function AddParcelDialog({ open, onOpenChange }: Props) {
             </div>
           </div>
 
-          <div>
-            <Label>Client / Recipient Name {isSample && <span className="text-muted-foreground text-xs">(for sample sales list)</span>}</Label>
-            <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Optional" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Client / Recipient Name {isSample && <span className="text-muted-foreground text-xs">(for sample sales list)</span>}</Label>
+              <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Optional" />
+            </div>
+            <div>
+              <Label>Recipient WhatsApp Number</Label>
+              <Input value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} placeholder="Optional" inputMode="tel" />
+            </div>
           </div>
 
           <div>
