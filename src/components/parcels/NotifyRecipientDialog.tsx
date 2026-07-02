@@ -23,7 +23,7 @@ export function normalizePhoneForWa(input: string): string {
 
 export function buildParcelMessage(parcel: { courier: string; tracking_id: string; courier_tracking_url: string | null }) {
   const url = parcel.courier_tracking_url || getCourierTrackingUrl(parcel.courier, parcel.tracking_id);
-  return `Greetings from EMS!\n\nYour parcel has been dispatched via ${parcel.courier}.\n\nTracking ID: ${parcel.tracking_id}\n\nYou can track your parcel here: ${url}`;
+  return `Greetings from EMS!\n\nYour parcel has been dispatched via ${parcel.courier}.\n\nTracking ID: ${parcel.tracking_id}\n\nYou can track your parcel here: ${url}\n\nDownload our latest catalogue from our website: https://esotericminerals.com/`;
 }
 
 export function NotifyRecipientDialog({ open, onOpenChange, parcel }: Props) {
