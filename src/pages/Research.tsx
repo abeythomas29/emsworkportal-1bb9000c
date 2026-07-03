@@ -175,6 +175,9 @@ export default function ResearchPage() {
           <TabsContent value="others" className="space-y-4 mt-4">
             {others.length === 0 ? <p className="text-muted-foreground text-center py-8">No tests from others.</p> : others.map(renderCard)}
           </TabsContent>
+          <TabsContent value="flow-rate" className="mt-4">
+            <FlowRateCalculator />
+          </TabsContent>
         </Tabs>
       </div>
 
