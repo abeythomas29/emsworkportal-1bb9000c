@@ -31,6 +31,7 @@ export function NewPODialog({ trigger }: Props) {
   const [expected, setExpected] = useState('');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<POItem[]>([emptyItem()]);
+  const [vendorDialogOpen, setVendorDialogOpen] = useState(false);
 
   const reset = () => {
     setVendorId(null); setVendorName(''); setPoDate(new Date().toISOString().slice(0, 10));
