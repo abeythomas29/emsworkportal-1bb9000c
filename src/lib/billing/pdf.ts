@@ -3,6 +3,7 @@ import autoTable from 'jspdf-autotable';
 import { numberToIndianWords } from './numberToWords';
 import { buildHsnSummary, computeTotals, ComputedLine } from './calc';
 import emsLogoUrl from '@/assets/ems-logo.png';
+import upiQrUrl from '@/assets/upi-qr.png';
 
 // EMS brand palette
 const BRAND_CHARCOAL: [number, number, number] = [58, 58, 58];
@@ -15,16 +16,22 @@ let emsLogoImg: HTMLImageElement | null = null;
 const emsLogoPromise: Promise<HTMLImageElement | null> = new Promise((resolve) => {
   const img = new Image();
   img.crossOrigin = 'anonymous';
-  img.onload = () => {
-    emsLogoImg = img;
-    resolve(img);
-  };
+  img.onload = () => { emsLogoImg = img; resolve(img); };
   img.onerror = () => resolve(null);
   img.src = emsLogoUrl;
 });
 
+let upiQrImg: HTMLImageElement | null = null;
+const upiQrPromise: Promise<HTMLImageElement | null> = new Promise((resolve) => {
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => { upiQrImg = img; resolve(img); };
+  img.onerror = () => resolve(null);
+  img.src = upiQrUrl;
+});
+
 export async function prepareBrandingAssets(): Promise<void> {
-  await emsLogoPromise;
+  await Promise.all([emsLogoPromise, upiQrPromise]);
 }
 
 function getDefaultLogoImg(): HTMLImageElement | null {
@@ -391,6 +398,19 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
     `Branch Code: ${bank.bank_branch_code || '—'}   SWIFT: ${bank.bank_swift || '—'}`,
   ];
   bankLines.forEach((l, i) => doc.text(l, M + 3, footerY + 10 + i * 4.5));
+
+  // UPI QR (only on proforma) — inside bank details column, right side
+  if (input.doc_type === 'proforma' && upiQrImg) {
+    const qrSize = footerH - 12;
+    const qrX = M + colW - qrSize - 3;
+    const qrY = footerY + 3;
+    doc.addImage(upiQrImg, 'PNG', qrX, qrY, qrSize, qrSize, undefined, 'FAST');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(...BRAND_CHARCOAL);
+    doc.text('Scan & Pay (UPI)', qrX + qrSize / 2, qrY + qrSize + 2.5, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+  }
 
   // Signature column — centered
   const sigColX = M + colW;
