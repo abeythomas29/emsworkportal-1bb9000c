@@ -16,16 +16,22 @@ let emsLogoImg: HTMLImageElement | null = null;
 const emsLogoPromise: Promise<HTMLImageElement | null> = new Promise((resolve) => {
   const img = new Image();
   img.crossOrigin = 'anonymous';
-  img.onload = () => {
-    emsLogoImg = img;
-    resolve(img);
-  };
+  img.onload = () => { emsLogoImg = img; resolve(img); };
   img.onerror = () => resolve(null);
   img.src = emsLogoUrl;
 });
 
+let upiQrImg: HTMLImageElement | null = null;
+const upiQrPromise: Promise<HTMLImageElement | null> = new Promise((resolve) => {
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => { upiQrImg = img; resolve(img); };
+  img.onerror = () => resolve(null);
+  img.src = upiQrUrl;
+});
+
 export async function prepareBrandingAssets(): Promise<void> {
-  await emsLogoPromise;
+  await Promise.all([emsLogoPromise, upiQrPromise]);
 }
 
 function getDefaultLogoImg(): HTMLImageElement | null {
