@@ -198,7 +198,13 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
     p.gstin ? `GSTIN: ${p.gstin}` : null,
     p.phone ? `Phone: ${p.phone}` : null,
   ].filter(Boolean) as string[];
-  partyLines.forEach((l, i) => doc.text(String(l), M + 3, y + 10 + i * 4.5));
+  const partyMaxW = colW - 6;
+  let py = y + 10;
+  partyLines.forEach((l) => {
+    const wrapped = doc.splitTextToSize(String(l), partyMaxW);
+    doc.text(wrapped, M + 3, py);
+    py += wrapped.length * 4.5;
+  });
 
   doc.setFont('helvetica', 'bold');
   doc.text('Invoice Details', M + colW + 3, y + 5);
