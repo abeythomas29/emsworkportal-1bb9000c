@@ -211,3 +211,64 @@ function SeriesRow({
     </TableRow>
   );
 }
+
+function BrandImageField({
+  label,
+  value,
+  onChange,
+  hint,
+}: {
+  label: string;
+  value: string | null;
+  onChange: (v: string | null) => void;
+  hint?: string;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please pick a PNG or JPG image');
+      return;
+    }
+    if (file.size > 1024 * 1024) {
+      toast.error('Image must be under 1 MB');
+      return;
+    }
+    try {
+      const url = await readFileAsDataUrl(file);
+      onChange(url);
+    } catch {
+      toast.error('Could not read image');
+    }
+  };
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <div className="flex items-center gap-4 border rounded-md p-3 bg-muted/30">
+        <div className="w-24 h-16 rounded border bg-background flex items-center justify-center overflow-hidden">
+          {value ? (
+            <img src={value} alt={label} className="max-w-full max-h-full object-contain" />
+          ) : (
+            <ImageIcon className="w-6 h-6 text-muted-foreground" />
+          )}
+        </div>
+        <div className="flex-1 space-y-2">
+          <div className="flex flex-wrap gap-2">
+            <input ref={ref} type="file" accept="image/png,image/jpeg" className="hidden" onChange={onFile} />
+            <Button type="button" variant="outline" size="sm" onClick={() => ref.current?.click()}>
+              <Upload className="w-4 h-4 mr-2" /> {value ? 'Replace' : 'Upload'}
+            </Button>
+            {value && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => onChange(null)}>
+                <Trash2 className="w-4 h-4 mr-2" /> Remove
+              </Button>
+            )}
+          </div>
+          {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
