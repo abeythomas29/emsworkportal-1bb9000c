@@ -311,11 +311,25 @@ export function useDeleteBillingDocument() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
+      // If it's a finalized tax invoice mirrored into sales, remove the mirror
+      // (this also restores stock via the apply_sale_to_stock trigger on delete).
+      const { data: doc } = await supabase
+        .from('billing_documents')
+        .select('sales_invoice_id')
+        .eq('id', id)
+        .maybeSingle();
+      if (doc?.sales_invoice_id) {
+        await supabase.from('sales_items').delete().eq('invoice_id', doc.sales_invoice_id);
+        await supabase.from('sales_invoices').delete().eq('id', doc.sales_invoice_id);
+      }
       const { error } = await supabase.from('billing_documents').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['billing_documents'] });
+      qc.invalidateQueries({ queryKey: ['sales-invoices'] });
+      qc.invalidateQueries({ queryKey: ['sales-dashboard-stats'] });
+      qc.invalidateQueries({ queryKey: ['products'] });
       toast.success('Document deleted');
     },
     onError: (e: Error) => toast.error(e.message),
