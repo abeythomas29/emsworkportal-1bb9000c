@@ -368,7 +368,7 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
 
   const sig = getCompanyImg(input.company.signature_url);
   if (sig) {
-    doc.addImage(sig, 'PNG', pageW - M - 43, footerY + 8, 40, 16);
+    doc.addImage(sig, 'PNG', pageW - M - 43, footerY + 8, 40, 16, undefined, 'FAST');
   }
 
   doc.setFont('helvetica', 'normal');
