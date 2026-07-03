@@ -429,8 +429,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
                   <TableHead className="w-[80px]">Qty</TableHead>
                   <TableHead className="w-[80px]">Unit</TableHead>
                   <TableHead className="w-[110px]">Price</TableHead>
-                  <TableHead className="w-[80px]">Disc %</TableHead>
-                  <TableHead className="w-[80px]">GST %</TableHead>
+                  <TableHead className="w-[100px]">GST %</TableHead>
                   <TableHead className="w-[110px] text-right">Amount</TableHead>
                   {!readOnly && <TableHead className="w-[40px]" />}
                 </TableRow>
