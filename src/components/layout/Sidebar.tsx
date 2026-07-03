@@ -21,6 +21,7 @@ import {
   Factory,
   TrendingUp,
   ShoppingCart,
+  ShoppingBag,
   Receipt,
   Package,
   FlaskConical,
@@ -124,6 +125,12 @@ const navItems: NavItem[] = [
     icon: <TrendingUp size={20} />,
     label: 'Sales',
     path: '/sales',
+    roles: ['admin'],
+  },
+  {
+    icon: <ShoppingBag size={20} />,
+    label: 'Purchases',
+    path: '/purchases',
     roles: ['admin'],
   },
   {
