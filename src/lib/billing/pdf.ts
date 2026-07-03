@@ -146,7 +146,7 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   const logoW = 32;
   const textLeft = logo ? M + 6 + logoW + 6 : M + 8;
   if (logo) {
-    doc.addImage(logo, 'PNG', M + 6, headerY + 3, logoW, headerH - 6);
+    doc.addImage(logo, 'PNG', M + 6, headerY + 3, logoW, headerH - 6, undefined, 'FAST');
   }
 
   doc.setTextColor(...BRAND_CHARCOAL);
