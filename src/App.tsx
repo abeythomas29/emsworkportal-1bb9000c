@@ -27,6 +27,7 @@ import SalaryPage from "./pages/Salary";
 import PrivacyPolicyPage from "./pages/PrivacyPolicy";
 import ProductionPage from "./pages/Production";
 import SalesPage from "./pages/Sales";
+import PurchasesPage from "./pages/Purchases";
 import RequestsPage from "./pages/Requests";
 import ReimbursementsPage from "./pages/Reimbursements";
 import ParcelsPage from "./pages/Parcels";
@@ -62,6 +63,7 @@ const App = () => (
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="/production" element={<ProductionPage />} />
             <Route path="/sales" element={<SalesPage />} />
+            <Route path="/purchases" element={<PurchasesPage />} />
             <Route path="/requests" element={<RequestsPage />} />
             <Route path="/reimbursements" element={<ReimbursementsPage />} />
             <Route path="/parcels" element={<ParcelsPage />} />

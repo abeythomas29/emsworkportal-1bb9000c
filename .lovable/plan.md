@@ -1,38 +1,81 @@
-## Goal
 
-Replace the destructive "Delete employee" flow with a soft-delete so admins can still view the deleted user's attendance (and other history). Keep the existing "Reject pending signup" path as a true hard-delete (those users haven't done anything yet).
+# Purchases Module
 
-## Why a new column
+Mirror the Sales portal for the expense side: create Purchase Orders, upload vendor tax invoices (PDF/image) that AI auto-fills, and see monthly purchase totals with the same Executive Dark Command look.
 
-`is_active` is already overloaded — it doubles as the "pending approval" flag for new signups. We can't reuse it for deletion. Add a dedicated `deleted_at timestamptz` on `profiles` (NULL = not deleted).
+## 1. Navigation & Access
 
-## Changes
+- New route `/purchases`, admin-only (same guard as `/sales`).
+- Sidebar entry "Purchases" (ShoppingBag icon) under the admin group.
+- Page shell copies `Sales.tsx`: pill tabs → **Purchase Orders**, **Invoices**, **Reports**.
 
-### 1. Database (migration)
-- Add `profiles.deleted_at timestamptz NULL`.
-- Update RLS on `profiles`:
-  - Regular users (`SELECT` for authenticated): only rows where `deleted_at IS NULL`.
-  - Admins: can read all rows including deleted.
-- Keep existing INSERT/UPDATE rules.
+## 2. Database (new tables)
 
-### 2. `useEmployees.ts`
-- `deleteEmployee(id)` for an **approved** employee (`is_active = true` or previously activated): set `deleted_at = now()` and `is_active = false`. Do NOT cascade-delete attendance / leave / OT / work_hours / user_roles.
-- Add a new `rejectPendingSignup(id)` that runs the current hard-delete cascade — only used for the Pending Approvals reject button.
-- Filter the default employee list to `deleted_at IS NULL`.
-- Add `fetchDeletedEmployees()` (admin-only) for an "Archived employees" view.
+**`purchase_orders`**
+- vendor_id (→ parties), vendor_name_snapshot, po_number (auto: `PO-YY-YY-####`), po_date, expected_delivery
+- status: `draft | approved | sent | partially_received | received | cancelled`
+- notes, total, created_by, approved_by, approved_at
+- Auto-numbered via reused `billing_number_series` (doc_type `purchase_order`).
 
-### 3. `Employees.tsx`
-- Pending Approvals → Reject button calls `rejectPendingSignup` (hard delete, as today).
-- Active employees → Delete button calls the new soft-delete `deleteEmployee`. Update the confirm dialog copy to "Archive employee — their attendance and history will remain viewable to admins."
-- Add an "Archived" section/tab (admin only) listing soft-deleted profiles with a "Restore" action that clears `deleted_at`.
+**`purchase_order_items`** — po_id, item_name, hsn_sac, quantity, unit, unit_price, tax_percent, amount, product_id (nullable), raw_material_id (nullable).
 
-### 4. Attendance visibility
-- `useAllAttendance.ts` already joins profiles via a separate fetch. Change it to fetch profiles **without** filtering by `deleted_at` so historical rows still show the name/department. No other code change needed — attendance rows were never deleted under the new flow.
-- `AttendanceReport.tsx`: include archived employees in the employee selector when admin is filtering historical months (label them "(archived)").
+**`purchase_invoices`**
+- vendor_id, vendor_name, vendor_gstin
+- invoice_no (vendor's), invoice_date, po_id (nullable link)
+- sub_total, total_tax, total, payment_status (`unpaid|partial|paid`), amount_paid
+- attachment_url (storage path), attachment_mime
+- extraction_status (`pending|extracted|manual|failed`), extraction_raw (jsonb)
+- uploaded_by, created_at
 
-### 5. Login / auth
-- Block sign-in for soft-deleted users: in `AuthContext` after session load, if `profile.deleted_at` is set, sign out and show "This account has been archived."
+**`purchase_invoice_items`** — invoice_id, item_name, hsn_sac, quantity, unit, unit_price, tax_percent, amount.
 
-## Out of scope
-- No backfill — existing already-deleted users are gone; this only protects future deletions.
-- No changes to leave/OT/parcel tables; they reference `profiles(id)` and will keep working since the profile row remains.
+**Storage bucket**: `purchase-invoices` (private).
+
+RLS: admin-only for all four tables (uses `has_role(auth.uid(),'admin')`), GRANTs to authenticated + service_role.
+
+## 3. Purchase Order workflow
+
+Lifecycle: **draft → approved → sent → partially_received / received** (or **cancelled**).
+- New PO dialog (vendor picker reuses `parties`, line items reuse billing calc helpers).
+- List panel with status filter + monthly total pills.
+- Row actions: view, edit (draft only), approve, mark sent, mark received, cancel, delete (draft/cancelled only).
+- Approved POs display in a compact picker when logging an invoice.
+
+## 4. Invoice upload + AI extraction
+
+- "Upload Invoice" button opens a dropzone (PDF, JPG, PNG, ≤10 MB).
+- File uploads to `purchase-invoices` bucket → edge function `extract-purchase-invoice` called with signed URL.
+- Edge function uses Lovable AI (`google/gemini-2.5-flash`, structured output) to extract: vendor name, GSTIN, invoice no/date, line items (name, qty, unit price, tax%), sub_total, tax total, grand total.
+- Result opens a review dialog prefilled with extracted values; admin edits, links to a PO (optional), and saves.
+- Manual entry path available if extraction fails.
+
+## 5. Reports (mirrors `SalesReportsPanel`)
+
+- Month selector, KPI cards: Total Spend, Invoice Count, Top Vendor, Avg Invoice Value.
+- 6-month trend chart, top vendors + top items tables, unpaid outstanding widget.
+
+## 6. Dashboard touch
+
+- Small "Purchases this month" tile next to the Sales KPI strip (admin only).
+
+## 7. Files to add / edit
+
+New:
+- `src/pages/Purchases.tsx`
+- `src/components/purchases/PurchasesModule.tsx`
+- `src/components/purchases/POListPanel.tsx`, `NewPODialog.tsx`, `POEditDialog.tsx`
+- `src/components/purchases/InvoiceListPanel.tsx`, `UploadInvoiceDialog.tsx`, `ReviewExtractedInvoiceDialog.tsx`
+- `src/components/purchases/PurchaseReportsPanel.tsx`
+- `src/hooks/usePurchaseOrders.ts`, `usePurchaseInvoices.ts`
+- `supabase/functions/extract-purchase-invoice/index.ts`
+
+Edited:
+- `src/App.tsx` (route), `src/components/layout/Sidebar.tsx` (nav item), `src/components/dashboard/…` (optional tile).
+
+## Technical notes
+
+- Reuse `src/lib/billing/calc.ts` and `financialYearOf` for numbering + line math.
+- Reuse `get_next_billing_number` RPC by adding `purchase_order` as a valid doc_type (default prefix `PO-`).
+- Extraction edge function sends the file as an `image_url` (image) or `file` (PDF) content block per the multimodal spec, with a strict JSON schema. Falls back to `manual` status on any error so the admin can key it in.
+- Storage access via signed URLs (bucket is private).
+- All new UI reuses the same tokens, pill tabs, gradient KPI cards, and empty-state style as the Sales portal so the look stays consistent.
