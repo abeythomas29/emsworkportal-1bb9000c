@@ -5,10 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  ClipboardList, Loader2, MoreHorizontal, CheckCircle2, Send, PackageCheck, XCircle, Trash2,
+  ClipboardList, Loader2, MoreHorizontal, CheckCircle2, Send, PackageCheck, XCircle, Trash2, FileDown,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { usePurchaseOrders, type POStatus } from '@/hooks/usePurchaseOrders';
+import { useCompanySettings, useParties } from '@/hooks/useBilling';
+import { generatePOPdf } from '@/lib/purchases/poPdf';
+import { toast } from 'sonner';
 import { NewPODialog } from './NewPODialog';
 
 const inr = (v: number) =>
