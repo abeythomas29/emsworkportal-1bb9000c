@@ -425,34 +425,67 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
               <TableBody>
                 {lines.map((l, idx) => {
                   const c = computed[idx];
+                  const matched = products.find((p) => p.name.toLowerCase() === l.item_name.trim().toLowerCase());
+                  const stock = matched ? Number(matched.current_stock || 0) : null;
                   return (
                     <TableRow key={l.key}>
-                      <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
+                      <TableCell className="text-muted-foreground align-top pt-4">{idx + 1}</TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1">
                           <div className="flex gap-1">
                             <Input
                               value={l.item_name}
-                              onChange={(e) => setLine(idx, { item_name: e.target.value })}
-                              placeholder="Item name"
+                              list={`products-list-${l.key}`}
+                              onChange={(e) => {
+                                const name = e.target.value;
+                                const p = products.find((x) => x.name.toLowerCase() === name.trim().toLowerCase());
+                                setLine(idx, {
+                                  item_name: name,
+                                  product_id: p ? p.id : null,
+                                  unit: p ? p.unit : l.unit,
+                                  hsn_sac: autoHsn(name, l.hsn_sac),
+                                });
+                              }}
+                              placeholder="Type product code…"
                               disabled={readOnly}
                             />
+                            <datalist id={`products-list-${l.key}`}>
+                              {products.map((p) => (
+                                <option key={p.id} value={p.name}>
+                                  {`Stock: ${Number(p.current_stock || 0).toFixed(2)} ${p.unit || 'kg'}`}
+                                </option>
+                              ))}
+                            </datalist>
                             <Select
                               value={l.product_id || ''}
                               onValueChange={(pid) => {
                                 const p = products.find((x) => x.id === pid);
-                                if (p) setLine(idx, { product_id: pid, item_name: p.name, unit: p.unit });
+                                if (p) setLine(idx, { product_id: pid, item_name: p.name, unit: p.unit, hsn_sac: autoHsn(p.name, l.hsn_sac) });
                               }}
                               disabled={readOnly}
                             >
                               <SelectTrigger className="w-[42px] p-0 justify-center" aria-label="Pick product" />
                               <SelectContent>
                                 {products.map((p) => (
-                                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                  <SelectItem key={p.id} value={p.id}>
+                                    {p.name} · {Number(p.current_stock || 0).toFixed(2)} {p.unit || 'kg'}
+                                  </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
                           </div>
+                          {stock !== null && (
+                            <div className="flex items-center gap-2 text-xs">
+                              <Badge
+                                variant="outline"
+                                className={stock <= 0 ? 'text-destructive border-destructive' : stock < l.quantity ? 'text-warning border-warning' : 'text-success border-success'}
+                              >
+                                In stock: {stock.toFixed(2)} {matched?.unit || 'kg'}
+                              </Badge>
+                              {stock < l.quantity && stock > 0 && <span className="text-warning">Insufficient stock</span>}
+                              {stock <= 0 && <span className="text-destructive">Out of stock</span>}
+                            </div>
+                          )}
                           <Input
                             value={l.description}
                             onChange={(e) => setLine(idx, { description: e.target.value })}
@@ -465,6 +498,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
                       <TableCell>
                         <Input value={l.hsn_sac} onChange={(e) => setLine(idx, { hsn_sac: e.target.value })} disabled={readOnly} />
                       </TableCell>
+
                       <TableCell>
                         <Input type="number" step="0.001" value={l.quantity}
                           onChange={(e) => setLine(idx, { quantity: Number(e.target.value) })} disabled={readOnly} />
