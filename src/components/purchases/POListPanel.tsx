@@ -109,6 +109,9 @@ export function POListPanel() {
                 ))}
               </SelectContent>
             </Select>
+            <Button size="sm" variant="outline" className="gap-2" onClick={() => setTermsDialogOpen(true)}>
+              <FileText className="w-4 h-4" /> Terms templates
+            </Button>
             <NewPODialog />
           </div>
         </div>
