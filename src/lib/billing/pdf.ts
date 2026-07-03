@@ -155,13 +155,19 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   doc.text(input.company.name, textLeft, headerY + 7);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
+  const headerMaxW = pageW - M - 3 - textLeft;
   const addr = [
     input.company.address_line,
     [input.company.city, input.company.state, input.company.pincode].filter(Boolean).join(', '),
     `GSTIN: ${input.company.gstin || '—'}   State Code: ${input.company.state_code || '—'}`,
     `Phone: ${input.company.phone || '—'}   Email: ${input.company.email || '—'}`,
   ].filter(Boolean) as string[];
-  addr.forEach((line, i) => doc.text(line, textLeft, headerY + 12 + i * 4.2));
+  let addrY = headerY + 12;
+  addr.forEach((line) => {
+    const wrapped = doc.splitTextToSize(String(line), headerMaxW);
+    doc.text(wrapped, textLeft, addrY);
+    addrY += wrapped.length * 4.2;
+  });
 
   // Title bar under header (charcoal with gold underline)
   let y = headerY + headerH + 2;
