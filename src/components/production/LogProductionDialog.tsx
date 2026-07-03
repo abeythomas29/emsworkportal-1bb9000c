@@ -20,6 +20,11 @@ interface MaterialRow {
   quantity_consumed: string;
 }
 
+interface ProductRow {
+  product_id: string;
+  quantity_consumed: string;
+}
+
 interface Props {
   trigger?: React.ReactNode;
   editLog?: ProductionLog | null;
@@ -38,13 +43,13 @@ export function LogProductionDialog({ trigger, editLog, open: controlledOpen, on
   const [quantity, setQuantity] = useState('');
   const [notes, setNotes] = useState('');
   const [materials, setMaterials] = useState<MaterialRow[]>([{ raw_material_id: '', quantity_consumed: '' }]);
+  const [productsUsed, setProductsUsed] = useState<ProductRow[]>([]);
 
   const { data: products = [] } = useProducts();
   const { data: rawMaterials = [] } = useRawMaterials();
   const createLog = useCreateProductionLog();
   const updateLog = useUpdateProductionLog();
 
-  // Populate form when editing
   useEffect(() => {
     if (open && editLog) {
       setDate(editLog.date);
@@ -56,6 +61,11 @@ export function LogProductionDialog({ trigger, editLog, open: controlledOpen, on
         quantity_consumed: String(m.quantity_consumed),
       }));
       setMaterials(mats.length > 0 ? mats : [{ raw_material_id: '', quantity_consumed: '' }]);
+      const pcs = (editLog.products_consumed || []).map((p) => ({
+        product_id: p.product_id,
+        quantity_consumed: String(p.quantity_consumed),
+      }));
+      setProductsUsed(pcs);
     } else if (open && !editLog) {
       reset();
     }
@@ -68,6 +78,7 @@ export function LogProductionDialog({ trigger, editLog, open: controlledOpen, on
     setQuantity('');
     setNotes('');
     setMaterials([{ raw_material_id: '', quantity_consumed: '' }]);
+    setProductsUsed([]);
   };
 
   const handleSubmit = async () => {
@@ -80,6 +91,10 @@ export function LogProductionDialog({ trigger, editLog, open: controlledOpen, on
       materials: materials.map((m) => ({
         raw_material_id: m.raw_material_id,
         quantity_consumed: parseFloat(m.quantity_consumed) || 0,
+      })),
+      products_consumed: productsUsed.map((p) => ({
+        product_id: p.product_id,
+        quantity_consumed: parseFloat(p.quantity_consumed) || 0,
       })),
     };
     if (isEdit && editLog) {
