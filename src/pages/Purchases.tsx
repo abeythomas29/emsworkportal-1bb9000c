@@ -49,6 +49,7 @@ export default function PurchasesPage() {
 
         {tab === 'invoices' && <InvoiceListPanel />}
         {tab === 'orders' && <POListPanel />}
+        {tab === 'vendors' && <VendorsPanel />}
         {tab === 'reports' && <PurchaseReportsPanel />}
       </div>
     </DashboardLayout>
