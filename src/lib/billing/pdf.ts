@@ -11,30 +11,49 @@ const BRAND_TEAL: [number, number, number] = [95, 196, 192];
 const BRAND_GOLD_SOFT: [number, number, number] = [252, 244, 220];
 
 // Preload EMS logo as data URL for default branding
-let emsLogoDataUrl: string | null = null;
-const emsLogoPromise: Promise<string> = fetch(emsLogoUrl)
-  .then((r) => r.blob())
-  .then(
-    (b) =>
-      new Promise<string>((resolve, reject) => {
-        const fr = new FileReader();
-        fr.onload = () => resolve(String(fr.result));
-        fr.onerror = reject;
-        fr.readAsDataURL(b);
-      })
-  )
-  .then((d) => {
-    emsLogoDataUrl = d;
-    return d;
-  })
-  .catch(() => '');
+let emsLogoImg: HTMLImageElement | null = null;
+const emsLogoPromise: Promise<HTMLImageElement | null> = new Promise((resolve) => {
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    emsLogoImg = img;
+    resolve(img);
+  };
+  img.onerror = () => resolve(null);
+  img.src = emsLogoUrl;
+});
 
 export async function prepareBrandingAssets(): Promise<void> {
   await emsLogoPromise;
 }
 
-export function getDefaultLogo(): string | null {
-  return emsLogoDataUrl;
+function getDefaultLogoImg(): HTMLImageElement | null {
+  return emsLogoImg;
+}
+
+function dataUrlToImg(dataUrl: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = dataUrl;
+  });
+}
+
+// Cache for user-uploaded logo/signature converted to Image elements
+const imgCache = new Map<string, HTMLImageElement | null>();
+export async function preloadCompanyImages(company: { logo_url?: string | null; signature_url?: string | null }): Promise<void> {
+  const jobs: Promise<void>[] = [];
+  for (const url of [company.logo_url, company.signature_url]) {
+    if (url && !imgCache.has(url)) {
+      jobs.push(dataUrlToImg(url).then((img) => { imgCache.set(url, img); }));
+    }
+  }
+  await Promise.all(jobs);
+}
+function getCompanyImg(url: string | null | undefined): HTMLImageElement | null {
+  if (!url) return null;
+  return imgCache.get(url) ?? null;
 }
 
 export interface CompanyInfo {
@@ -123,14 +142,11 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   doc.setLineWidth(0.3);
   doc.rect(M, headerY, pageW - 2 * M, headerH);
 
-  const logo = input.company.logo_url || getDefaultLogo();
+  const logo = getCompanyImg(input.company.logo_url) || getDefaultLogoImg();
   const logoW = 32;
   const textLeft = logo ? M + 6 + logoW + 6 : M + 8;
   if (logo) {
-    try {
-      const fmt = logo.includes('image/jpeg') || logo.includes('image/jpg') ? 'JPEG' : 'PNG';
-      doc.addImage(logo, fmt, M + 6, headerY + 3, logoW, headerH - 6);
-    } catch { /* ignore invalid image */ }
+    doc.addImage(logo, 'PNG', M + 6, headerY + 3, logoW, headerH - 6);
   }
 
   doc.setTextColor(...BRAND_CHARCOAL);
@@ -350,12 +366,9 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   doc.setFontSize(9);
   doc.text(`For ${input.company.name}`, M + colW + 3, footerY + 5);
 
-  const sig = input.company.signature_url;
+  const sig = getCompanyImg(input.company.signature_url);
   if (sig) {
-    try {
-      const fmt = sig.includes('image/jpeg') || sig.includes('image/jpg') ? 'JPEG' : 'PNG';
-      doc.addImage(sig, fmt, pageW - M - 43, footerY + 8, 40, 16);
-    } catch { /* ignore invalid image */ }
+    doc.addImage(sig, 'PNG', pageW - M - 43, footerY + 8, 40, 16);
   }
 
   doc.setFont('helvetica', 'normal');
