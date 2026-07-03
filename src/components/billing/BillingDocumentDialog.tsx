@@ -129,6 +129,8 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
   const [docNumber, setDocNumber] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(documentId ?? null);
   const [partyDialogOpen, setPartyDialogOpen] = useState(false);
+  const [newProductOpen, setNewProductOpen] = useState(false);
+  const [newProductForLine, setNewProductForLine] = useState<number | null>(null);
 
   // load existing
   useEffect(() => {
