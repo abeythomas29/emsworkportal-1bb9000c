@@ -122,7 +122,7 @@ function fmtDate(d: string) {
 }
 
 export function generateBillingPdf(input: PdfDocInput): jsPDF {
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
   const pageW = doc.internal.pageSize.getWidth();
   const M = 10;
   const totals = computeTotals(input.lines);
@@ -146,7 +146,7 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   const logoW = 32;
   const textLeft = logo ? M + 6 + logoW + 6 : M + 8;
   if (logo) {
-    doc.addImage(logo, 'PNG', M + 6, headerY + 3, logoW, headerH - 6);
+    doc.addImage(logo, 'PNG', M + 6, headerY + 3, logoW, headerH - 6, undefined, 'FAST');
   }
 
   doc.setTextColor(...BRAND_CHARCOAL);
@@ -344,7 +344,7 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
 
   // Footer: Bank details + Signature
   const footerH = 32;
-  const footerY = Math.max(y, doc.internal.pageSize.getHeight() - M - footerH);
+  const footerY = y + 2;
   doc.rect(M, footerY, pageW - 2 * M, footerH);
   doc.line(M + colW, footerY, M + colW, footerY + footerH);
 
@@ -368,7 +368,7 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
 
   const sig = getCompanyImg(input.company.signature_url);
   if (sig) {
-    doc.addImage(sig, 'PNG', pageW - M - 43, footerY + 8, 40, 16);
+    doc.addImage(sig, 'PNG', pageW - M - 43, footerY + 8, 40, 16, undefined, 'FAST');
   }
 
   doc.setFont('helvetica', 'normal');
