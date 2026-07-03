@@ -315,14 +315,16 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
     sameState,
   });
 
-  const downloadPdf = () => {
+  const downloadPdf = async () => {
     if (!company) return;
+    await prepareBrandingAssets();
     const pdf = generateBillingPdf(buildPdfInput());
     pdf.save(`${docNumber || 'DRAFT'}.pdf`);
   };
 
-  const previewPdf = () => {
+  const previewPdf = async () => {
     if (!company) return;
+    await prepareBrandingAssets();
     const pdf = generateBillingPdf(buildPdfInput());
     window.open(pdf.output('bloburl'), '_blank');
   };
