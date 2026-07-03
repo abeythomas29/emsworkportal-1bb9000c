@@ -533,10 +533,6 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
                           onChange={(e) => setLine(idx, { unit_price: Number(e.target.value) })} disabled={readOnly} />
                       </TableCell>
                       <TableCell>
-                        <Input type="number" step="0.01" value={l.discount_percent}
-                          onChange={(e) => setLine(idx, { discount_percent: Number(e.target.value) })} disabled={readOnly} />
-                      </TableCell>
-                      <TableCell>
                         <Input type="number" step="0.01" value={l.tax_percent}
                           onChange={(e) => setLine(idx, { tax_percent: Number(e.target.value) })} disabled={readOnly} />
                       </TableCell>
