@@ -27,6 +27,7 @@ import { generateBillingPdf, prepareBrandingAssets, preloadCompanyImages } from 
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { PartyDialog } from './PartyDialog';
+import { NewProductDialog } from './NewProductDialog';
 
 type DocType = 'tax_invoice' | 'proforma' | 'estimate';
 
