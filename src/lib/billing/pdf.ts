@@ -399,6 +399,19 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   ];
   bankLines.forEach((l, i) => doc.text(l, M + 3, footerY + 10 + i * 4.5));
 
+  // UPI QR (only on proforma) — inside bank details column, right side
+  if (input.doc_type === 'proforma' && upiQrImg) {
+    const qrSize = footerH - 6;
+    const qrX = M + colW - qrSize - 3;
+    const qrY = footerY + 3;
+    doc.addImage(upiQrImg, 'PNG', qrX, qrY, qrSize, qrSize, undefined, 'FAST');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(...BRAND_CHARCOAL);
+    doc.text('Scan & Pay (UPI)', qrX + qrSize / 2, qrY + qrSize + 2.5, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+  }
+
   // Signature column — centered
   const sigColX = M + colW;
   const sigColW = pageW - M - sigColX;
