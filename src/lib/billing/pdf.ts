@@ -333,29 +333,47 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   doc.text('Total', totalsX, totalY);
   doc.text('INR ' + inr(totals.total), pageW - M - 2, totalY, { align: 'right' });
 
-  // Amount in words
+  // Amount in Words + Terms — bordered layout block
   y = totalY + 5;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.text('Amount in Words:', M, y);
-  doc.setFont('helvetica', 'normal');
+  const infoW = pageW - 2 * M;
   const words = numberToIndianWords(totals.total);
-  const wrapped = doc.splitTextToSize(words, pageW - 2 * M - 35);
-  doc.text(wrapped, M + 35, y);
-  y += (wrapped.length * 4) + 3;
+  const wordsWrapped = doc.splitTextToSize(words, infoW - 6);
+  const wordsH = 5 + wordsWrapped.length * 4 + 3;
 
-  // Terms
+  doc.setDrawColor(...BRAND_CHARCOAL);
+  doc.setLineWidth(0.2);
+  doc.rect(M, y, infoW, wordsH);
+  doc.setFillColor(...BRAND_GOLD_SOFT);
+  doc.rect(M, y, infoW, 5, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...BRAND_CHARCOAL);
+  doc.text('AMOUNT IN WORDS', M + 3, y + 3.6);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(0, 0, 0);
+  doc.text(wordsWrapped, M + 3, y + 9);
+  y += wordsH + 2;
+
   if (input.terms) {
+    const t = doc.splitTextToSize(input.terms, infoW - 6);
+    const termsH = 5 + t.length * 4 + 3;
+    doc.rect(M, y, infoW, termsH);
+    doc.setFillColor(...BRAND_GOLD_SOFT);
+    doc.rect(M, y, infoW, 5, 'F');
     doc.setFont('helvetica', 'bold');
-    doc.text('Terms & Conditions', M, y);
+    doc.setFontSize(8.5);
+    doc.setTextColor(...BRAND_CHARCOAL);
+    doc.text('TERMS & CONDITIONS', M + 3, y + 3.6);
     doc.setFont('helvetica', 'normal');
-    const t = doc.splitTextToSize(input.terms, pageW - 2 * M);
-    doc.text(t, M, y + 4);
-    y += 4 + t.length * 4 + 2;
+    doc.setFontSize(8.5);
+    doc.setTextColor(0, 0, 0);
+    doc.text(t, M + 3, y + 9);
+    y += termsH + 2;
   }
 
   // Footer: Bank details + Signature
-  const footerH = 32;
+  const footerH = 34;
   const footerY = y + 2;
   doc.rect(M, footerY, pageW - 2 * M, footerH);
   doc.line(M + colW, footerY, M + colW, footerY + footerH);
@@ -374,18 +392,25 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   ];
   bankLines.forEach((l, i) => doc.text(l, M + 3, footerY + 10 + i * 4.5));
 
+  // Signature column — centered
+  const sigColX = M + colW;
+  const sigColW = pageW - M - sigColX;
+  const sigColCenter = sigColX + sigColW / 2;
+
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
-  doc.text(`For ${input.company.name}`, M + colW + 3, footerY + 5);
+  doc.text(`For ${input.company.name}`, sigColCenter, footerY + 5, { align: 'center' });
 
   const sig = getCompanyImg(input.company.signature_url);
+  const sigW = 40;
+  const sigH = 16;
   if (sig) {
-    doc.addImage(sig, 'PNG', pageW - M - 43, footerY + 8, 40, 16, undefined, 'FAST');
+    doc.addImage(sig, 'PNG', sigColCenter - sigW / 2, footerY + 8, sigW, sigH, undefined, 'FAST');
   }
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.text('Authorized Signatory', pageW - M - 3, footerY + footerH - 3, { align: 'right' });
+  doc.text('Authorized Signatory', sigColCenter, footerY + footerH - 3, { align: 'center' });
 
   return doc;
 }
