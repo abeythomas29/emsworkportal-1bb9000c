@@ -83,6 +83,7 @@ export function NewPODialog({ trigger }: Props) {
       po_date: poDate,
       expected_delivery: expected || null,
       notes: notes.trim() || null,
+      terms: terms.trim() || null,
       items: cleanItems,
     });
     reset();
