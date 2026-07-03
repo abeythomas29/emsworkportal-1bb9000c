@@ -189,6 +189,14 @@ export function NewPODialog({ trigger }: Props) {
           </DialogFooter>
         </form>
       </DialogContent>
+      <PartyDialog
+        open={vendorDialogOpen}
+        onOpenChange={setVendorDialogOpen}
+        onSaved={(p: Party) => {
+          setVendorId(p.id);
+          setVendorName(p.name);
+        }}
+      />
     </Dialog>
   );
 }
