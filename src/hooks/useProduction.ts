@@ -241,6 +241,7 @@ export function useCreateProductionLog() {
       quantity_produced: number;
       notes?: string;
       materials: Array<{ raw_material_id: string; quantity_consumed: number }>;
+      products_consumed?: Array<{ product_id: string; quantity_consumed: number }>;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
@@ -271,6 +272,20 @@ export function useCreateProductionLog() {
         );
         if (matErr) throw matErr;
       }
+
+      const validProds = (input.products_consumed || []).filter(
+        (p) => p.product_id && p.quantity_consumed > 0
+      );
+      if (validProds.length > 0) {
+        const { error: pErr } = await supabase.from('production_log_products_consumed').insert(
+          validProds.map((p) => ({
+            production_log_id: log.id,
+            product_id: p.product_id,
+            quantity_consumed: p.quantity_consumed,
+          }))
+        );
+        if (pErr) throw pErr;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['production_logs'] });
@@ -295,6 +310,7 @@ export function useUpdateProductionLog() {
       quantity_produced: number;
       notes?: string;
       materials: Array<{ raw_material_id: string; quantity_consumed: number }>;
+      products_consumed?: Array<{ product_id: string; quantity_consumed: number }>;
     }) => {
       const { error: updErr } = await supabase
         .from('production_logs')
@@ -307,7 +323,6 @@ export function useUpdateProductionLog() {
         .eq('id', input.id);
       if (updErr) throw updErr;
 
-      // Replace materials: delete existing then insert new (triggers will adjust stock)
       const { error: delErr } = await supabase
         .from('production_log_materials')
         .delete()
@@ -326,6 +341,26 @@ export function useUpdateProductionLog() {
           }))
         );
         if (matErr) throw matErr;
+      }
+
+      const { error: delProdErr } = await supabase
+        .from('production_log_products_consumed')
+        .delete()
+        .eq('production_log_id', input.id);
+      if (delProdErr) throw delProdErr;
+
+      const validProds = (input.products_consumed || []).filter(
+        (p) => p.product_id && p.quantity_consumed > 0
+      );
+      if (validProds.length > 0) {
+        const { error: pErr } = await supabase.from('production_log_products_consumed').insert(
+          validProds.map((p) => ({
+            production_log_id: input.id,
+            product_id: p.product_id,
+            quantity_consumed: p.quantity_consumed,
+          }))
+        );
+        if (pErr) throw pErr;
       }
     },
     onSuccess: () => {
