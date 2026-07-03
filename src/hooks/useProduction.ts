@@ -35,6 +35,12 @@ export interface ProductionLog {
     quantity_consumed: number;
     raw_material?: { name: string; unit: string };
   }>;
+  products_consumed?: Array<{
+    id: string;
+    product_id: string;
+    quantity_consumed: number;
+    product?: { name: string; unit: string };
+  }>;
 }
 
 export function useProducts() {
@@ -80,10 +86,14 @@ export function useProductionLogs() {
       const ids = (logs || []).map((l) => l.id);
       if (ids.length === 0) return [] as ProductionLog[];
 
-      const [matsRes, profilesRes] = await Promise.all([
+      const [matsRes, prodConsRes, profilesRes] = await Promise.all([
         supabase
           .from('production_log_materials')
           .select('*, raw_material:raw_materials(name, unit)')
+          .in('production_log_id', ids),
+        supabase
+          .from('production_log_products_consumed')
+          .select('*, product:products(name, unit)')
           .in('production_log_id', ids),
         supabase
           .from('profiles')
@@ -97,12 +107,19 @@ export function useProductionLogs() {
         arr.push(m);
         matsByLog.set(m.production_log_id, arr);
       });
+      const prodConsByLog = new Map<string, any[]>();
+      (prodConsRes.data || []).forEach((p: any) => {
+        const arr = prodConsByLog.get(p.production_log_id) || [];
+        arr.push(p);
+        prodConsByLog.set(p.production_log_id, arr);
+      });
       const profileMap = new Map<string, string>();
       (profilesRes.data || []).forEach((p: any) => profileMap.set(p.id, p.full_name));
 
       return (logs || []).map((l: any) => ({
         ...l,
         materials: matsByLog.get(l.id) || [],
+        products_consumed: prodConsByLog.get(l.id) || [],
         logger: { full_name: profileMap.get(l.user_id) || 'Unknown' },
       })) as ProductionLog[];
     },
