@@ -109,51 +109,56 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   const totals = computeTotals(input.lines);
   const hsn = buildHsnSummary(input.lines, input.sameState);
 
-  // ---- Header (logo + company block)
+  // ---- Header (logo + company block) with EMS brand accent
   const headerY = M;
-  const headerH = 30;
-  doc.setDrawColor(0);
+  const headerH = 32;
+
+  // Left brand strip (teal)
+  doc.setFillColor(...BRAND_TEAL);
+  doc.rect(M, headerY, 3, headerH, 'F');
+  // Header background (soft cream)
+  doc.setFillColor(...BRAND_GOLD_SOFT);
+  doc.rect(M + 3, headerY, pageW - 2 * M - 3, headerH, 'F');
+  doc.setDrawColor(...BRAND_CHARCOAL);
+  doc.setLineWidth(0.3);
   doc.rect(M, headerY, pageW - 2 * M, headerH);
 
-  const logo = input.company.logo_url;
-  const logoW = 26;
-  const textLeft = logo ? M + logoW + 6 : M + 3;
+  const logo = input.company.logo_url || getDefaultLogo();
+  const logoW = 32;
+  const textLeft = logo ? M + 6 + logoW + 6 : M + 8;
   if (logo) {
     try {
       const fmt = logo.includes('image/jpeg') || logo.includes('image/jpg') ? 'JPEG' : 'PNG';
-      doc.addImage(logo, fmt, M + 2, headerY + 2, logoW, headerH - 4);
+      doc.addImage(logo, fmt, M + 6, headerY + 3, logoW, headerH - 6);
     } catch { /* ignore invalid image */ }
   }
 
+  doc.setTextColor(...BRAND_CHARCOAL);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
-  doc.text(input.company.name, textLeft, headerY + 6);
+  doc.text(input.company.name, textLeft, headerY + 7);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   const addr = [
     input.company.address_line,
     [input.company.city, input.company.state, input.company.pincode].filter(Boolean).join(', '),
     `GSTIN: ${input.company.gstin || '—'}   State Code: ${input.company.state_code || '—'}`,
     `Phone: ${input.company.phone || '—'}   Email: ${input.company.email || '—'}`,
   ].filter(Boolean) as string[];
-  addr.forEach((line, i) => doc.text(line, textLeft, headerY + 11 + i * 4));
+  addr.forEach((line, i) => doc.text(line, textLeft, headerY + 12 + i * 4.2));
 
-  // Title bar under header
-  let y = headerY + headerH;
-  doc.setFillColor(240, 240, 240);
+  // Title bar under header (charcoal with gold underline)
+  let y = headerY + headerH + 2;
+  doc.setFillColor(...BRAND_CHARCOAL);
   doc.rect(M, y, pageW - 2 * M, 8, 'F');
-  doc.rect(M, y, pageW - 2 * M, 8);
+  doc.setFillColor(...BRAND_GOLD);
+  doc.rect(M, y + 8, pageW - 2 * M, 1.2, 'F');
+  doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
-  doc.text(TITLE[input.doc_type], pageW / 2, y + 5.5, { align: 'center' });
-  y += 8;
-  doc.setFillColor(240, 240, 240);
-  doc.rect(M, y, pageW - 2 * M, 8, 'F');
-  doc.rect(M, y, pageW - 2 * M, 8);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
-  doc.text(TITLE[input.doc_type], pageW / 2, y + 5.5, { align: 'center' });
-  y += 8;
+  doc.text(TITLE[input.doc_type], pageW / 2, y + 5.7, { align: 'center' });
+  doc.setTextColor(0, 0, 0);
+  y += 9.2;
   const colW = (pageW - 2 * M) / 2;
   const detailH = 34;
   doc.rect(M, y, colW, detailH);
