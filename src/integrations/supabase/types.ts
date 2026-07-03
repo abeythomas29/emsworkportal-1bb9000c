@@ -1091,6 +1091,314 @@ export type Database = {
         }
         Relationships: []
       }
+      purchase_invoice_items: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          hsn_sac: string | null
+          id: string
+          invoice_id: string
+          item_name: string
+          quantity: number
+          tax_amount: number
+          tax_percent: number
+          taxable_value: number
+          unit: string | null
+          unit_price: number
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          hsn_sac?: string | null
+          id?: string
+          invoice_id: string
+          item_name: string
+          quantity?: number
+          tax_amount?: number
+          tax_percent?: number
+          taxable_value?: number
+          unit?: string | null
+          unit_price?: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          hsn_sac?: string | null
+          id?: string
+          invoice_id?: string
+          item_name?: string
+          quantity?: number
+          tax_amount?: number
+          tax_percent?: number
+          taxable_value?: number
+          unit?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_invoices: {
+        Row: {
+          amount_paid: number
+          attachment_mime: string | null
+          attachment_path: string | null
+          created_at: string
+          extraction_raw: Json | null
+          extraction_status: Database["public"]["Enums"]["purchase_invoice_extraction_status"]
+          id: string
+          invoice_date: string
+          invoice_no: string | null
+          notes: string | null
+          payment_status: Database["public"]["Enums"]["purchase_invoice_payment_status"]
+          po_id: string | null
+          sub_total: number
+          total: number
+          total_tax: number
+          updated_at: string
+          uploaded_by: string | null
+          vendor_gstin: string | null
+          vendor_id: string | null
+          vendor_name: string
+        }
+        Insert: {
+          amount_paid?: number
+          attachment_mime?: string | null
+          attachment_path?: string | null
+          created_at?: string
+          extraction_raw?: Json | null
+          extraction_status?: Database["public"]["Enums"]["purchase_invoice_extraction_status"]
+          id?: string
+          invoice_date?: string
+          invoice_no?: string | null
+          notes?: string | null
+          payment_status?: Database["public"]["Enums"]["purchase_invoice_payment_status"]
+          po_id?: string | null
+          sub_total?: number
+          total?: number
+          total_tax?: number
+          updated_at?: string
+          uploaded_by?: string | null
+          vendor_gstin?: string | null
+          vendor_id?: string | null
+          vendor_name: string
+        }
+        Update: {
+          amount_paid?: number
+          attachment_mime?: string | null
+          attachment_path?: string | null
+          created_at?: string
+          extraction_raw?: Json | null
+          extraction_status?: Database["public"]["Enums"]["purchase_invoice_extraction_status"]
+          id?: string
+          invoice_date?: string
+          invoice_no?: string | null
+          notes?: string | null
+          payment_status?: Database["public"]["Enums"]["purchase_invoice_payment_status"]
+          po_id?: string | null
+          sub_total?: number
+          total?: number
+          total_tax?: number
+          updated_at?: string
+          uploaded_by?: string | null
+          vendor_gstin?: string | null
+          vendor_id?: string | null
+          vendor_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_invoices_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_invoices_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_invoices_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_order_items: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          hsn_sac: string | null
+          id: string
+          item_name: string
+          po_id: string
+          product_id: string | null
+          quantity: number
+          raw_material_id: string | null
+          tax_amount: number
+          tax_percent: number
+          taxable_value: number
+          unit: string | null
+          unit_price: number
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          hsn_sac?: string | null
+          id?: string
+          item_name: string
+          po_id: string
+          product_id?: string | null
+          quantity?: number
+          raw_material_id?: string | null
+          tax_amount?: number
+          tax_percent?: number
+          taxable_value?: number
+          unit?: string | null
+          unit_price?: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          hsn_sac?: string | null
+          id?: string
+          item_name?: string
+          po_id?: string
+          product_id?: string | null
+          quantity?: number
+          raw_material_id?: string | null
+          tax_amount?: number
+          tax_percent?: number
+          taxable_value?: number
+          unit?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_raw_material_id_fkey"
+            columns: ["raw_material_id"]
+            isOneToOne: false
+            referencedRelation: "raw_materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          expected_delivery: string | null
+          financial_year: string | null
+          id: string
+          notes: string | null
+          po_date: string
+          po_number: string | null
+          status: Database["public"]["Enums"]["purchase_order_status"]
+          sub_total: number
+          total: number
+          total_tax: number
+          updated_at: string
+          vendor_gstin: string | null
+          vendor_id: string | null
+          vendor_name: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          expected_delivery?: string | null
+          financial_year?: string | null
+          id?: string
+          notes?: string | null
+          po_date?: string
+          po_number?: string | null
+          status?: Database["public"]["Enums"]["purchase_order_status"]
+          sub_total?: number
+          total?: number
+          total_tax?: number
+          updated_at?: string
+          vendor_gstin?: string | null
+          vendor_id?: string | null
+          vendor_name: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          expected_delivery?: string | null
+          financial_year?: string | null
+          id?: string
+          notes?: string | null
+          po_date?: string
+          po_number?: string | null
+          status?: Database["public"]["Enums"]["purchase_order_status"]
+          sub_total?: number
+          total?: number
+          total_tax?: number
+          updated_at?: string
+          vendor_gstin?: string | null
+          vendor_id?: string | null
+          vendor_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       purchase_requests: {
         Row: {
           created_at: string
@@ -1690,6 +1998,19 @@ export type Database = {
         | "negotiation"
         | "won"
         | "lost"
+      purchase_invoice_extraction_status:
+        | "pending"
+        | "extracted"
+        | "manual"
+        | "failed"
+      purchase_invoice_payment_status: "unpaid" | "partial" | "paid"
+      purchase_order_status:
+        | "draft"
+        | "approved"
+        | "sent"
+        | "partially_received"
+        | "received"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1844,6 +2165,21 @@ export const Constants = {
         "negotiation",
         "won",
         "lost",
+      ],
+      purchase_invoice_extraction_status: [
+        "pending",
+        "extracted",
+        "manual",
+        "failed",
+      ],
+      purchase_invoice_payment_status: ["unpaid", "partial", "paid"],
+      purchase_order_status: [
+        "draft",
+        "approved",
+        "sent",
+        "partially_received",
+        "received",
+        "cancelled",
       ],
     },
   },
