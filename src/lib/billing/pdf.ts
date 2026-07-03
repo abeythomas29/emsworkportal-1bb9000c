@@ -75,16 +75,6 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   const totals = computeTotals(input.lines);
   const hsn = buildHsnSummary(input.lines, input.sameState);
 
-  // ---- Title
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.text(TITLE[input.doc_type], pageW / 2, M + 6, { align: 'center' });
-
-  // ---- Company info box
-  let y = M + 10;
-  const boxH = 26;
-  doc.setDrawColor(0);
-  doc.rect(M, y, pageW - 2 * M, boxH);
   // ---- Header (logo + company block)
   const headerY = M;
   const headerH = 30;
@@ -116,6 +106,13 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
 
   // Title bar under header
   let y = headerY + headerH;
+  doc.setFillColor(240, 240, 240);
+  doc.rect(M, y, pageW - 2 * M, 8, 'F');
+  doc.rect(M, y, pageW - 2 * M, 8);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text(TITLE[input.doc_type], pageW / 2, y + 5.5, { align: 'center' });
+  y += 8;
   doc.setFillColor(240, 240, 240);
   doc.rect(M, y, pageW - 2 * M, 8, 'F');
   doc.rect(M, y, pageW - 2 * M, 8);
