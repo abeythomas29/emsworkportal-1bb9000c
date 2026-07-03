@@ -90,10 +90,21 @@ function useProductsList() {
 }
 
 const EMS_HSN = '32061110';
-const autoHsn = (name: string, current: string) => {
-  if (name.trim().toLowerCase().startsWith('ems')) return EMS_HSN;
+const EMS_SERIES_PRICE: Record<string, number> = { '1': 400, '2': 750, '3': 600, '4': 860, '5': 650 };
+const isEms = (name: string) => name.trim().toLowerCase().startsWith('ems');
+const autoHsn = (name: string, current: string) => (isEms(name) ? EMS_HSN : current);
+const emsSeriesDigit = (name: string): string | null => {
+  if (!isEms(name)) return null;
+  const rest = name.trim().slice(3).replace(/[^0-9]/g, '');
+  return rest.length > 0 ? rest[0] : null;
+};
+const autoPrice = (name: string, current: number) => {
+  const d = emsSeriesDigit(name);
+  if (d && EMS_SERIES_PRICE[d] !== undefined && (!current || current === 0)) return EMS_SERIES_PRICE[d];
   return current;
 };
+const autoGst = (name: string, current: number) => (isEms(name) ? 18 : current);
+
 
 
 export function BillingDocumentDialog({ open, onOpenChange, documentId, initialType = 'tax_invoice', onConvert }: Props) {
