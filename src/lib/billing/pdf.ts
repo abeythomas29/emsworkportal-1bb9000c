@@ -213,8 +213,7 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
 
   autoTable(doc, {
     startY: y,
-    // @ts-expect-error - jspdf-autotable head accepts CellDef[][]
-    head: hsnHead,
+    head: hsnHead as never,
     body: hsnBody,
     theme: 'grid',
     styles: { fontSize: 8, cellPadding: 1.5, halign: 'center' },
