@@ -3,6 +3,7 @@ import autoTable from 'jspdf-autotable';
 import { numberToIndianWords } from './numberToWords';
 import { buildHsnSummary, computeTotals, ComputedLine } from './calc';
 import emsLogoUrl from '@/assets/ems-logo.png';
+import upiQrUrl from '@/assets/upi-qr.png';
 
 // EMS brand palette
 const BRAND_CHARCOAL: [number, number, number] = [58, 58, 58];
