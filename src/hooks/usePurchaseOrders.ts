@@ -67,6 +67,7 @@ export function usePurchaseOrders() {
       po_date: string;
       expected_delivery?: string | null;
       notes?: string | null;
+      terms?: string | null;
       items: POItem[];
     }) => {
       const cleanItems = input.items.map((i) => {
