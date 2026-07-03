@@ -142,14 +142,11 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   doc.setLineWidth(0.3);
   doc.rect(M, headerY, pageW - 2 * M, headerH);
 
-  const logo = input.company.logo_url || getDefaultLogo();
+  const logo = getCompanyImg(input.company.logo_url) || getDefaultLogoImg();
   const logoW = 32;
   const textLeft = logo ? M + 6 + logoW + 6 : M + 8;
   if (logo) {
-    try {
-      const fmt = logo.includes('image/jpeg') || logo.includes('image/jpg') ? 'JPEG' : 'PNG';
-      doc.addImage(logo, fmt, M + 6, headerY + 3, logoW, headerH - 6);
-    } catch { /* ignore invalid image */ }
+    doc.addImage(logo, 'PNG', M + 6, headerY + 3, logoW, headerH - 6);
   }
 
   doc.setTextColor(...BRAND_CHARCOAL);
