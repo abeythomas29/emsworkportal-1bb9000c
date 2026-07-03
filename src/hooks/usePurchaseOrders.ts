@@ -29,6 +29,7 @@ export interface PurchaseOrder {
   expected_delivery: string | null;
   status: POStatus;
   notes: string | null;
+  terms: string | null;
   sub_total: number;
   total_tax: number;
   total: number;
