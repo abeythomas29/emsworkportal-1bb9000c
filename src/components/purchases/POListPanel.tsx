@@ -35,9 +35,22 @@ const STATUS_META: Record<POStatus, { label: string; className: string }> = {
 };
 
 export function POListPanel() {
-  const { orders, isLoading, updateStatus, removePO } = usePurchaseOrders();
+  const { orders, isLoading, updateStatus, removePO, getWithItems } = usePurchaseOrders();
+  const { data: company } = useCompanySettings();
+  const { data: parties = [] } = useParties();
   const [selectedMonth, setSelectedMonth] = useState<string | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<POStatus | 'all'>('all');
+
+  const handleDownloadPdf = async (poId: string, poNumber: string | null, vendorId: string | null) => {
+    try {
+      const full = await getWithItems(poId);
+      const vendor = vendorId ? parties.find((p) => p.id === vendorId) ?? null : null;
+      const pdf = await generatePOPdf(full, company ?? null, vendor);
+      pdf.save(`${poNumber || 'PO'}.pdf`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to generate PDF');
+    }
+  };
 
   const months = useMemo(() => {
     const s = new Set<string>();
