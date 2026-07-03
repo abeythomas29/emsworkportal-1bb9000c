@@ -41,6 +41,7 @@ export function POListPanel() {
   const { data: parties = [] } = useParties();
   const [selectedMonth, setSelectedMonth] = useState<string | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<POStatus | 'all'>('all');
+  const [termsDialogOpen, setTermsDialogOpen] = useState(false);
 
   const handleDownloadPdf = async (poId: string, poNumber: string | null, vendorId: string | null) => {
     try {
