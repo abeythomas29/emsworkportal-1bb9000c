@@ -112,6 +112,50 @@ export type Database = {
           },
         ]
       }
+      flow_rate_calibrations: {
+        Row: {
+          created_at: string
+          d90_microns: number
+          flow_rate_ml_min: number
+          id: string
+          mica_name: string | null
+          notes: string | null
+          updated_at: string
+          user_id: string
+          weight_g: number
+        }
+        Insert: {
+          created_at?: string
+          d90_microns: number
+          flow_rate_ml_min: number
+          id?: string
+          mica_name?: string | null
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+          weight_g: number
+        }
+        Update: {
+          created_at?: string
+          d90_microns?: number
+          flow_rate_ml_min?: number
+          id?: string
+          mica_name?: string | null
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+          weight_g?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flow_rate_calibrations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       holidays: {
         Row: {
           created_at: string | null
