@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Search, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, BookOpen } from 'lucide-react';
 import { Party, useDeleteParty, useParties } from '@/hooks/useBilling';
 import { PartyDialog } from './PartyDialog';
+import { PartyLedgerDialog } from './PartyLedgerDialog';
 
 export function PartiesPanel() {
   const { data: parties = [], isLoading } = useParties();
@@ -14,6 +15,7 @@ export function PartiesPanel() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Party | null>(null);
   const [q, setQ] = useState('');
+  const [ledgerParty, setLedgerParty] = useState<Party | null>(null);
 
   const filtered = parties.filter(
     (p) => !q || p.name.toLowerCase().includes(q.toLowerCase()) || (p.gstin || '').toLowerCase().includes(q.toLowerCase())
@@ -53,8 +55,14 @@ export function PartiesPanel() {
               </TableHeader>
               <TableBody>
                 {filtered.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-medium">{p.name}</TableCell>
+                  <TableRow
+                    key={p.id}
+                    className="cursor-pointer hover:bg-muted/40 transition-colors"
+                    onClick={() => setLedgerParty(p)}
+                  >
+                    <TableCell className="font-medium">
+                      <span className="hover:text-primary transition-colors">{p.name}</span>
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{p.gstin || '—'}</TableCell>
                     <TableCell>
                       <Badge variant={p.gst_type === 'registered' ? 'default' : 'secondary'}>
@@ -63,8 +71,22 @@ export function PartiesPanel() {
                     </TableCell>
                     <TableCell>{p.billing_state || '—'}</TableCell>
                     <TableCell>{p.phone || '—'}</TableCell>
-                    <TableCell className="text-right">
-                      <Button size="icon" variant="ghost" onClick={() => { setEditing(p); setDialogOpen(true); }}>
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setLedgerParty(p)}
+                        aria-label={`View ledger for ${p.name}`}
+                        title="View ledger"
+                      >
+                        <BookOpen className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => { setEditing(p); setDialogOpen(true); }}
+                        aria-label={`Edit ${p.name}`}
+                      >
                         <Pencil className="w-4 h-4" />
                       </Button>
                       <Button
@@ -73,6 +95,7 @@ export function PartiesPanel() {
                         onClick={() => {
                           if (confirm(`Delete ${p.name}?`)) del.mutate(p.id);
                         }}
+                        aria-label={`Delete ${p.name}`}
                       >
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
@@ -85,6 +108,11 @@ export function PartiesPanel() {
         )}
       </CardContent>
       <PartyDialog open={dialogOpen} onOpenChange={setDialogOpen} party={editing} />
+      <PartyLedgerDialog
+        party={ledgerParty}
+        open={!!ledgerParty}
+        onOpenChange={(o) => !o && setLedgerParty(null)}
+      />
     </Card>
   );
 }
