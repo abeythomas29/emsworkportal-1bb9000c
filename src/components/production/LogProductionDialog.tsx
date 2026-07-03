@@ -193,6 +193,71 @@ export function LogProductionDialog({ trigger, editLog, open: controlledOpen, on
             ))}
           </div>
 
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>
+                Finished Products Used <span className="text-xs text-muted-foreground font-normal">(optional)</span>
+              </Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setProductsUsed([...productsUsed, { product_id: '', quantity_consumed: '' }])}
+              >
+                <Plus className="mr-1 h-3 w-3" />Add
+              </Button>
+            </div>
+            {productsUsed.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Add a finished product here if a previously produced item was consumed as an input (e.g. colour series blends).
+              </p>
+            ) : (
+              productsUsed.map((p, idx) => (
+                <div key={idx} className="grid grid-cols-[1fr_120px_40px] gap-2 items-end">
+                  <Select
+                    value={p.product_id}
+                    onValueChange={(v) => {
+                      const next = [...productsUsed];
+                      next[idx].product_id = v;
+                      setProductsUsed(next);
+                    }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select finished product" /></SelectTrigger>
+                    <SelectContent>
+                      {products
+                        .filter((pr) => (pr.is_active || pr.id === p.product_id) && pr.id !== productId)
+                        .map((pr) => (
+                          <SelectItem key={pr.id} value={pr.id}>
+                            {pr.name} ({pr.unit}) — stock: {pr.current_stock}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="Qty"
+                    value={p.quantity_consumed}
+                    onChange={(e) => {
+                      const next = [...productsUsed];
+                      next[idx].quantity_consumed = e.target.value;
+                      setProductsUsed(next);
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setProductsUsed(productsUsed.filter((_, i) => i !== idx))}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+
+
           <div>
             <Label>Notes (optional)</Label>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Batch info, observations..." />
