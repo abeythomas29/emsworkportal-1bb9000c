@@ -5,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2 } from 'lucide-react';
-import { useParties } from '@/hooks/useBilling';
+import { Plus, Trash2, UserPlus } from 'lucide-react';
+import { useParties, type Party } from '@/hooks/useBilling';
 import { usePurchaseOrders, type POItem } from '@/hooks/usePurchaseOrders';
+import { PartyDialog } from '@/components/billing/PartyDialog';
 
 interface Props { trigger?: React.ReactNode }
 
@@ -30,6 +31,7 @@ export function NewPODialog({ trigger }: Props) {
   const [expected, setExpected] = useState('');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<POItem[]>([emptyItem()]);
+  const [vendorDialogOpen, setVendorDialogOpen] = useState(false);
 
   const reset = () => {
     setVendorId(null); setVendorName(''); setPoDate(new Date().toISOString().slice(0, 10));
@@ -84,17 +86,26 @@ export function NewPODialog({ trigger }: Props) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Vendor</Label>
+              <div className="flex items-center justify-between">
+                <Label>Vendor</Label>
+                <Button type="button" size="sm" variant="ghost" className="h-6 px-2 text-xs gap-1" onClick={() => setVendorDialogOpen(true)}>
+                  <UserPlus className="w-3.5 h-3.5" /> Register vendor
+                </Button>
+              </div>
               <Select value={vendorId ?? 'new'} onValueChange={(v) => {
                 if (v === 'new') { setVendorId(null); return; }
                 setVendorId(v);
                 const p = parties.find((x) => x.id === v);
                 if (p) setVendorName(p.name);
               }}>
-                <SelectTrigger><SelectValue placeholder="Select existing or type new" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select vendor or type new" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="new">— New vendor (type name) —</SelectItem>
-                  {parties.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                  {parties.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}{p.gstin ? ` · ${p.gstin}` : ''}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {!vendorId && (
@@ -178,6 +189,14 @@ export function NewPODialog({ trigger }: Props) {
           </DialogFooter>
         </form>
       </DialogContent>
+      <PartyDialog
+        open={vendorDialogOpen}
+        onOpenChange={setVendorDialogOpen}
+        onSaved={(p: Party) => {
+          setVendorId(p.id);
+          setVendorName(p.name);
+        }}
+      />
     </Dialog>
   );
 }
