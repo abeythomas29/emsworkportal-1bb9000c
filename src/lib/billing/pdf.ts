@@ -310,6 +310,15 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.text(`For ${input.company.name}`, M + colW + 3, footerY + 5);
+
+  const sig = input.company.signature_url;
+  if (sig) {
+    try {
+      const fmt = sig.includes('image/jpeg') || sig.includes('image/jpg') ? 'JPEG' : 'PNG';
+      doc.addImage(sig, fmt, pageW - M - 43, footerY + 8, 40, 16);
+    } catch { /* ignore invalid image */ }
+  }
+
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.text('Authorized Signatory', pageW - M - 3, footerY + footerH - 3, { align: 'right' });
