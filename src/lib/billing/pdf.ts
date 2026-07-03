@@ -2,6 +2,40 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { numberToIndianWords } from './numberToWords';
 import { buildHsnSummary, computeTotals, ComputedLine } from './calc';
+import emsLogoUrl from '@/assets/ems-logo.png';
+
+// EMS brand palette
+const BRAND_CHARCOAL: [number, number, number] = [58, 58, 58];
+const BRAND_GOLD: [number, number, number] = [212, 160, 23];
+const BRAND_TEAL: [number, number, number] = [95, 196, 192];
+const BRAND_GOLD_SOFT: [number, number, number] = [252, 244, 220];
+
+// Preload EMS logo as data URL for default branding
+let emsLogoDataUrl: string | null = null;
+const emsLogoPromise: Promise<string> = fetch(emsLogoUrl)
+  .then((r) => r.blob())
+  .then(
+    (b) =>
+      new Promise<string>((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(String(fr.result));
+        fr.onerror = reject;
+        fr.readAsDataURL(b);
+      })
+  )
+  .then((d) => {
+    emsLogoDataUrl = d;
+    return d;
+  })
+  .catch(() => '');
+
+export async function prepareBrandingAssets(): Promise<void> {
+  await emsLogoPromise;
+}
+
+export function getDefaultLogo(): string | null {
+  return emsLogoDataUrl;
+}
 
 export interface CompanyInfo {
   name: string;
