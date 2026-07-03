@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
+import { toast } from 'sonner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   CompanySettings,
@@ -14,6 +15,15 @@ import {
 } from '@/hooks/useBilling';
 import { INDIAN_STATES } from '@/lib/billing/states';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
 
 const DOC_TYPE_LABEL: Record<string, string> = {
   tax_invoice: 'Tax Invoice',
@@ -101,6 +111,24 @@ export function CompanySettingsPanel() {
           </div>
 
           <div className="md:col-span-2 border-t pt-4">
+            <h4 className="font-medium mb-3">Branding</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <BrandImageField
+                label="Company Logo"
+                value={form.logo_url}
+                onChange={(v) => set('logo_url', v)}
+                hint="Shown at the top of every invoice, proforma, and estimate."
+              />
+              <BrandImageField
+                label="Authorized Signature"
+                value={form.signature_url}
+                onChange={(v) => set('signature_url', v)}
+                hint="Placed above 'Authorized Signatory' on every document."
+              />
+            </div>
+          </div>
+
+          <div className="md:col-span-2 border-t pt-4">
             <h4 className="font-medium mb-3">Bank Details</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -181,5 +209,66 @@ function SeriesRow({
         )}
       </TableCell>
     </TableRow>
+  );
+}
+
+function BrandImageField({
+  label,
+  value,
+  onChange,
+  hint,
+}: {
+  label: string;
+  value: string | null;
+  onChange: (v: string | null) => void;
+  hint?: string;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please pick a PNG or JPG image');
+      return;
+    }
+    if (file.size > 1024 * 1024) {
+      toast.error('Image must be under 1 MB');
+      return;
+    }
+    try {
+      const url = await readFileAsDataUrl(file);
+      onChange(url);
+    } catch {
+      toast.error('Could not read image');
+    }
+  };
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <div className="flex items-center gap-4 border rounded-md p-3 bg-muted/30">
+        <div className="w-24 h-16 rounded border bg-background flex items-center justify-center overflow-hidden">
+          {value ? (
+            <img src={value} alt={label} className="max-w-full max-h-full object-contain" />
+          ) : (
+            <ImageIcon className="w-6 h-6 text-muted-foreground" />
+          )}
+        </div>
+        <div className="flex-1 space-y-2">
+          <div className="flex flex-wrap gap-2">
+            <input ref={ref} type="file" accept="image/png,image/jpeg" className="hidden" onChange={onFile} />
+            <Button type="button" variant="outline" size="sm" onClick={() => ref.current?.click()}>
+              <Upload className="w-4 h-4 mr-2" /> {value ? 'Replace' : 'Upload'}
+            </Button>
+            {value && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => onChange(null)}>
+                <Trash2 className="w-4 h-4 mr-2" /> Remove
+              </Button>
+            )}
+          </div>
+          {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+        </div>
+      </div>
+    </div>
   );
 }

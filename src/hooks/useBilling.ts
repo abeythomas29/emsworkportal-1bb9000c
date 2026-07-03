@@ -16,6 +16,7 @@ export interface CompanySettings {
   phone: string | null;
   email: string | null;
   logo_url: string | null;
+  signature_url: string | null;
   bank_name: string | null;
   bank_account: string | null;
   bank_ifsc: string | null;
