@@ -5,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2 } from 'lucide-react';
-import { useParties } from '@/hooks/useBilling';
+import { Plus, Trash2, UserPlus } from 'lucide-react';
+import { useParties, type Party } from '@/hooks/useBilling';
 import { usePurchaseOrders, type POItem } from '@/hooks/usePurchaseOrders';
+import { PartyDialog } from '@/components/billing/PartyDialog';
 
 interface Props { trigger?: React.ReactNode }
 
