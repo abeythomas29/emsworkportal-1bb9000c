@@ -2,14 +2,25 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { numberToIndianWords } from '@/lib/billing/numberToWords';
 import type { CompanySettings } from '@/hooks/useBilling';
-import type { PurchaseOrder, POItem } from '@/hooks/usePurchaseOrders';
+import type { PurchaseOrder, POItem, POStatus } from '@/hooks/usePurchaseOrders';
 
-const BRAND_CHARCOAL: [number, number, number] = [58, 58, 58];
-const BRAND_GOLD: [number, number, number] = [212, 160, 23];
-const BRAND_GOLD_SOFT: [number, number, number] = [252, 244, 220];
+// --- Palette (EMS corporate) ---
+const INK: [number, number, number] = [23, 27, 34];        // near-black text
+const MUTED: [number, number, number] = [110, 116, 128];   // secondary text
+const HAIR: [number, number, number] = [222, 226, 232];    // hairline rules
+const SOFT: [number, number, number] = [247, 248, 250];    // zebra + surface
+const GOLD: [number, number, number] = [194, 145, 20];     // brand accent
+const GOLD_SOFT: [number, number, number] = [253, 245, 219];
+const OK: [number, number, number] = [22, 128, 96];
+const WARN: [number, number, number] = [176, 108, 8];
+const DANGER: [number, number, number] = [176, 42, 42];
 
-const inr = (n: number) =>
-  new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0);
+// Helvetica in jsPDF has no ₹ glyph — use ASCII-safe "INR "
+const money = (n: number) =>
+  'INR ' + new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0);
+
+const dt = (d?: string | null) =>
+  d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
 export interface VendorInfo {
   name: string;
@@ -34,6 +45,32 @@ function loadImg(url?: string | null): Promise<HTMLImageElement | null> {
   });
 }
 
+const STATUS_STYLE: Record<POStatus, { label: string; fg: [number, number, number]; bg: [number, number, number] }> = {
+  draft:              { label: 'DRAFT',              fg: MUTED, bg: SOFT },
+  approved:           { label: 'APPROVED',           fg: OK,    bg: [227, 245, 236] },
+  sent:               { label: 'SENT TO VENDOR',     fg: [36, 84, 160], bg: [227, 236, 250] },
+  partially_received: { label: 'PARTIALLY RECEIVED', fg: WARN,  bg: [253, 240, 214] },
+  received:           { label: 'RECEIVED',           fg: OK,    bg: [227, 245, 236] },
+  cancelled:          { label: 'CANCELLED',          fg: DANGER, bg: [251, 230, 230] },
+};
+
+function addressLines(a: {
+  billing_street?: string | null;
+  billing_city?: string | null;
+  billing_state?: string | null;
+  billing_pincode?: string | null;
+  billing_country?: string | null;
+}): string[] {
+  const cityLine = [a.billing_city, a.billing_state, a.billing_pincode].filter(Boolean).join(', ');
+  return [a.billing_street, cityLine, a.billing_country].filter((x): x is string => !!x && x.trim().length > 0);
+}
+
+function companyAddressLines(c: CompanySettings | null): string[] {
+  if (!c) return [];
+  const cityLine = [c.city, c.state, c.pincode].filter(Boolean).join(', ');
+  return [c.address_line, cityLine, c.country].filter((x): x is string => !!x && x.trim().length > 0);
+}
+
 export async function generatePOPdf(
   po: PurchaseOrder & { items: POItem[] },
   company: CompanySettings | null,
@@ -41,165 +78,330 @@ export async function generatePOPdf(
 ): Promise<jsPDF> {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth();
-  const margin = 36;
-  let y = margin;
+  const pageH = doc.internal.pageSize.getHeight();
+  const M = 40; // page margin
 
   const logo = await loadImg(company?.logo_url);
+  const signature = await loadImg(company?.signature_url);
 
-  // Header band
-  doc.setFillColor(...BRAND_GOLD_SOFT);
-  doc.rect(0, 0, pageW, 90, 'F');
-  doc.setFillColor(...BRAND_GOLD);
-  doc.rect(0, 90, pageW, 3, 'F');
+  // ─────────────── HEADER ───────────────
+  // Slim gold accent bar (top)
+  doc.setFillColor(...GOLD);
+  doc.rect(0, 0, pageW, 4, 'F');
 
+  let cursorY = 34;
+
+  // Left: logo + company
   if (logo) {
-    try { doc.addImage(logo, 'PNG', margin, 18, 56, 56); } catch {}
+    try { doc.addImage(logo, 'PNG', M, cursorY - 4, 44, 44); } catch {}
   }
-
-  const headerLeft = logo ? margin + 68 : margin;
-  doc.setTextColor(...BRAND_CHARCOAL);
+  const brandX = logo ? M + 56 : M;
+  doc.setTextColor(...INK);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(15);
-  doc.text(company?.name || 'Company', headerLeft, 38);
+  doc.setFontSize(13);
+  doc.text(company?.name || 'Company', brandX, cursorY + 6);
+
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  const addrLines = [
-    company?.address_line,
-    [company?.city, company?.state, company?.pincode].filter(Boolean).join(', '),
-    company?.gstin ? `GSTIN: ${company.gstin}` : null,
-    [company?.phone, company?.email].filter(Boolean).join(' · '),
-  ].filter(Boolean) as string[];
-  addrLines.forEach((l, i) => doc.text(l, headerLeft, 54 + i * 11));
+  doc.setFontSize(8.5);
+  doc.setTextColor(...MUTED);
+  const addr = companyAddressLines(company);
+  addr.forEach((l, i) => doc.text(l, brandX, cursorY + 20 + i * 10));
+  const contactLine = [company?.phone, company?.email].filter(Boolean).join('  ·  ');
+  if (contactLine) doc.text(contactLine, brandX, cursorY + 20 + addr.length * 10);
 
+  // Right: document wordmark
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
-  doc.setTextColor(...BRAND_GOLD);
-  doc.text('PURCHASE ORDER', pageW - margin, 40, { align: 'right' });
-  doc.setFontSize(9);
-  doc.setTextColor(...BRAND_CHARCOAL);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`PO #: ${po.po_number ?? '—'}`, pageW - margin, 58, { align: 'right' });
-  doc.text(`Date: ${new Date(po.po_date).toLocaleDateString('en-GB')}`, pageW - margin, 70, { align: 'right' });
-  if (po.expected_delivery) {
-    doc.text(`Expected: ${new Date(po.expected_delivery).toLocaleDateString('en-GB')}`, pageW - margin, 82, { align: 'right' });
-  }
+  doc.setFontSize(22);
+  doc.setTextColor(...INK);
+  doc.text('PURCHASE ORDER', pageW - M, cursorY + 4, { align: 'right' });
 
-  y = 115;
-
-  // Vendor block
-  doc.setDrawColor(220);
-  doc.setLineWidth(0.6);
-  doc.roundedRect(margin, y, pageW - margin * 2, 78, 6, 6);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('courier', 'normal');
   doc.setFontSize(10);
-  doc.setTextColor(120);
-  doc.text('VENDOR', margin + 12, y + 16);
-  doc.setTextColor(...BRAND_CHARCOAL);
-  doc.setFontSize(11);
-  doc.text(vendor?.name || po.vendor_name, margin + 12, y + 32);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  const vAddr = [
-    vendor?.billing_street,
-    [vendor?.billing_city, vendor?.billing_state, vendor?.billing_pincode].filter(Boolean).join(', '),
-    vendor?.billing_country,
-  ].filter(Boolean) as string[];
-  vAddr.forEach((l, i) => doc.text(l, margin + 12, y + 46 + i * 11));
-  const gst = vendor?.gstin || po.vendor_gstin;
-  if (gst) doc.text(`GSTIN: ${gst}`, pageW - margin - 12, y + 32, { align: 'right' });
-  if (vendor?.phone) doc.text(`Phone: ${vendor.phone}`, pageW - margin - 12, y + 46, { align: 'right' });
+  doc.setTextColor(...GOLD);
+  doc.text(po.po_number ?? 'DRAFT', pageW - M, cursorY + 22, { align: 'right' });
 
-  y += 92;
+  // Status pill
+  const st = STATUS_STYLE[po.status] ?? STATUS_STYLE.draft;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  const pillW = doc.getTextWidth(st.label) + 14;
+  const pillH = 14;
+  const pillX = pageW - M - pillW;
+  const pillY = cursorY + 30;
+  doc.setFillColor(...st.bg);
+  doc.roundedRect(pillX, pillY, pillW, pillH, 3, 3, 'F');
+  doc.setTextColor(...st.fg);
+  doc.text(st.label, pillX + pillW / 2, pillY + 9.5, { align: 'center' });
 
-  // Items
+  // Divider under header
+  const headerBottom = Math.max(cursorY + 20 + addr.length * 10 + 20, pillY + pillH + 14);
+  doc.setDrawColor(...HAIR);
+  doc.setLineWidth(0.5);
+  doc.line(M, headerBottom, pageW - M, headerBottom);
+
+  // ─────────────── META STRIP ───────────────
+  const metaY = headerBottom + 14;
+  const metaCellW = (pageW - M * 2) / 4;
+  const metaLabels = ['PO NUMBER', 'PO DATE', 'EXPECTED DELIVERY', 'PAYMENT TERMS'];
+  const metaValues = [
+    po.po_number ?? '—',
+    dt(po.po_date),
+    dt(po.expected_delivery),
+    'Net 30 days',
+  ];
+  metaLabels.forEach((lab, i) => {
+    const x = M + metaCellW * i;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(...MUTED);
+    doc.text(lab, x, metaY);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10.5);
+    doc.setTextColor(...INK);
+    doc.text(String(metaValues[i]), x, metaY + 14);
+  });
+  const metaBottom = metaY + 26;
+  doc.setDrawColor(...HAIR);
+  doc.line(M, metaBottom, pageW - M, metaBottom);
+
+  // ─────────────── VENDOR + SHIP TO ───────────────
+  const partsY = metaBottom + 18;
+  const colW = (pageW - M * 2 - 20) / 2;
+
+  const drawParty = (
+    x: number,
+    label: string,
+    name: string,
+    lines: string[],
+    gstin?: string | null,
+    phone?: string | null,
+  ) => {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(...GOLD);
+    doc.text(label, x, partsY);
+    doc.setTextColor(...INK);
+    doc.setFontSize(12);
+    doc.text(name || '—', x, partsY + 16);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...MUTED);
+    let yy = partsY + 30;
+    lines.forEach((l) => { doc.text(l, x, yy); yy += 12; });
+    if (gstin) {
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...INK);
+      doc.text('GSTIN', x, yy + 4);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...MUTED);
+      doc.text(gstin, x + 40, yy + 4);
+      yy += 14;
+    }
+    if (phone) {
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...INK);
+      doc.text('Phone', x, yy + 4);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...MUTED);
+      doc.text(phone, x + 40, yy + 4);
+      yy += 14;
+    }
+    return yy;
+  };
+
+  const vendorLines = vendor ? addressLines(vendor) : [];
+  const y1 = drawParty(
+    M,
+    'VENDOR',
+    vendor?.name || po.vendor_name,
+    vendorLines,
+    vendor?.gstin || po.vendor_gstin,
+    vendor?.phone,
+  );
+  const shipLines = companyAddressLines(company);
+  const y2 = drawParty(
+    M + colW + 20,
+    'SHIP TO',
+    company?.name || 'Company',
+    shipLines,
+    company?.gstin,
+    company?.phone,
+  );
+  const partsBottom = Math.max(y1, y2) + 10;
+
+  // ─────────────── ITEMS TABLE ───────────────
   autoTable(doc, {
-    startY: y,
-    head: [['#', 'Item', 'HSN', 'Qty', 'Unit', 'Rate', 'GST%', 'Amount']],
+    startY: partsBottom,
+    head: [['#', 'Description', 'HSN/SAC', 'Qty', 'Unit', 'Rate', 'GST', 'Amount']],
     body: po.items.map((it, i) => {
       const gross = (Number(it.quantity) || 0) * (Number(it.unit_price) || 0);
       const tax = gross * ((Number(it.tax_percent) || 0) / 100);
       return [
-        i + 1,
+        String(i + 1),
         it.item_name,
-        it.hsn_sac || '',
+        it.hsn_sac || '—',
         String(it.quantity),
-        it.unit || '',
-        inr(Number(it.unit_price)),
+        it.unit || '—',
+        money(Number(it.unit_price)),
         `${it.tax_percent}%`,
-        inr(gross + tax),
+        money(gross + tax),
       ];
     }),
-    styles: { fontSize: 9, cellPadding: 6, textColor: BRAND_CHARCOAL, lineColor: [230, 230, 230] },
-    headStyles: { fillColor: BRAND_CHARCOAL, textColor: [255, 255, 255], fontStyle: 'bold' },
-    columnStyles: {
-      0: { cellWidth: 26, halign: 'center' },
-      3: { halign: 'right' },
-      5: { halign: 'right' },
-      6: { halign: 'right' },
-      7: { halign: 'right' },
+    theme: 'plain',
+    styles: {
+      font: 'helvetica',
+      fontSize: 9,
+      cellPadding: { top: 8, right: 8, bottom: 8, left: 8 },
+      textColor: INK,
+      lineColor: HAIR,
+      lineWidth: 0,
     },
-    margin: { left: margin, right: margin },
+    headStyles: {
+      fontStyle: 'bold',
+      fontSize: 7.5,
+      textColor: MUTED,
+      fillColor: [255, 255, 255],
+      lineWidth: { bottom: 0.8, top: 0.8, left: 0, right: 0 },
+      lineColor: INK,
+      cellPadding: { top: 8, right: 8, bottom: 8, left: 8 },
+    },
+    alternateRowStyles: { fillColor: SOFT },
+    columnStyles: {
+      0: { cellWidth: 22, halign: 'center', textColor: MUTED },
+      1: { cellWidth: 'auto', fontStyle: 'bold' },
+      2: { cellWidth: 60, textColor: MUTED },
+      3: { cellWidth: 34, halign: 'right' },
+      4: { cellWidth: 38, textColor: MUTED },
+      5: { cellWidth: 72, halign: 'right' },
+      6: { cellWidth: 34, halign: 'right', textColor: MUTED },
+      7: { cellWidth: 82, halign: 'right', fontStyle: 'bold' },
+    },
+    margin: { left: M, right: M },
+    didDrawPage: () => {
+      // page numbers drawn after loop below
+    },
   });
+  const afterTable = (doc as any).lastAutoTable.finalY;
 
-  const afterTable = (doc as any).lastAutoTable.finalY + 12;
+  // Table closing rule
+  doc.setDrawColor(...INK);
+  doc.setLineWidth(0.8);
+  doc.line(M, afterTable + 1, pageW - M, afterTable + 1);
 
-  // Totals block
-  const totalsX = pageW - margin - 220;
-  const totalsW = 220;
-  let ty = afterTable;
-  const rowH = 16;
-  doc.setFontSize(10);
-  const row = (label: string, val: string, bold = false) => {
-    doc.setFont('helvetica', bold ? 'bold' : 'normal');
-    doc.text(label, totalsX + 8, ty + 11);
-    doc.text(val, totalsX + totalsW - 8, ty + 11, { align: 'right' });
-    ty += rowH;
+  // ─────────────── TOTALS ───────────────
+  const totalsW = 240;
+  const totalsX = pageW - M - totalsW;
+  let ty = afterTable + 18;
+  const totalRow = (label: string, value: string, opts: { bold?: boolean; big?: boolean } = {}) => {
+    doc.setFont('helvetica', opts.bold ? 'bold' : 'normal');
+    doc.setFontSize(opts.big ? 12 : 10);
+    doc.setTextColor(opts.bold ? INK[0] : MUTED[0], opts.bold ? INK[1] : MUTED[1], opts.bold ? INK[2] : MUTED[2]);
+    doc.text(label, totalsX, ty);
+    doc.setTextColor(...INK);
+    doc.text(value, totalsX + totalsW, ty, { align: 'right' });
+    ty += opts.big ? 20 : 16;
   };
-  doc.setDrawColor(220);
-  doc.roundedRect(totalsX, ty, totalsW, rowH * 3 + 4, 4, 4);
-  ty += 2;
-  row('Subtotal', `₹${inr(Number(po.sub_total))}`);
-  row('Tax', `₹${inr(Number(po.total_tax))}`);
-  doc.setFillColor(...BRAND_GOLD_SOFT);
-  doc.rect(totalsX, ty, totalsW, rowH, 'F');
-  row('Grand Total', `₹${inr(Number(po.total))}`, true);
+  totalRow('Subtotal', money(Number(po.sub_total)));
+  totalRow('Tax (GST)', money(Number(po.total_tax)));
+  // Gold grand total band
+  const gtY = ty - 4;
+  doc.setFillColor(...GOLD_SOFT);
+  doc.roundedRect(totalsX - 10, gtY, totalsW + 10, 26, 3, 3, 'F');
+  doc.setDrawColor(...GOLD);
+  doc.setLineWidth(0.6);
+  doc.roundedRect(totalsX - 10, gtY, totalsW + 10, 26, 3, 3, 'S');
+  ty = gtY + 17;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(...INK);
+  doc.text('GRAND TOTAL', totalsX, ty);
+  doc.setFontSize(13);
+  doc.text(money(Number(po.total)), totalsX + totalsW, ty, { align: 'right' });
+  ty = gtY + 40;
 
-  ty += 8;
+  // Amount in words (left column, aligned with totals top)
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(9);
-  doc.setTextColor(90);
+  doc.setTextColor(...MUTED);
   const words = numberToIndianWords(Number(po.total)) + ' only';
-  doc.text(`Amount in words: ${words}`, margin, ty + 8, { maxWidth: pageW - margin * 2 });
+  const wrapped = doc.splitTextToSize(`Amount in words: ${words}`, pageW - M * 2 - totalsW - 20);
+  doc.text(wrapped, M, afterTable + 22);
 
-  ty += 30;
+  let blockY = Math.max(ty, afterTable + 22 + wrapped.length * 11) + 18;
 
-  if (po.notes) {
+  // ─────────────── NOTES & TERMS ───────────────
+  if (po.notes && po.notes.trim().length > 0) {
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...BRAND_CHARCOAL);
-    doc.setFontSize(10);
-    doc.text('Notes', margin, ty);
+    doc.setFontSize(8);
+    doc.setTextColor(...GOLD);
+    doc.text('NOTES', M, blockY);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.text(doc.splitTextToSize(po.notes, pageW - margin * 2), margin, ty + 14);
+    doc.setFontSize(9.5);
+    doc.setTextColor(...INK);
+    const noteLines = doc.splitTextToSize(po.notes, pageW - M * 2);
+    doc.text(noteLines, M, blockY + 14);
+    blockY += 14 + noteLines.length * 12 + 12;
   }
 
-  // Footer / signature
-  const footY = doc.internal.pageSize.getHeight() - 90;
-  doc.setDrawColor(220);
-  doc.line(pageW - margin - 160, footY, pageW - margin, footY);
-  doc.setFontSize(9);
-  doc.setTextColor(...BRAND_CHARCOAL);
-  doc.text(`For ${company?.name || 'Company'}`, pageW - margin - 80, footY - 6, { align: 'center' });
-  doc.text('Authorised Signatory', pageW - margin - 80, footY + 14, { align: 'center' });
-
+  doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
-  doc.setTextColor(140);
-  doc.text(
-    'This is a computer-generated purchase order.',
-    pageW / 2,
-    doc.internal.pageSize.getHeight() - 24,
-    { align: 'center' },
-  );
+  doc.setTextColor(...GOLD);
+  doc.text('TERMS & CONDITIONS', M, blockY);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...MUTED);
+  const terms = [
+    'Goods should match approved specifications. Rejected material will be returned at vendor cost.',
+    'Please quote the PO number on invoices, delivery notes, and correspondence.',
+    'Payment as per agreed terms after receipt of goods and GST-compliant tax invoice.',
+    'Any change in price, quantity, or delivery schedule requires written approval.',
+  ];
+  let termY = blockY + 14;
+  terms.forEach((t, i) => {
+    doc.text(`${i + 1}.`, M, termY);
+    const tw = doc.splitTextToSize(t, pageW - M * 2 - 14);
+    doc.text(tw, M + 14, termY);
+    termY += tw.length * 11 + 4;
+  });
+
+  // ─────────────── SIGNATURE ───────────────
+  const sigW = 180;
+  const sigX = pageW - M - sigW;
+  const sigY = Math.max(termY + 24, pageH - 130);
+  if (signature) {
+    try { doc.addImage(signature, 'PNG', sigX + sigW / 2 - 36, sigY - 42, 72, 40); } catch {}
+  }
+  doc.setDrawColor(...INK);
+  doc.setLineWidth(0.4);
+  doc.line(sigX, sigY, sigX + sigW, sigY);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...INK);
+  doc.text(`For ${company?.name || 'Company'}`, sigX + sigW / 2, sigY + 12, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...MUTED);
+  doc.text('Authorised Signatory', sigX + sigW / 2, sigY + 24, { align: 'center' });
+
+  // ─────────────── FOOTER (all pages) ───────────────
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    // hairline
+    doc.setDrawColor(...HAIR);
+    doc.setLineWidth(0.5);
+    doc.line(M, pageH - 34, pageW - M, pageH - 34);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...MUTED);
+    const footL = [company?.name, company?.gstin ? `GSTIN ${company.gstin}` : null, company?.email]
+      .filter(Boolean).join('  ·  ');
+    doc.text(footL, M, pageH - 20);
+    doc.text(`Page ${i} of ${pageCount}`, pageW - M, pageH - 20, { align: 'right' });
+    doc.setFontSize(6.5);
+    doc.text('This is a computer-generated purchase order and does not require a physical signature to be valid.',
+      pageW / 2, pageH - 10, { align: 'center' });
+  }
 
   return doc;
 }
