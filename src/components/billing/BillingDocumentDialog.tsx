@@ -455,6 +455,8 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
                                   product_id: p ? p.id : null,
                                   unit: p ? p.unit : l.unit,
                                   hsn_sac: autoHsn(name, l.hsn_sac),
+                                  unit_price: autoPrice(name, l.unit_price),
+                                  tax_percent: autoGst(name, l.tax_percent),
                                 });
                               }}
                               placeholder="Type product code…"
@@ -471,8 +473,16 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
                               value={l.product_id || ''}
                               onValueChange={(pid) => {
                                 const p = products.find((x) => x.id === pid);
-                                if (p) setLine(idx, { product_id: pid, item_name: p.name, unit: p.unit, hsn_sac: autoHsn(p.name, l.hsn_sac) });
+                                if (p) setLine(idx, {
+                                  product_id: pid,
+                                  item_name: p.name,
+                                  unit: p.unit,
+                                  hsn_sac: autoHsn(p.name, l.hsn_sac),
+                                  unit_price: autoPrice(p.name, l.unit_price),
+                                  tax_percent: autoGst(p.name, l.tax_percent),
+                                });
                               }}
+
                               disabled={readOnly}
                             >
                               <SelectTrigger className="w-[42px] p-0 justify-center" aria-label="Pick product" />
