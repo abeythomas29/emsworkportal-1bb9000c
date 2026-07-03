@@ -343,26 +343,28 @@ export async function generatePOPdf(
     blockY += 14 + noteLines.length * 12 + 12;
   }
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(...GOLD);
-  doc.text('TERMS & CONDITIONS', M, blockY);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.5);
-  doc.setTextColor(...MUTED);
-  const terms = [
-    'Goods should match approved specifications. Rejected material will be returned at vendor cost.',
-    'Please quote the PO number on invoices, delivery notes, and correspondence.',
-    'Payment as per agreed terms after receipt of goods and GST-compliant tax invoice.',
-    'Any change in price, quantity, or delivery schedule requires written approval.',
-  ];
-  let termY = blockY + 14;
-  terms.forEach((t, i) => {
-    doc.text(`${i + 1}.`, M, termY);
-    const tw = doc.splitTextToSize(t, pageW - M * 2 - 14);
-    doc.text(tw, M + 14, termY);
-    termY += tw.length * 11 + 4;
-  });
+  const terms = (po.terms ?? '')
+    .split(/\n\s*\n/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+
+  let termY = blockY;
+  if (terms.length > 0) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(...GOLD);
+    doc.text('TERMS & CONDITIONS', M, blockY);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...MUTED);
+    termY = blockY + 14;
+    terms.forEach((t, i) => {
+      doc.text(`${i + 1}.`, M, termY);
+      const tw = doc.splitTextToSize(t, pageW - M * 2 - 14);
+      doc.text(tw, M + 14, termY);
+      termY += tw.length * 11 + 6;
+    });
+  }
 
   // ─────────────── SIGNATURE ───────────────
   const sigW = 180;
