@@ -499,6 +499,15 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
                               </SelectContent>
                             </Select>
                           </div>
+                          {!readOnly && l.item_name.trim() && !matched && (
+                            <button
+                              type="button"
+                              onClick={() => { setNewProductForLine(idx); setNewProductOpen(true); }}
+                              className="text-xs text-primary hover:underline self-start"
+                            >
+                              + Add "{l.item_name.trim()}" as new product
+                            </button>
+                          )}
                           {stock !== null && (
                             <div className="flex items-center gap-2 text-xs">
                               <Badge
