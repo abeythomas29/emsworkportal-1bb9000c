@@ -855,6 +855,44 @@ export type Database = {
         }
         Relationships: []
       }
+      po_term_templates: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_default: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_default?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_default?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "po_term_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       policies: {
         Row: {
           category: string
@@ -1328,6 +1366,7 @@ export type Database = {
           po_number: string | null
           status: Database["public"]["Enums"]["purchase_order_status"]
           sub_total: number
+          terms: string | null
           total: number
           total_tax: number
           updated_at: string
@@ -1348,6 +1387,7 @@ export type Database = {
           po_number?: string | null
           status?: Database["public"]["Enums"]["purchase_order_status"]
           sub_total?: number
+          terms?: string | null
           total?: number
           total_tax?: number
           updated_at?: string
@@ -1368,6 +1408,7 @@ export type Database = {
           po_number?: string | null
           status?: Database["public"]["Enums"]["purchase_order_status"]
           sub_total?: number
+          terms?: string | null
           total?: number
           total_tax?: number
           updated_at?: string

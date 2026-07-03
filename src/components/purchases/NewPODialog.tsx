@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, UserPlus } from 'lucide-react';
+import { Plus, Trash2, UserPlus, FileText, Save } from 'lucide-react';
+import { toast } from 'sonner';
 import { useParties, type Party } from '@/hooks/useBilling';
 import { usePurchaseOrders, type POItem } from '@/hooks/usePurchaseOrders';
+import { usePOTermTemplates } from '@/hooks/usePOTermTemplates';
 import { PartyDialog } from '@/components/billing/PartyDialog';
 
 interface Props { trigger?: React.ReactNode }
@@ -24,18 +26,32 @@ const emptyItem = (): POItem => ({
 export function NewPODialog({ trigger }: Props) {
   const { data: parties = [] } = useParties();
   const { createPO, isCreating } = usePurchaseOrders();
+  const { templates, defaultTemplate, saveTemplate } = usePOTermTemplates();
   const [open, setOpen] = useState(false);
   const [vendorId, setVendorId] = useState<string | null>(null);
   const [vendorName, setVendorName] = useState('');
   const [poDate, setPoDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [expected, setExpected] = useState('');
   const [notes, setNotes] = useState('');
+  const [terms, setTerms] = useState('');
   const [items, setItems] = useState<POItem[]>([emptyItem()]);
   const [vendorDialogOpen, setVendorDialogOpen] = useState(false);
+  const [newTemplateName, setNewTemplateName] = useState('');
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+
+  // Auto-load default template when opening a fresh dialog with empty terms
+  useEffect(() => {
+    if (open && !terms && defaultTemplate) {
+      setTerms(defaultTemplate.content);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, defaultTemplate?.id]);
 
   const reset = () => {
     setVendorId(null); setVendorName(''); setPoDate(new Date().toISOString().slice(0, 10));
     setExpected(''); setNotes(''); setItems([emptyItem()]);
+    setTerms(defaultTemplate?.content ?? '');
+    setNewTemplateName(''); setShowSaveTemplate(false);
   };
 
   const updateItem = (i: number, patch: Partial<POItem>) => {
@@ -67,6 +83,7 @@ export function NewPODialog({ trigger }: Props) {
       po_date: poDate,
       expected_delivery: expected || null,
       notes: notes.trim() || null,
+      terms: terms.trim() || null,
       items: cleanItems,
     });
     reset();
@@ -182,6 +199,85 @@ export function NewPODialog({ trigger }: Props) {
               <div className="flex justify-between font-semibold border-t border-border pt-1 mt-1"><span>Total</span><span className="tabular-nums text-primary">₹{grand.toFixed(2)}</span></div>
             </div>
           </div>
+
+          {/* Terms & Conditions */}
+          <div className="space-y-2 border border-border rounded-lg p-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-primary" />
+                <Label className="mb-0">Terms &amp; Conditions</Label>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Select
+                  value=""
+                  onValueChange={(id) => {
+                    const t = templates.find((x) => x.id === id);
+                    if (t) setTerms(t.content);
+                  }}
+                >
+                  <SelectTrigger className="w-56 h-8 text-xs">
+                    <SelectValue placeholder="Load template…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {templates.length === 0 && (
+                      <div className="px-2 py-1.5 text-xs text-muted-foreground">No templates yet</div>
+                    )}
+                    {templates.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}{t.is_default ? ' · default' : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 gap-1 text-xs"
+                  onClick={() => setShowSaveTemplate((s) => !s)}
+                >
+                  <Save className="w-3.5 h-3.5" /> Save as template
+                </Button>
+              </div>
+            </div>
+            {showSaveTemplate && (
+              <div className="flex gap-2 pt-1">
+                <Input
+                  placeholder="Template name (e.g. Machinery PO Terms)"
+                  value={newTemplateName}
+                  onChange={(e) => setNewTemplateName(e.target.value)}
+                  className="h-8 text-xs"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-8"
+                  onClick={async () => {
+                    if (!newTemplateName.trim() || !terms.trim()) {
+                      toast.error('Add a name and terms first');
+                      return;
+                    }
+                    await saveTemplate({ name: newTemplateName.trim(), content: terms });
+                    setNewTemplateName('');
+                    setShowSaveTemplate(false);
+                  }}
+                >
+                  Save
+                </Button>
+              </div>
+            )}
+            <Textarea
+              rows={5}
+              value={terms}
+              onChange={(e) => setTerms(e.target.value)}
+              placeholder="Separate clauses with a blank line. Each paragraph will be numbered on the PDF."
+              className="font-mono text-xs"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Leave blank to skip the terms section on the PDF.
+            </p>
+          </div>
+
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>

@@ -29,6 +29,7 @@ export interface PurchaseOrder {
   expected_delivery: string | null;
   status: POStatus;
   notes: string | null;
+  terms: string | null;
   sub_total: number;
   total_tax: number;
   total: number;
@@ -66,6 +67,7 @@ export function usePurchaseOrders() {
       po_date: string;
       expected_delivery?: string | null;
       notes?: string | null;
+      terms?: string | null;
       items: POItem[];
     }) => {
       const cleanItems = input.items.map((i) => {
@@ -103,6 +105,7 @@ export function usePurchaseOrders() {
           po_date: input.po_date,
           expected_delivery: input.expected_delivery ?? null,
           notes: input.notes ?? null,
+          terms: input.terms ?? null,
           sub_total,
           total_tax,
           total,

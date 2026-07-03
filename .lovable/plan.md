@@ -1,81 +1,54 @@
+## Add editable Terms & Conditions to POs
 
-# Purchases Module
+Let admins attach custom terms to each Purchase Order, save reusable term templates (like the reference image), pick one when creating a PO, and print those terms on the generated PDF. Seed one template with the "Pricing & Payment / Delivery / Quality…" wording you provided.
 
-Mirror the Sales portal for the expense side: create Purchase Orders, upload vendor tax invoices (PDF/image) that AI auto-fills, and see monthly purchase totals with the same Executive Dark Command look.
+### What changes
 
-## 1. Navigation & Access
+**1. New "Terms Templates" library (admin only)**
 
-- New route `/purchases`, admin-only (same guard as `/sales`).
-- Sidebar entry "Purchases" (ShoppingBag icon) under the admin group.
-- Page shell copies `Sales.tsx`: pill tabs → **Purchase Orders**, **Invoices**, **Reports**.
+- New table `po_term_templates` with fields: name, content, is_default.
+- Managed from a small **"Terms templates"** button in the Purchases header.
+- Dialog lists all saved templates (Name · preview · Default badge · Edit / Delete), with an "Add template" form (Name + multi-line Content + "Set as default" toggle).
+- Seeded on migration with one template named **"Standard Purchase Terms"** containing the 8 clauses you sent (Pricing & Payment, Delivery, Quality, Warranty, Compliance, Indemnity, Termination, Governing Law), marked as default.
 
-## 2. Database (new tables)
+**2. Terms section inside "New PO" dialog**
 
-**`purchase_orders`**
-- vendor_id (→ parties), vendor_name_snapshot, po_number (auto: `PO-YY-YY-####`), po_date, expected_delivery
-- status: `draft | approved | sent | partially_received | received | cancelled`
-- notes, total, created_by, approved_by, approved_at
-- Auto-numbered via reused `billing_number_series` (doc_type `purchase_order`).
+Added below Notes:
 
-**`purchase_order_items`** — po_id, item_name, hsn_sac, quantity, unit, unit_price, tax_percent, amount, product_id (nullable), raw_material_id (nullable).
+```text
+Terms & Conditions                    [ Load template ▾ ]  [ Save as new template ]
+┌──────────────────────────────────────────────────────────┐
+│ (multi-line textarea, pre-filled with default template)  │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+```
 
-**`purchase_invoices`**
-- vendor_id, vendor_name, vendor_gstin
-- invoice_no (vendor's), invoice_date, po_id (nullable link)
-- sub_total, total_tax, total, payment_status (`unpaid|partial|paid`), amount_paid
-- attachment_url (storage path), attachment_mime
-- extraction_status (`pending|extracted|manual|failed`), extraction_raw (jsonb)
-- uploaded_by, created_at
+- **Load template** dropdown lists all saved templates; picking one replaces textarea content.
+- **Save as new template** opens a tiny inline prompt for a name and saves the current textarea as a new template.
+- Empty textarea = no terms printed on PDF (falls back to nothing, not the old hard-coded list).
+- The default template is auto-loaded when opening the dialog for a fresh PO.
 
-**`purchase_invoice_items`** — invoice_id, item_name, hsn_sac, quantity, unit, unit_price, tax_percent, amount.
+**3. PO stores its own terms**
 
-**Storage bucket**: `purchase-invoices` (private).
+Add `terms text` column to `purchase_orders` so what you saw when creating the PO is exactly what prints — future edits to the template don't rewrite past POs.
 
-RLS: admin-only for all four tables (uses `has_role(auth.uid(),'admin')`), GRANTs to authenticated + service_role.
+**4. PDF update**
 
-## 3. Purchase Order workflow
+`generatePOPdf` now reads `po.terms`:
+- If present: split on blank lines into numbered clauses (each paragraph = one item), rendered under **TERMS & CONDITIONS** exactly like today's layout.
+- If empty: the Terms section is skipped entirely, so the signature block moves up cleanly.
 
-Lifecycle: **draft → approved → sent → partially_received / received** (or **cancelled**).
-- New PO dialog (vendor picker reuses `parties`, line items reuse billing calc helpers).
-- List panel with status filter + monthly total pills.
-- Row actions: view, edit (draft only), approve, mark sent, mark received, cancel, delete (draft/cancelled only).
-- Approved POs display in a compact picker when logging an invoice.
+### Technical notes
 
-## 4. Invoice upload + AI extraction
+- Migration adds `po_term_templates` (admin RLS via `has_role`), grants to `authenticated` + `service_role`, `updated_at` trigger, unique index enforcing at most one `is_default = true`, and seeds the "Standard Purchase Terms" row. Also adds `purchase_orders.terms text`.
+- New hook `usePOTermTemplates` (list / upsert / remove / default).
+- `usePurchaseOrders.createPO` accepts optional `terms`.
+- `POListPanel` header gets a `[Terms templates]` button opening `TermsTemplatesDialog.tsx`.
+- `NewPODialog.tsx` gets a Terms block with template loader + save-as-template action; state seeded from the default template on open.
+- `poPdf.ts`: replace the hard-coded `terms` array with `po.terms?.split(/\n\s*\n/).map(t => t.trim()).filter(Boolean)`; skip the whole section if empty.
 
-- "Upload Invoice" button opens a dropzone (PDF, JPG, PNG, ≤10 MB).
-- File uploads to `purchase-invoices` bucket → edge function `extract-purchase-invoice` called with signed URL.
-- Edge function uses Lovable AI (`google/gemini-2.5-flash`, structured output) to extract: vendor name, GSTIN, invoice no/date, line items (name, qty, unit price, tax%), sub_total, tax total, grand total.
-- Result opens a review dialog prefilled with extracted values; admin edits, links to a PO (optional), and saves.
-- Manual entry path available if extraction fails.
+### Files
 
-## 5. Reports (mirrors `SalesReportsPanel`)
-
-- Month selector, KPI cards: Total Spend, Invoice Count, Top Vendor, Avg Invoice Value.
-- 6-month trend chart, top vendors + top items tables, unpaid outstanding widget.
-
-## 6. Dashboard touch
-
-- Small "Purchases this month" tile next to the Sales KPI strip (admin only).
-
-## 7. Files to add / edit
-
-New:
-- `src/pages/Purchases.tsx`
-- `src/components/purchases/PurchasesModule.tsx`
-- `src/components/purchases/POListPanel.tsx`, `NewPODialog.tsx`, `POEditDialog.tsx`
-- `src/components/purchases/InvoiceListPanel.tsx`, `UploadInvoiceDialog.tsx`, `ReviewExtractedInvoiceDialog.tsx`
-- `src/components/purchases/PurchaseReportsPanel.tsx`
-- `src/hooks/usePurchaseOrders.ts`, `usePurchaseInvoices.ts`
-- `supabase/functions/extract-purchase-invoice/index.ts`
-
-Edited:
-- `src/App.tsx` (route), `src/components/layout/Sidebar.tsx` (nav item), `src/components/dashboard/…` (optional tile).
-
-## Technical notes
-
-- Reuse `src/lib/billing/calc.ts` and `financialYearOf` for numbering + line math.
-- Reuse `get_next_billing_number` RPC by adding `purchase_order` as a valid doc_type (default prefix `PO-`).
-- Extraction edge function sends the file as an `image_url` (image) or `file` (PDF) content block per the multimodal spec, with a strict JSON schema. Falls back to `manual` status on any error so the admin can key it in.
-- Storage access via signed URLs (bucket is private).
-- All new UI reuses the same tokens, pill tabs, gradient KPI cards, and empty-state style as the Sales portal so the look stays consistent.
+- Migration: `po_term_templates` table + seed + `purchase_orders.terms`.
+- New: `src/hooks/usePOTermTemplates.ts`, `src/components/purchases/TermsTemplatesDialog.tsx`.
+- Edited: `src/hooks/usePurchaseOrders.ts`, `src/components/purchases/NewPODialog.tsx`, `src/components/purchases/POListPanel.tsx`, `src/lib/purchases/poPdf.ts`.

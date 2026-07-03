@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  ClipboardList, Loader2, MoreHorizontal, CheckCircle2, Send, PackageCheck, XCircle, Trash2, FileDown,
+  ClipboardList, Loader2, MoreHorizontal, CheckCircle2, Send, PackageCheck, XCircle, Trash2, FileDown, FileText,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { usePurchaseOrders, type POStatus } from '@/hooks/usePurchaseOrders';
@@ -13,6 +13,7 @@ import { useCompanySettings, useParties } from '@/hooks/useBilling';
 import { generatePOPdf } from '@/lib/purchases/poPdf';
 import { toast } from 'sonner';
 import { NewPODialog } from './NewPODialog';
+import { TermsTemplatesDialog } from './TermsTemplatesDialog';
 
 const inr = (v: number) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v || 0);
@@ -40,6 +41,7 @@ export function POListPanel() {
   const { data: parties = [] } = useParties();
   const [selectedMonth, setSelectedMonth] = useState<string | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<POStatus | 'all'>('all');
+  const [termsDialogOpen, setTermsDialogOpen] = useState(false);
 
   const handleDownloadPdf = async (poId: string, poNumber: string | null, vendorId: string | null) => {
     try {
@@ -107,6 +109,9 @@ export function POListPanel() {
                 ))}
               </SelectContent>
             </Select>
+            <Button size="sm" variant="outline" className="gap-2" onClick={() => setTermsDialogOpen(true)}>
+              <FileText className="w-4 h-4" /> Terms templates
+            </Button>
             <NewPODialog />
           </div>
         </div>
@@ -194,6 +199,7 @@ export function POListPanel() {
           )}
         </CardContent>
       </Card>
+      <TermsTemplatesDialog open={termsDialogOpen} onOpenChange={setTermsDialogOpen} />
     </div>
   );
 }
