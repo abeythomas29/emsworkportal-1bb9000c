@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, UserPlus } from 'lucide-react';
+import { Plus, Trash2, UserPlus, FileText, Save } from 'lucide-react';
+import { toast } from 'sonner';
 import { useParties, type Party } from '@/hooks/useBilling';
 import { usePurchaseOrders, type POItem } from '@/hooks/usePurchaseOrders';
+import { usePOTermTemplates } from '@/hooks/usePOTermTemplates';
 import { PartyDialog } from '@/components/billing/PartyDialog';
 
 interface Props { trigger?: React.ReactNode }
