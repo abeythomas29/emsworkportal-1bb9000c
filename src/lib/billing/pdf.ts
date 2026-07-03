@@ -232,7 +232,7 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
     body: rows,
     theme: 'grid',
     styles: { fontSize: 8, cellPadding: 1.5 },
-    headStyles: { fillColor: [230, 230, 230], textColor: 0, fontStyle: 'bold' },
+    headStyles: { fillColor: BRAND_CHARCOAL, textColor: 255, fontStyle: 'bold' },
     columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 55 } },
     margin: { left: M, right: M },
   });
@@ -278,7 +278,7 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
     body: hsnBody,
     theme: 'grid',
     styles: { fontSize: 8, cellPadding: 1.5, halign: 'center' },
-    headStyles: { fillColor: [230, 230, 230], textColor: 0, fontStyle: 'bold', halign: 'center' },
+    headStyles: { fillColor: BRAND_CHARCOAL, textColor: 255, fontStyle: 'bold', halign: 'center' },
     margin: { left: M, right: M },
   });
 
