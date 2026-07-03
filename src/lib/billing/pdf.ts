@@ -122,7 +122,7 @@ function fmtDate(d: string) {
 }
 
 export function generateBillingPdf(input: PdfDocInput): jsPDF {
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
   const pageW = doc.internal.pageSize.getWidth();
   const M = 10;
   const totals = computeTotals(input.lines);
