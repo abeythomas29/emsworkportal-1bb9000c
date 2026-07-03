@@ -429,8 +429,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
                   <TableHead className="w-[80px]">Qty</TableHead>
                   <TableHead className="w-[80px]">Unit</TableHead>
                   <TableHead className="w-[110px]">Price</TableHead>
-                  <TableHead className="w-[80px]">Disc %</TableHead>
-                  <TableHead className="w-[80px]">GST %</TableHead>
+                  <TableHead className="w-[100px]">GST %</TableHead>
                   <TableHead className="w-[110px] text-right">Amount</TableHead>
                   {!readOnly && <TableHead className="w-[40px]" />}
                 </TableRow>
@@ -532,10 +531,6 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
                       <TableCell>
                         <Input type="number" step="0.01" value={l.unit_price}
                           onChange={(e) => setLine(idx, { unit_price: Number(e.target.value) })} disabled={readOnly} />
-                      </TableCell>
-                      <TableCell>
-                        <Input type="number" step="0.01" value={l.discount_percent}
-                          onChange={(e) => setLine(idx, { discount_percent: Number(e.target.value) })} disabled={readOnly} />
                       </TableCell>
                       <TableCell>
                         <Input type="number" step="0.01" value={l.tax_percent}
