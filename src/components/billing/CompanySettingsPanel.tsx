@@ -111,6 +111,24 @@ export function CompanySettingsPanel() {
           </div>
 
           <div className="md:col-span-2 border-t pt-4">
+            <h4 className="font-medium mb-3">Branding</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <BrandImageField
+                label="Company Logo"
+                value={form.logo_url}
+                onChange={(v) => set('logo_url', v)}
+                hint="Shown at the top of every invoice, proforma, and estimate."
+              />
+              <BrandImageField
+                label="Authorized Signature"
+                value={form.signature_url}
+                onChange={(v) => set('signature_url', v)}
+                hint="Placed above 'Authorized Signatory' on every document."
+              />
+            </div>
+          </div>
+
+          <div className="md:col-span-2 border-t pt-4">
             <h4 className="font-medium mb-3">Bank Details</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
