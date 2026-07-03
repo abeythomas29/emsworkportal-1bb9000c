@@ -682,6 +682,23 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
           onOpenChange={setPartyDialogOpen}
           onSaved={(p) => { setPartyId(p.id); setPosState(p.billing_state || ''); setPosCode(p.billing_state_code || ''); }}
         />
+
+        <NewProductDialog
+          open={newProductOpen}
+          onOpenChange={(o) => { setNewProductOpen(o); if (!o) setNewProductForLine(null); }}
+          defaultName={newProductForLine !== null ? (lines[newProductForLine]?.item_name || '') : ''}
+          onCreated={(p) => {
+            if (newProductForLine === null) return;
+            setLine(newProductForLine, {
+              product_id: p.id,
+              item_name: p.name,
+              unit: p.unit,
+              hsn_sac: p.hsn_sac || autoHsn(p.name, ''),
+              unit_price: p.unit_price || autoPrice(p.name, 0),
+              tax_percent: p.tax_percent || autoGst(p.name, 18),
+            });
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
