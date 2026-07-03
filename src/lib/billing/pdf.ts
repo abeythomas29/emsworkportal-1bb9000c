@@ -85,9 +85,25 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   const boxH = 26;
   doc.setDrawColor(0);
   doc.rect(M, y, pageW - 2 * M, boxH);
+  // ---- Header (logo + company block)
+  const headerY = M;
+  const headerH = 30;
+  doc.setDrawColor(0);
+  doc.rect(M, headerY, pageW - 2 * M, headerH);
+
+  const logo = input.company.logo_url;
+  const logoW = 26;
+  const textLeft = logo ? M + logoW + 6 : M + 3;
+  if (logo) {
+    try {
+      const fmt = logo.includes('image/jpeg') || logo.includes('image/jpg') ? 'JPEG' : 'PNG';
+      doc.addImage(logo, fmt, M + 2, headerY + 2, logoW, headerH - 4);
+    } catch { /* ignore invalid image */ }
+  }
+
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
-  doc.text(input.company.name, M + 3, y + 6);
+  doc.setFontSize(14);
+  doc.text(input.company.name, textLeft, headerY + 6);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   const addr = [
@@ -96,10 +112,17 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
     `GSTIN: ${input.company.gstin || '—'}   State Code: ${input.company.state_code || '—'}`,
     `Phone: ${input.company.phone || '—'}   Email: ${input.company.email || '—'}`,
   ].filter(Boolean) as string[];
-  addr.forEach((line, i) => doc.text(line, M + 3, y + 11 + i * 4));
+  addr.forEach((line, i) => doc.text(line, textLeft, headerY + 11 + i * 4));
 
-  // ---- Bill To / Invoice details
-  y += boxH;
+  // Title bar under header
+  let y = headerY + headerH;
+  doc.setFillColor(240, 240, 240);
+  doc.rect(M, y, pageW - 2 * M, 8, 'F');
+  doc.rect(M, y, pageW - 2 * M, 8);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text(TITLE[input.doc_type], pageW / 2, y + 5.5, { align: 'center' });
+  y += 8;
   const colW = (pageW - 2 * M) / 2;
   const detailH = 34;
   doc.rect(M, y, colW, detailH);
