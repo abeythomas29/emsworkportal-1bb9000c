@@ -34,6 +34,7 @@ export default function PurchasesPage() {
             <div role="tablist" aria-label="Purchases sections" className="flex flex-wrap items-center gap-2">
               <Pill active={tab === 'invoices'} onClick={() => setTab('invoices')} icon={<Receipt className="w-4 h-4" />}>Invoices</Pill>
               <Pill active={tab === 'orders'} onClick={() => setTab('orders')} icon={<ClipboardList className="w-4 h-4" />}>Purchase Orders</Pill>
+              <Pill active={tab === 'vendors'} onClick={() => setTab('vendors')} icon={<Users className="w-4 h-4" />}>Vendors</Pill>
               <Pill active={tab === 'reports'} onClick={() => setTab('reports')} icon={<FileSpreadsheet className="w-4 h-4" />}>Reports</Pill>
             </div>
             <div className="flex items-center gap-3">
