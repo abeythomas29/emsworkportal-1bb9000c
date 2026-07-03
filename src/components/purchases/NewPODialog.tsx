@@ -26,18 +26,32 @@ const emptyItem = (): POItem => ({
 export function NewPODialog({ trigger }: Props) {
   const { data: parties = [] } = useParties();
   const { createPO, isCreating } = usePurchaseOrders();
+  const { templates, defaultTemplate, saveTemplate } = usePOTermTemplates();
   const [open, setOpen] = useState(false);
   const [vendorId, setVendorId] = useState<string | null>(null);
   const [vendorName, setVendorName] = useState('');
   const [poDate, setPoDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [expected, setExpected] = useState('');
   const [notes, setNotes] = useState('');
+  const [terms, setTerms] = useState('');
   const [items, setItems] = useState<POItem[]>([emptyItem()]);
   const [vendorDialogOpen, setVendorDialogOpen] = useState(false);
+  const [newTemplateName, setNewTemplateName] = useState('');
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+
+  // Auto-load default template when opening a fresh dialog with empty terms
+  useEffect(() => {
+    if (open && !terms && defaultTemplate) {
+      setTerms(defaultTemplate.content);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, defaultTemplate?.id]);
 
   const reset = () => {
     setVendorId(null); setVendorName(''); setPoDate(new Date().toISOString().slice(0, 10));
     setExpected(''); setNotes(''); setItems([emptyItem()]);
+    setTerms(defaultTemplate?.content ?? '');
+    setNewTemplateName(''); setShowSaveTemplate(false);
   };
 
   const updateItem = (i: number, patch: Partial<POItem>) => {
