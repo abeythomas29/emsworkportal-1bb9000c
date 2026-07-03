@@ -82,12 +82,19 @@ function useProductsList() {
   return useQuery({
     queryKey: ['billing_products'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('products').select('id, name, unit').eq('is_active', true).order('name');
+      const { data, error } = await supabase.from('products').select('id, name, unit, current_stock').eq('is_active', true).order('name');
       if (error) throw error;
-      return (data || []) as { id: string; name: string; unit: string }[];
+      return (data || []) as { id: string; name: string; unit: string; current_stock: number }[];
     },
   });
 }
+
+const EMS_HSN = '32061110';
+const autoHsn = (name: string, current: string) => {
+  if (name.trim().toLowerCase().startsWith('ems')) return EMS_HSN;
+  return current;
+};
+
 
 export function BillingDocumentDialog({ open, onOpenChange, documentId, initialType = 'tax_invoice', onConvert }: Props) {
   const { data: existing } = useBillingDocument(documentId ?? null);
