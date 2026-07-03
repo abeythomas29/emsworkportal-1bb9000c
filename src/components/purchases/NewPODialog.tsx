@@ -86,17 +86,26 @@ export function NewPODialog({ trigger }: Props) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Vendor</Label>
+              <div className="flex items-center justify-between">
+                <Label>Vendor</Label>
+                <Button type="button" size="sm" variant="ghost" className="h-6 px-2 text-xs gap-1" onClick={() => setVendorDialogOpen(true)}>
+                  <UserPlus className="w-3.5 h-3.5" /> Register vendor
+                </Button>
+              </div>
               <Select value={vendorId ?? 'new'} onValueChange={(v) => {
                 if (v === 'new') { setVendorId(null); return; }
                 setVendorId(v);
                 const p = parties.find((x) => x.id === v);
                 if (p) setVendorName(p.name);
               }}>
-                <SelectTrigger><SelectValue placeholder="Select existing or type new" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select vendor or type new" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="new">— New vendor (type name) —</SelectItem>
-                  {parties.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                  {parties.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}{p.gstin ? ` · ${p.gstin}` : ''}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {!vendorId && (
