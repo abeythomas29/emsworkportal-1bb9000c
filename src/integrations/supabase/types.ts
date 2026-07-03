@@ -53,6 +53,274 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_document_items: {
+        Row: {
+          amount: number
+          cgst: number
+          created_at: string
+          description: string | null
+          discount_amount: number
+          discount_percent: number
+          document_id: string
+          hsn_sac: string | null
+          id: string
+          igst: number
+          item_name: string
+          position: number
+          product_id: string | null
+          quantity: number
+          sgst: number
+          tax_amount: number
+          tax_percent: number
+          taxable_value: number
+          unit: string | null
+          unit_price: number
+        }
+        Insert: {
+          amount?: number
+          cgst?: number
+          created_at?: string
+          description?: string | null
+          discount_amount?: number
+          discount_percent?: number
+          document_id: string
+          hsn_sac?: string | null
+          id?: string
+          igst?: number
+          item_name: string
+          position?: number
+          product_id?: string | null
+          quantity?: number
+          sgst?: number
+          tax_amount?: number
+          tax_percent?: number
+          taxable_value?: number
+          unit?: string | null
+          unit_price?: number
+        }
+        Update: {
+          amount?: number
+          cgst?: number
+          created_at?: string
+          description?: string | null
+          discount_amount?: number
+          discount_percent?: number
+          document_id?: string
+          hsn_sac?: string | null
+          id?: string
+          igst?: number
+          item_name?: string
+          position?: number
+          product_id?: string | null
+          quantity?: number
+          sgst?: number
+          tax_amount?: number
+          tax_percent?: number
+          taxable_value?: number
+          unit?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_document_items_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "billing_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_documents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          doc_date: string
+          doc_number: string | null
+          doc_type: string
+          finalized_at: string | null
+          financial_year: string | null
+          id: string
+          notes: string | null
+          party_id: string | null
+          party_snapshot: Json | null
+          payment_mode: string | null
+          place_of_supply_code: string | null
+          place_of_supply_state: string | null
+          round_off: number
+          sales_invoice_id: string | null
+          status: string
+          sub_total: number
+          tax_summary: Json | null
+          terms: string | null
+          total: number
+          total_discount: number
+          total_in_words: string | null
+          total_tax: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          doc_date?: string
+          doc_number?: string | null
+          doc_type: string
+          finalized_at?: string | null
+          financial_year?: string | null
+          id?: string
+          notes?: string | null
+          party_id?: string | null
+          party_snapshot?: Json | null
+          payment_mode?: string | null
+          place_of_supply_code?: string | null
+          place_of_supply_state?: string | null
+          round_off?: number
+          sales_invoice_id?: string | null
+          status?: string
+          sub_total?: number
+          tax_summary?: Json | null
+          terms?: string | null
+          total?: number
+          total_discount?: number
+          total_in_words?: string | null
+          total_tax?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          doc_date?: string
+          doc_number?: string | null
+          doc_type?: string
+          finalized_at?: string | null
+          financial_year?: string | null
+          id?: string
+          notes?: string | null
+          party_id?: string | null
+          party_snapshot?: Json | null
+          payment_mode?: string | null
+          place_of_supply_code?: string | null
+          place_of_supply_state?: string | null
+          round_off?: number
+          sales_invoice_id?: string | null
+          status?: string
+          sub_total?: number
+          tax_summary?: Json | null
+          terms?: string | null
+          total?: number
+          total_discount?: number
+          total_in_words?: string | null
+          total_tax?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_documents_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_number_series: {
+        Row: {
+          created_at: string
+          doc_type: string
+          financial_year: string
+          id: string
+          next_number: number
+          prefix: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doc_type: string
+          financial_year: string
+          id?: string
+          next_number?: number
+          prefix: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doc_type?: string
+          financial_year?: string
+          id?: string
+          next_number?: number
+          prefix?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      company_settings: {
+        Row: {
+          address_line: string | null
+          bank_account: string | null
+          bank_branch_code: string | null
+          bank_ifsc: string | null
+          bank_micr: string | null
+          bank_name: string | null
+          bank_swift: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          gstin: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          phone: string | null
+          pincode: string | null
+          state: string | null
+          state_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          address_line?: string | null
+          bank_account?: string | null
+          bank_branch_code?: string | null
+          bank_ifsc?: string | null
+          bank_micr?: string | null
+          bank_name?: string | null
+          bank_swift?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          gstin?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          phone?: string | null
+          pincode?: string | null
+          state?: string | null
+          state_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address_line?: string | null
+          bank_account?: string | null
+          bank_branch_code?: string | null
+          bank_ifsc?: string | null
+          bank_micr?: string | null
+          bank_name?: string | null
+          bank_swift?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          gstin?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          pincode?: string | null
+          state?: string | null
+          state_code?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       default_leave_settings: {
         Row: {
           casual_leave: number
@@ -508,6 +776,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      parties: {
+        Row: {
+          billing_city: string | null
+          billing_country: string | null
+          billing_pincode: string | null
+          billing_state: string | null
+          billing_state_code: string | null
+          billing_street: string | null
+          created_at: string
+          created_by: string | null
+          gst_type: string
+          gstin: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          shipping_city: string | null
+          shipping_country: string | null
+          shipping_pincode: string | null
+          shipping_same: boolean
+          shipping_state: string | null
+          shipping_state_code: string | null
+          shipping_street: string | null
+          updated_at: string
+        }
+        Insert: {
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_pincode?: string | null
+          billing_state?: string | null
+          billing_state_code?: string | null
+          billing_street?: string | null
+          created_at?: string
+          created_by?: string | null
+          gst_type?: string
+          gstin?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          shipping_city?: string | null
+          shipping_country?: string | null
+          shipping_pincode?: string | null
+          shipping_same?: boolean
+          shipping_state?: string | null
+          shipping_state_code?: string | null
+          shipping_street?: string | null
+          updated_at?: string
+        }
+        Update: {
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_pincode?: string | null
+          billing_state?: string | null
+          billing_state_code?: string | null
+          billing_street?: string | null
+          created_at?: string
+          created_by?: string | null
+          gst_type?: string
+          gstin?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          shipping_city?: string | null
+          shipping_country?: string | null
+          shipping_pincode?: string | null
+          shipping_same?: boolean
+          shipping_state?: string | null
+          shipping_state_code?: string | null
+          shipping_street?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       policies: {
         Row: {
@@ -1268,6 +1611,11 @@ export type Database = {
     Functions: {
       accrue_earned_leave: { Args: never; Returns: undefined }
       cap_earned_leave_year_end: { Args: never; Returns: undefined }
+      finalize_billing_document: {
+        Args: { _document_id: string }
+        Returns: Json
+      }
+      finalize_tax_invoice: { Args: { _document_id: string }; Returns: Json }
       get_basic_profiles: {
         Args: { _user_ids: string[] }
         Returns: {
@@ -1275,6 +1623,10 @@ export type Database = {
           full_name: string
           id: string
         }[]
+      }
+      get_next_billing_number: {
+        Args: { _doc_type: string; _financial_year: string }
+        Returns: string
       }
       get_sales_dashboard_stats: { Args: never; Returns: Json }
       get_upcoming_birthdays: {
