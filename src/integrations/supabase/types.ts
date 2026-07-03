@@ -581,6 +581,45 @@ export type Database = {
           },
         ]
       }
+      production_log_products_consumed: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          production_log_id: string
+          quantity_consumed: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          production_log_id: string
+          quantity_consumed: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          production_log_id?: string
+          quantity_consumed?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_log_products_consumed_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_log_products_consumed_production_log_id_fkey"
+            columns: ["production_log_id"]
+            isOneToOne: false
+            referencedRelation: "production_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       production_logs: {
         Row: {
           created_at: string

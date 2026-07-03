@@ -85,6 +85,33 @@ export function ProductionLogDetailsDialog({ log, open, onOpenChange, canEdit, o
               )}
             </div>
 
+            {(log.products_consumed || []).length > 0 && (
+              <>
+                <Separator />
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Finished Products Used ({(log.products_consumed || []).length})
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    {(log.products_consumed || []).map((p) => (
+                      <div
+                        key={p.id}
+                        className="flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2"
+                      >
+                        <span className="text-sm font-medium">{p.product?.name}</span>
+                        <Badge variant="outline">
+                          {Number(p.quantity_consumed).toFixed(2)} {p.product?.unit}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
             <Separator />
 
             {/* Notes */}

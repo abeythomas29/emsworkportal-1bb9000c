@@ -35,6 +35,12 @@ export interface ProductionLog {
     quantity_consumed: number;
     raw_material?: { name: string; unit: string };
   }>;
+  products_consumed?: Array<{
+    id: string;
+    product_id: string;
+    quantity_consumed: number;
+    product?: { name: string; unit: string };
+  }>;
 }
 
 export function useProducts() {
@@ -80,10 +86,14 @@ export function useProductionLogs() {
       const ids = (logs || []).map((l) => l.id);
       if (ids.length === 0) return [] as ProductionLog[];
 
-      const [matsRes, profilesRes] = await Promise.all([
+      const [matsRes, prodConsRes, profilesRes] = await Promise.all([
         supabase
           .from('production_log_materials')
           .select('*, raw_material:raw_materials(name, unit)')
+          .in('production_log_id', ids),
+        supabase
+          .from('production_log_products_consumed')
+          .select('*, product:products(name, unit)')
           .in('production_log_id', ids),
         supabase
           .from('profiles')
@@ -97,12 +107,19 @@ export function useProductionLogs() {
         arr.push(m);
         matsByLog.set(m.production_log_id, arr);
       });
+      const prodConsByLog = new Map<string, any[]>();
+      (prodConsRes.data || []).forEach((p: any) => {
+        const arr = prodConsByLog.get(p.production_log_id) || [];
+        arr.push(p);
+        prodConsByLog.set(p.production_log_id, arr);
+      });
       const profileMap = new Map<string, string>();
       (profilesRes.data || []).forEach((p: any) => profileMap.set(p.id, p.full_name));
 
       return (logs || []).map((l: any) => ({
         ...l,
         materials: matsByLog.get(l.id) || [],
+        products_consumed: prodConsByLog.get(l.id) || [],
         logger: { full_name: profileMap.get(l.user_id) || 'Unknown' },
       })) as ProductionLog[];
     },
@@ -224,6 +241,7 @@ export function useCreateProductionLog() {
       quantity_produced: number;
       notes?: string;
       materials: Array<{ raw_material_id: string; quantity_consumed: number }>;
+      products_consumed?: Array<{ product_id: string; quantity_consumed: number }>;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
@@ -254,6 +272,20 @@ export function useCreateProductionLog() {
         );
         if (matErr) throw matErr;
       }
+
+      const validProds = (input.products_consumed || []).filter(
+        (p) => p.product_id && p.quantity_consumed > 0
+      );
+      if (validProds.length > 0) {
+        const { error: pErr } = await supabase.from('production_log_products_consumed').insert(
+          validProds.map((p) => ({
+            production_log_id: log.id,
+            product_id: p.product_id,
+            quantity_consumed: p.quantity_consumed,
+          }))
+        );
+        if (pErr) throw pErr;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['production_logs'] });
@@ -278,6 +310,7 @@ export function useUpdateProductionLog() {
       quantity_produced: number;
       notes?: string;
       materials: Array<{ raw_material_id: string; quantity_consumed: number }>;
+      products_consumed?: Array<{ product_id: string; quantity_consumed: number }>;
     }) => {
       const { error: updErr } = await supabase
         .from('production_logs')
@@ -290,7 +323,6 @@ export function useUpdateProductionLog() {
         .eq('id', input.id);
       if (updErr) throw updErr;
 
-      // Replace materials: delete existing then insert new (triggers will adjust stock)
       const { error: delErr } = await supabase
         .from('production_log_materials')
         .delete()
@@ -309,6 +341,26 @@ export function useUpdateProductionLog() {
           }))
         );
         if (matErr) throw matErr;
+      }
+
+      const { error: delProdErr } = await supabase
+        .from('production_log_products_consumed')
+        .delete()
+        .eq('production_log_id', input.id);
+      if (delProdErr) throw delProdErr;
+
+      const validProds = (input.products_consumed || []).filter(
+        (p) => p.product_id && p.quantity_consumed > 0
+      );
+      if (validProds.length > 0) {
+        const { error: pErr } = await supabase.from('production_log_products_consumed').insert(
+          validProds.map((p) => ({
+            production_log_id: input.id,
+            product_id: p.product_id,
+            quantity_consumed: p.quantity_consumed,
+          }))
+        );
+        if (pErr) throw pErr;
       }
     },
     onSuccess: () => {
