@@ -27,6 +27,7 @@ import { generateBillingPdf, prepareBrandingAssets, preloadCompanyImages } from 
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { PartyDialog } from './PartyDialog';
+import { NewProductDialog } from './NewProductDialog';
 
 type DocType = 'tax_invoice' | 'proforma' | 'estimate';
 
@@ -128,6 +129,8 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
   const [docNumber, setDocNumber] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(documentId ?? null);
   const [partyDialogOpen, setPartyDialogOpen] = useState(false);
+  const [newProductOpen, setNewProductOpen] = useState(false);
+  const [newProductForLine, setNewProductForLine] = useState<number | null>(null);
 
   // load existing
   useEffect(() => {
@@ -496,6 +499,15 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
                               </SelectContent>
                             </Select>
                           </div>
+                          {!readOnly && l.item_name.trim() && !matched && (
+                            <button
+                              type="button"
+                              onClick={() => { setNewProductForLine(idx); setNewProductOpen(true); }}
+                              className="text-xs text-primary hover:underline self-start"
+                            >
+                              + Add "{l.item_name.trim()}" as new product
+                            </button>
+                          )}
                           {stock !== null && (
                             <div className="flex items-center gap-2 text-xs">
                               <Badge
@@ -678,6 +690,23 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
           open={partyDialogOpen}
           onOpenChange={setPartyDialogOpen}
           onSaved={(p) => { setPartyId(p.id); setPosState(p.billing_state || ''); setPosCode(p.billing_state_code || ''); }}
+        />
+
+        <NewProductDialog
+          open={newProductOpen}
+          onOpenChange={(o) => { setNewProductOpen(o); if (!o) setNewProductForLine(null); }}
+          defaultName={newProductForLine !== null ? (lines[newProductForLine]?.item_name || '') : ''}
+          onCreated={(p) => {
+            if (newProductForLine === null) return;
+            setLine(newProductForLine, {
+              product_id: p.id,
+              item_name: p.name,
+              unit: p.unit,
+              hsn_sac: p.hsn_sac || autoHsn(p.name, ''),
+              unit_price: p.unit_price || autoPrice(p.name, 0),
+              tax_percent: p.tax_percent || autoGst(p.name, 18),
+            });
+          }}
         />
       </DialogContent>
     </Dialog>
