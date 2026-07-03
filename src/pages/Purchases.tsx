@@ -5,10 +5,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { POListPanel } from '@/components/purchases/POListPanel';
 import { InvoiceListPanel } from '@/components/purchases/InvoiceListPanel';
 import { PurchaseReportsPanel } from '@/components/purchases/PurchaseReportsPanel';
-import { Loader2, ShoppingBag, ClipboardList, Receipt, FileSpreadsheet } from 'lucide-react';
+import { VendorsPanel } from '@/components/purchases/VendorsPanel';
+import { Loader2, ShoppingBag, ClipboardList, Receipt, FileSpreadsheet, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type Tab = 'orders' | 'invoices' | 'reports';
+type Tab = 'orders' | 'invoices' | 'vendors' | 'reports';
 
 export default function PurchasesPage() {
   const { role, isLoading } = useAuth();
