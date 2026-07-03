@@ -199,6 +199,7 @@ export function POListPanel() {
           )}
         </CardContent>
       </Card>
+      <TermsTemplatesDialog open={termsDialogOpen} onOpenChange={setTermsDialogOpen} />
     </div>
   );
 }
