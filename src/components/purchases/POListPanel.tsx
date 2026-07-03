@@ -150,6 +150,10 @@ export function POListPanel() {
                             <Button variant="ghost" size="icon"><MoreHorizontal className="w-4 h-4" /></Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleDownloadPdf(po.id, po.po_number, po.vendor_id)}>
+                              <FileDown className="w-4 h-4 mr-2" /> Download PDF
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             {po.status === 'draft' && (
                               <DropdownMenuItem onClick={() => updateStatus({ id: po.id, status: 'approved' })}>
                                 <CheckCircle2 className="w-4 h-4 mr-2" /> Approve
