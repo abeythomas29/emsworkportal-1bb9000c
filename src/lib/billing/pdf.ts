@@ -19,6 +19,8 @@ export interface CompanyInfo {
   bank_micr?: string | null;
   bank_branch_code?: string | null;
   bank_swift?: string | null;
+  logo_url?: string | null;
+  signature_url?: string | null;
 }
 
 export interface PartySnapshot {
