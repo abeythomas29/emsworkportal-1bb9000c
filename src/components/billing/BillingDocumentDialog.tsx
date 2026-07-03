@@ -23,7 +23,7 @@ import {
 import { INDIAN_STATES } from '@/lib/billing/states';
 import { computeLine, computeTotals, financialYearOf, buildHsnSummary } from '@/lib/billing/calc';
 import { numberToIndianWords } from '@/lib/billing/numberToWords';
-import { generateBillingPdf } from '@/lib/billing/pdf';
+import { generateBillingPdf, prepareBrandingAssets } from '@/lib/billing/pdf';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { PartyDialog } from './PartyDialog';
@@ -315,14 +315,16 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
     sameState,
   });
 
-  const downloadPdf = () => {
+  const downloadPdf = async () => {
     if (!company) return;
+    await prepareBrandingAssets();
     const pdf = generateBillingPdf(buildPdfInput());
     pdf.save(`${docNumber || 'DRAFT'}.pdf`);
   };
 
-  const previewPdf = () => {
+  const previewPdf = async () => {
     if (!company) return;
+    await prepareBrandingAssets();
     const pdf = generateBillingPdf(buildPdfInput());
     window.open(pdf.output('bloburl'), '_blank');
   };
