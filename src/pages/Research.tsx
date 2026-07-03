@@ -16,7 +16,8 @@ import { useEmployees } from '@/hooks/useEmployees';
 import { NewTestDialog } from '@/components/research/NewTestDialog';
 import { NewSeriesDialog } from '@/components/research/NewSeriesDialog';
 import { FeedbackDialog } from '@/components/research/FeedbackDialog';
-import { FlaskConical, MessageSquarePlus, Trash2, CheckCircle2 } from 'lucide-react';
+import { FlowRateCalculator } from '@/components/research/FlowRateCalculator';
+import { FlaskConical, MessageSquarePlus, Trash2, CheckCircle2, Droplets } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function ResearchPage() {
@@ -159,6 +160,9 @@ export default function ResearchPage() {
             <TabsTrigger value="all">All Tests ({filtered.length})</TabsTrigger>
             <TabsTrigger value="mine">My Tests ({mine.length})</TabsTrigger>
             <TabsTrigger value="others">Others ({others.length})</TabsTrigger>
+            <TabsTrigger value="flow-rate">
+              <Droplets className="w-4 h-4 mr-1" /> Flow Rate Calculator
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="all" className="space-y-4 mt-4">
             {isLoading ? <p className="text-muted-foreground">Loading…</p> :
