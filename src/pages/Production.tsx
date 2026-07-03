@@ -118,7 +118,14 @@ export default function ProductionPage() {
                                   {m.raw_material?.name}: {Number(m.quantity_consumed).toFixed(2)} {m.raw_material?.unit}
                                 </Badge>
                               ))}
-                              {(log.materials || []).length === 0 && <span className="text-muted-foreground text-xs">—</span>}
+                              {(log.products_consumed || []).map((p) => (
+                                <Badge key={p.id} variant="secondary" className="text-xs">
+                                  {p.product?.name}: {Number(p.quantity_consumed).toFixed(2)} {p.product?.unit}
+                                </Badge>
+                              ))}
+                              {(log.materials || []).length === 0 && (log.products_consumed || []).length === 0 && (
+                                <span className="text-muted-foreground text-xs">—</span>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">{log.notes || '—'}</TableCell>
