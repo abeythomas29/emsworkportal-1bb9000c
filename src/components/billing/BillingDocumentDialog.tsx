@@ -767,7 +767,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="order-1 md:order-2">
             <CardContent className="p-4 space-y-2 text-sm">
               <Row label="Sub Total" value={totals.total_taxable} />
               {sameState ? (
