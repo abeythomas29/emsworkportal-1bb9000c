@@ -106,6 +106,12 @@ const autoPrice = (name: string, current: number) => {
 };
 const autoGst = (name: string, current: number) => (isEms(name) ? 18 : current);
 
+const SHIPPING_LABEL = 'Shipping Charges';
+const SHIPPING_HSN = '996812';
+const SHIPPING_GST = 18;
+
+
+
 
 
 export function BillingDocumentDialog({ open, onOpenChange, documentId, initialType = 'tax_invoice', onConvert }: Props) {
