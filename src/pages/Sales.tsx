@@ -29,9 +29,9 @@ export default function SalesPage() {
     <DashboardLayout>
       <div className="space-y-8 animate-fade-in">
         {/* Header */}
-        <header className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between border-b border-border/60 pb-6">
-          <div className="space-y-4 min-w-0">
-            <div role="tablist" aria-label="Sales sections" className="flex items-center gap-2">
+        <header className="flex flex-col gap-4 md:gap-5 md:flex-row md:items-end md:justify-between border-b border-border/60 pb-5 md:pb-6">
+          <div className="space-y-3 md:space-y-4 min-w-0">
+            <div role="tablist" aria-label="Sales sections" className="flex items-center gap-2 overflow-x-auto -mx-1 px-1 scrollbar-hide">
               <PillTab active={tab === 'billing'} onClick={() => setTab('billing')} icon={<Receipt className="w-4 h-4" />}>
                 Billing
               </PillTab>
@@ -40,8 +40,8 @@ export default function SalesPage() {
               </PillTab>
             </div>
             <div className="flex items-center gap-3">
-              <IndianRupee className="w-7 h-7 md:w-8 md:h-8 text-primary" aria-hidden />
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">Sales Portal</h1>
+              <IndianRupee className="w-6 h-6 md:w-8 md:h-8 text-primary" aria-hidden />
+              <h1 className="text-2xl md:text-4xl font-bold tracking-tight text-foreground">Sales Portal</h1>
             </div>
             <p className="text-sm md:text-base text-muted-foreground max-w-2xl">
               Create GST invoices and track revenue, customers, and top products.
