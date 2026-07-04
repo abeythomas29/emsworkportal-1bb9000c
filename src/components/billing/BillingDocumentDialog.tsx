@@ -769,6 +769,40 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
           </Button>
         )}
 
+        {/* Shipping charges (optional, taxed @ 18%) */}
+        <Card className="mt-4">
+          <CardContent className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <label className="flex items-center gap-2 text-sm font-medium cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-primary"
+                checked={shippingEnabled}
+                disabled={readOnly}
+                onChange={(e) => setShippingEnabled(e.target.checked)}
+              />
+              Add shipping charges
+            </label>
+            {shippingEnabled && (
+              <div className="flex items-center gap-2 flex-1 sm:justify-end">
+                <Label className="text-xs whitespace-nowrap">Amount (₹)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  inputMode="decimal"
+                  value={shippingAmount || ''}
+                  onChange={(e) => setShippingAmount(Number(e.target.value))}
+                  disabled={readOnly}
+                  className="max-w-[160px]"
+                  placeholder="0.00"
+                />
+                <span className="text-xs text-muted-foreground whitespace-nowrap">+ 18% GST</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+
+
         {/* HSN summary + totals */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           <Card className="md:col-span-2 order-2 md:order-1">
