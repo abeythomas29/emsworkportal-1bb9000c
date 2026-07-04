@@ -202,7 +202,11 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
     p.phone ? `Phone: ${p.phone}` : null,
   ].filter(Boolean) as string[];
   const partyMaxW = colW - 6;
-  const partyWrapped: string[][] = partyLines.map((l) => doc.splitTextToSize(String(l), partyMaxW));
+  const partyWrapped: string[][] = partyLines.map((l) =>
+    String(l)
+      .split(/\r?\n/)
+      .flatMap((seg) => doc.splitTextToSize(seg || ' ', partyMaxW) as string[])
+  );
   const partyTextH = partyWrapped.reduce((s, w) => s + w.length * 4.5, 0);
 
   const details: [string, string][] = [
