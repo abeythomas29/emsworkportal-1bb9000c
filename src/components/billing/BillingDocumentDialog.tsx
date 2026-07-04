@@ -613,7 +613,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Input value={l.hsn_sac} onChange={(e) => setLine(idx, { hsn_sac: e.target.value })} disabled={readOnly} />
+                        <Input value={l.hsn_sac} onChange={(e) => setLine(idx, { hsn_sac: e.target.value })} list="hsn-suggestions" disabled={readOnly} />
                       </TableCell>
 
                       <TableCell>
