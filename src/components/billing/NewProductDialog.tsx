@@ -26,6 +26,26 @@ interface Props {
 
 export function NewProductDialog({ open, onOpenChange, defaultName = '', onCreated }: Props) {
   const qc = useQueryClient();
+  const { data: hsnSuggestions = [] } = useQuery({
+    queryKey: ['hsn_suggestions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('billing_document_items')
+        .select('hsn_sac')
+        .not('hsn_sac', 'is', null)
+        .limit(1000);
+      if (error) throw error;
+      const counts = new Map<string, number>();
+      for (const r of data || []) {
+        const h = (r as { hsn_sac: string | null }).hsn_sac?.trim();
+        if (!h) continue;
+        counts.set(h, (counts.get(h) || 0) + 1);
+      }
+      return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).map(([h]) => h);
+    },
+    staleTime: 60_000,
+    enabled: open,
+  });
   const [name, setName] = useState(defaultName);
   const [unit, setUnit] = useState('kg');
   const [hsn, setHsn] = useState('');
