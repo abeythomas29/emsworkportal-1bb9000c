@@ -861,6 +861,32 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
 
           <Card className="order-1 md:order-2">
             <CardContent className="p-4 space-y-2 text-sm">
+              {(() => {
+                const byUnit = new Map<string, number>();
+                for (const l of computedAll) {
+                  const name = (l.item_name || '').trim();
+                  if (!name || name === SHIPPING_LABEL) continue;
+                  const q = Number(l.quantity) || 0;
+                  if (!q) continue;
+                  const u = (l.unit || '').trim() || '—';
+                  byUnit.set(u, (byUnit.get(u) || 0) + q);
+                }
+                const entries = Array.from(byUnit.entries());
+                if (entries.length === 0) return null;
+                return (
+                  <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 pb-2 border-b">
+                    <span className="text-muted-foreground">Total Qty</span>
+                    <span className="font-medium text-right">
+                      {entries.map(([u, q], i) => (
+                        <span key={u}>
+                          {i > 0 && <span className="text-muted-foreground mx-1">·</span>}
+                          {q.toLocaleString('en-IN', { maximumFractionDigits: 3 })} {u}
+                        </span>
+                      ))}
+                    </span>
+                  </div>
+                );
+              })()}
               <Row label="Sub Total" value={totals.total_taxable} />
               {sameState ? (
                 <>
