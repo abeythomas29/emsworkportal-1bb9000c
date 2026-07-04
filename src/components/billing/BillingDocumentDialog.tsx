@@ -334,9 +334,9 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl w-[calc(100vw-1rem)] sm:w-full max-h-[95vh] overflow-y-auto p-4 sm:p-6 pb-24 sm:pb-6">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
+          <DialogTitle className="flex flex-wrap items-center gap-2 sm:gap-3 text-base sm:text-lg pr-6">
             {TITLE[docType]}
             {status === 'finalized' ? (
               <Badge className="bg-success text-success-foreground">Finalized · {docNumber}</Badge>
