@@ -977,6 +977,12 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
         </div>
 
 
+        <datalist id="hsn-suggestions">
+          {hsnSuggestions.map((h) => (
+            <option key={h} value={h} />
+          ))}
+        </datalist>
+
         <PartyDialog
           open={partyDialogOpen}
           onOpenChange={setPartyDialogOpen}
