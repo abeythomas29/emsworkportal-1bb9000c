@@ -118,7 +118,10 @@ export function NewProductDialog({ open, onOpenChange, defaultName = '', onCreat
             </div>
             <div className="space-y-2">
               <Label>HSN / SAC</Label>
-              <Input value={hsn} onChange={(e) => setHsn(e.target.value)} />
+              <Input value={hsn} onChange={(e) => setHsn(e.target.value)} list="new-product-hsn-suggestions" />
+              <datalist id="new-product-hsn-suggestions">
+                {hsnSuggestions.map((h) => <option key={h} value={h} />)}
+              </datalist>
             </div>
             <div className="space-y-2">
               <Label>Unit Price</Label>
