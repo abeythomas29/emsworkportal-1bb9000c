@@ -189,14 +189,10 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   doc.setTextColor(0, 0, 0);
   y += 9.2;
   const colW = (pageW - 2 * M) / 2;
-  const detailH = 34;
-  doc.rect(M, y, colW, detailH);
-  doc.rect(M + colW, y, colW, detailH);
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.text('Bill To', M + 3, y + 5);
+  // Precompute wrapped content to size the box dynamically so nothing overflows
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
   const p = input.party;
   const partyLines = [
     p.name,
@@ -206,16 +202,9 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
     p.phone ? `Phone: ${p.phone}` : null,
   ].filter(Boolean) as string[];
   const partyMaxW = colW - 6;
-  let py = y + 10;
-  partyLines.forEach((l) => {
-    const wrapped = doc.splitTextToSize(String(l), partyMaxW);
-    doc.text(wrapped, M + 3, py);
-    py += wrapped.length * 4.5;
-  });
+  const partyWrapped: string[][] = partyLines.map((l) => doc.splitTextToSize(String(l), partyMaxW));
+  const partyTextH = partyWrapped.reduce((s, w) => s + w.length * 4.5, 0);
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('Invoice Details', M + colW + 3, y + 5);
-  doc.setFont('helvetica', 'normal');
   const details: [string, string][] = [
     ['Invoice No', input.doc_number || 'DRAFT'],
     ['Date', fmtDate(input.doc_date)],
@@ -224,6 +213,27 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   if (input.doc_type === 'tax_invoice' && input.payment_mode) {
     details.push(['Payment Mode', input.payment_mode]);
   }
+  const detailsTextH = details.length * 5;
+
+  // Box height fits the taller column, with header + padding
+  const detailH = Math.max(34, 10 + Math.max(partyTextH, detailsTextH) + 4);
+  doc.rect(M, y, colW, detailH);
+  doc.rect(M + colW, y, colW, detailH);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.text('Bill To', M + 3, y + 5);
+  doc.setFont('helvetica', 'normal');
+  let py = y + 10;
+  partyWrapped.forEach((wrapped) => {
+    doc.text(wrapped, M + 3, py);
+    py += wrapped.length * 4.5;
+  });
+
+  doc.setFont('helvetica', 'bold');
+  doc.text('Invoice Details', M + colW + 3, y + 5);
+  doc.setFont('helvetica', 'normal');
+
   details.forEach(([k, v], i) => {
     doc.text(k, M + colW + 3, y + 10 + i * 5);
     doc.text(': ' + v, M + colW + 32, y + 10 + i * 5);
