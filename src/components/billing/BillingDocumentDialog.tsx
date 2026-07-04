@@ -224,7 +224,8 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
 
   const totals = useMemo(() => computeTotals(computed), [computed]);
   const hsnRows = useMemo(() => buildHsnSummary(computed, sameState), [computed, sameState]);
-  const readOnly = status === 'finalized';
+  const [unlocked, setUnlocked] = useState(false);
+  const readOnly = status === 'finalized' && !unlocked;
 
   const setLine = (idx: number, patch: Partial<LineRow>) => {
     setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
