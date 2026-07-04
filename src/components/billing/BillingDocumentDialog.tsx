@@ -360,7 +360,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
     terms,
     company: company!,
     party: (buildPartySnapshot() as never) || { name: 'Unknown' },
-    lines: computed.filter((l) => l.item_name.trim()),
+    lines: computedAll.filter((l) => l.item_name.trim()),
     sameState,
   });
 
