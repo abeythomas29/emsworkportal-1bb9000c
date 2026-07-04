@@ -106,6 +106,12 @@ const autoPrice = (name: string, current: number) => {
 };
 const autoGst = (name: string, current: number) => (isEms(name) ? 18 : current);
 
+const SHIPPING_LABEL = 'Shipping Charges';
+const SHIPPING_HSN = '996812';
+const SHIPPING_GST = 18;
+
+
+
 
 
 export function BillingDocumentDialog({ open, onOpenChange, documentId, initialType = 'tax_invoice', onConvert }: Props) {
@@ -131,10 +137,13 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
   const [partyDialogOpen, setPartyDialogOpen] = useState(false);
   const [newProductOpen, setNewProductOpen] = useState(false);
   const [newProductForLine, setNewProductForLine] = useState<number | null>(null);
+  const [shippingEnabled, setShippingEnabled] = useState(false);
+  const [shippingAmount, setShippingAmount] = useState<number>(0);
 
   // load existing
   useEffect(() => {
     if (existing?.doc) {
+
       const d = existing.doc;
       setDocType(d.doc_type);
       setDocDate(d.doc_date);
@@ -147,7 +156,11 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
       setStatus(d.status);
       setDocNumber(d.doc_number);
       setSavedId(d.id);
-      const its: BillingDocumentItem[] = existing.items || [];
+      const allItems: BillingDocumentItem[] = existing.items || [];
+      const shipItem = allItems.find((i) => i.item_name === SHIPPING_LABEL);
+      const its = allItems.filter((i) => i.item_name !== SHIPPING_LABEL);
+      setShippingEnabled(!!shipItem);
+      setShippingAmount(shipItem ? Number(shipItem.unit_price) : 0);
       setLines(
         its.length
           ? its.map((i) => ({
@@ -164,6 +177,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
             }))
           : [blankLine()]
       );
+
     }
   }, [existing]);
 
@@ -182,7 +196,10 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
       setStatus('draft');
       setDocNumber(null);
       setSavedId(null);
+      setShippingEnabled(false);
+      setShippingAmount(0);
     }
+
   }, [open, documentId, initialType]);
 
   const selectedParty: Party | undefined = useMemo(
@@ -222,8 +239,35 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
     [lines, sameState]
   );
 
-  const totals = useMemo(() => computeTotals(computed), [computed]);
-  const hsnRows = useMemo(() => buildHsnSummary(computed, sameState), [computed, sameState]);
+  const shippingLine = useMemo(
+    () =>
+      shippingEnabled && shippingAmount > 0
+        ? computeLine(
+            {
+              item_name: SHIPPING_LABEL,
+              hsn_sac: SHIPPING_HSN,
+              quantity: 1,
+              unit: 'Nos',
+              unit_price: Number(shippingAmount) || 0,
+              discount_percent: 0,
+              tax_percent: SHIPPING_GST,
+              product_id: null,
+              description: null,
+            },
+            sameState,
+          )
+        : null,
+    [shippingEnabled, shippingAmount, sameState],
+  );
+
+  const computedAll = useMemo(
+    () => (shippingLine ? [...computed, shippingLine] : computed),
+    [computed, shippingLine],
+  );
+
+  const totals = useMemo(() => computeTotals(computedAll), [computedAll]);
+  const hsnRows = useMemo(() => buildHsnSummary(computedAll, sameState), [computedAll, sameState]);
+
   const [unlocked, setUnlocked] = useState(false);
   const readOnly = status === 'finalized' && !unlocked;
 
@@ -269,9 +313,10 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
       toast.error(err);
       return;
     }
-    const items = computed
+    const items = computedAll
       .filter((l) => l.item_name.trim())
       .map((l, i) => ({
+
         position: i,
         product_id: l.product_id || null,
         item_name: l.item_name,
@@ -315,7 +360,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
     terms,
     company: company!,
     party: (buildPartySnapshot() as never) || { name: 'Unknown' },
-    lines: computed.filter((l) => l.item_name.trim()),
+    lines: computedAll.filter((l) => l.item_name.trim()),
     sameState,
   });
 
@@ -723,6 +768,40 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
             <Plus className="w-4 h-4 mr-1" /> Add Line
           </Button>
         )}
+
+        {/* Shipping charges (optional, taxed @ 18%) */}
+        <Card className="mt-4">
+          <CardContent className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <label className="flex items-center gap-2 text-sm font-medium cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-primary"
+                checked={shippingEnabled}
+                disabled={readOnly}
+                onChange={(e) => setShippingEnabled(e.target.checked)}
+              />
+              Add shipping charges
+            </label>
+            {shippingEnabled && (
+              <div className="flex items-center gap-2 flex-1 sm:justify-end">
+                <Label className="text-xs whitespace-nowrap">Amount (₹)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  inputMode="decimal"
+                  value={shippingAmount || ''}
+                  onChange={(e) => setShippingAmount(Number(e.target.value))}
+                  disabled={readOnly}
+                  className="max-w-[160px]"
+                  placeholder="0.00"
+                />
+                <span className="text-xs text-muted-foreground whitespace-nowrap">+ 18% GST</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+
 
         {/* HSN summary + totals */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
