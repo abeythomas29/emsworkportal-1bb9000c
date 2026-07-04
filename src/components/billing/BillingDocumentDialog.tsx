@@ -420,8 +420,8 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
           )}
         </div>
 
-        {/* Line items */}
-        <Card className="mt-4">
+        {/* Line items — desktop table */}
+        <Card className="mt-4 hidden md:block">
           <CardContent className="p-0 overflow-x-auto">
             <Table>
               <TableHeader>
@@ -534,18 +534,18 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
                       </TableCell>
 
                       <TableCell>
-                        <Input type="number" step="0.001" value={l.quantity}
+                        <Input type="number" step="0.001" inputMode="decimal" value={l.quantity}
                           onChange={(e) => setLine(idx, { quantity: Number(e.target.value) })} disabled={readOnly} />
                       </TableCell>
                       <TableCell>
                         <Input value={l.unit} onChange={(e) => setLine(idx, { unit: e.target.value })} disabled={readOnly} />
                       </TableCell>
                       <TableCell>
-                        <Input type="number" step="0.01" value={l.unit_price}
+                        <Input type="number" step="0.01" inputMode="decimal" value={l.unit_price}
                           onChange={(e) => setLine(idx, { unit_price: Number(e.target.value) })} disabled={readOnly} />
                       </TableCell>
                       <TableCell>
-                        <Input type="number" step="0.01" value={l.tax_percent}
+                        <Input type="number" step="0.01" inputMode="decimal" value={l.tax_percent}
                           onChange={(e) => setLine(idx, { tax_percent: Number(e.target.value) })} disabled={readOnly} />
                       </TableCell>
                       <TableCell className="text-right font-medium">
@@ -565,6 +565,145 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
             </Table>
           </CardContent>
         </Card>
+
+        {/* Line items — mobile stacked cards */}
+        <div className="mt-4 space-y-3 md:hidden">
+          {lines.map((l, idx) => {
+            const c = computed[idx];
+            const matched = products.find((p) => p.name.toLowerCase() === l.item_name.trim().toLowerCase());
+            const stock = matched ? Number(matched.current_stock || 0) : null;
+            return (
+              <Card key={l.key} className="border-border/60">
+                <CardContent className="p-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-muted-foreground">Item #{idx + 1}</span>
+                    {!readOnly && (
+                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setLines((ls) => ls.filter((_, i) => i !== idx))}>
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Item</Label>
+                    <div className="flex gap-1">
+                      <Input
+                        value={l.item_name}
+                        list={`products-list-m-${l.key}`}
+                        onChange={(e) => {
+                          const name = e.target.value;
+                          const p = products.find((x) => x.name.toLowerCase() === name.trim().toLowerCase());
+                          setLine(idx, {
+                            item_name: name,
+                            product_id: p ? p.id : null,
+                            unit: p ? p.unit : l.unit,
+                            hsn_sac: autoHsn(name, l.hsn_sac),
+                            unit_price: autoPrice(name, l.unit_price),
+                            tax_percent: autoGst(name, l.tax_percent),
+                          });
+                        }}
+                        placeholder="Type product code…"
+                        disabled={readOnly}
+                      />
+                      <datalist id={`products-list-m-${l.key}`}>
+                        {products.map((p) => (
+                          <option key={p.id} value={p.name}>
+                            {`Stock: ${Number(p.current_stock || 0).toFixed(2)} ${p.unit || 'kg'}`}
+                          </option>
+                        ))}
+                      </datalist>
+                      <Select
+                        value={l.product_id || ''}
+                        onValueChange={(pid) => {
+                          const p = products.find((x) => x.id === pid);
+                          if (p) setLine(idx, {
+                            product_id: pid,
+                            item_name: p.name,
+                            unit: p.unit,
+                            hsn_sac: autoHsn(p.name, l.hsn_sac),
+                            unit_price: autoPrice(p.name, l.unit_price),
+                            tax_percent: autoGst(p.name, l.tax_percent),
+                          });
+                        }}
+                        disabled={readOnly}
+                      >
+                        <SelectTrigger className="w-[44px] p-0 justify-center" aria-label="Pick product" />
+                        <SelectContent>
+                          {products.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.name} · {Number(p.current_stock || 0).toFixed(2)} {p.unit || 'kg'}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {!readOnly && l.item_name.trim() && !matched && (
+                      <button
+                        type="button"
+                        onClick={() => { setNewProductForLine(idx); setNewProductOpen(true); }}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        + Add "{l.item_name.trim()}" as new product
+                      </button>
+                    )}
+                    {stock !== null && (
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <Badge
+                          variant="outline"
+                          className={stock <= 0 ? 'text-destructive border-destructive' : stock < l.quantity ? 'text-warning border-warning' : 'text-success border-success'}
+                        >
+                          Stock: {stock.toFixed(2)} {matched?.unit || 'kg'}
+                        </Badge>
+                        {stock < l.quantity && stock > 0 && <span className="text-warning">Insufficient</span>}
+                        {stock <= 0 && <span className="text-destructive">Out of stock</span>}
+                      </div>
+                    )}
+                    <Input
+                      value={l.description}
+                      onChange={(e) => setLine(idx, { description: e.target.value })}
+                      placeholder="Description (optional)"
+                      className="text-xs h-9"
+                      disabled={readOnly}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">HSN/SAC</Label>
+                      <Input value={l.hsn_sac} onChange={(e) => setLine(idx, { hsn_sac: e.target.value })} disabled={readOnly} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Unit</Label>
+                      <Input value={l.unit} onChange={(e) => setLine(idx, { unit: e.target.value })} disabled={readOnly} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Qty</Label>
+                      <Input type="number" step="0.001" inputMode="decimal" value={l.quantity}
+                        onChange={(e) => setLine(idx, { quantity: Number(e.target.value) })} disabled={readOnly} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Price</Label>
+                      <Input type="number" step="0.01" inputMode="decimal" value={l.unit_price}
+                        onChange={(e) => setLine(idx, { unit_price: Number(e.target.value) })} disabled={readOnly} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">GST %</Label>
+                      <Input type="number" step="0.01" inputMode="decimal" value={l.tax_percent}
+                        onChange={(e) => setLine(idx, { tax_percent: Number(e.target.value) })} disabled={readOnly} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Amount</Label>
+                      <div className="h-10 px-3 flex items-center justify-end rounded-md border border-border bg-muted/40 font-semibold tabular-nums">
+                        {c.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
 
         {!readOnly && (
           <Button variant="outline" size="sm" onClick={() => setLines((ls) => [...ls, blankLine()])} className="mt-2">
