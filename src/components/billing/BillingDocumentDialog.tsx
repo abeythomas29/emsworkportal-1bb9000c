@@ -156,7 +156,11 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
       setStatus(d.status);
       setDocNumber(d.doc_number);
       setSavedId(d.id);
-      const its: BillingDocumentItem[] = existing.items || [];
+      const allItems: BillingDocumentItem[] = existing.items || [];
+      const shipItem = allItems.find((i) => i.item_name === SHIPPING_LABEL);
+      const its = allItems.filter((i) => i.item_name !== SHIPPING_LABEL);
+      setShippingEnabled(!!shipItem);
+      setShippingAmount(shipItem ? Number(shipItem.unit_price) : 0);
       setLines(
         its.length
           ? its.map((i) => ({
@@ -173,6 +177,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
             }))
           : [blankLine()]
       );
+
     }
   }, [existing]);
 
