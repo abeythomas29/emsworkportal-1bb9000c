@@ -357,6 +357,38 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   // Amount in Words + Terms — bordered layout block
   y = totalY + 5;
   const infoW = pageW - 2 * M;
+
+  // Total Quantity summary by unit (excluding shipping)
+  const qtyMap = new Map<string, number>();
+  for (const l of input.lines) {
+    if ((l.item_name || '').trim() === 'Shipping Charges') continue;
+    const q = Number(l.quantity) || 0;
+    if (!q) continue;
+    const u = (l.unit || '').trim() || '-';
+    qtyMap.set(u, (qtyMap.get(u) || 0) + q);
+  }
+  const qtyEntries = Array.from(qtyMap.entries());
+  if (qtyEntries.length > 0) {
+    const qtyStr = qtyEntries
+      .map(([u, q]) => `${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 }).format(q)} ${u}`)
+      .join('   ·   ');
+    const qtyH = 8;
+    doc.setDrawColor(...BRAND_CHARCOAL);
+    doc.setLineWidth(0.2);
+    doc.rect(M, y, infoW, qtyH);
+    doc.setFillColor(...BRAND_GOLD_SOFT);
+    doc.rect(M, y, 45, qtyH, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...BRAND_CHARCOAL);
+    doc.text('TOTAL QUANTITY', M + 3, y + 5.2);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(0, 0, 0);
+    doc.text(qtyStr, M + 48, y + 5.4);
+    y += qtyH + 2;
+  }
+
   const words = numberToIndianWords(totals.total);
   const wordsWrapped = doc.splitTextToSize(words, infoW - 6);
   const wordsH = 5 + wordsWrapped.length * 4 + 3;
