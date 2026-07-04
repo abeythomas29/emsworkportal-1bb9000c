@@ -239,8 +239,35 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
     [lines, sameState]
   );
 
-  const totals = useMemo(() => computeTotals(computed), [computed]);
-  const hsnRows = useMemo(() => buildHsnSummary(computed, sameState), [computed, sameState]);
+  const shippingLine = useMemo(
+    () =>
+      shippingEnabled && shippingAmount > 0
+        ? computeLine(
+            {
+              item_name: SHIPPING_LABEL,
+              hsn_sac: SHIPPING_HSN,
+              quantity: 1,
+              unit: 'Nos',
+              unit_price: Number(shippingAmount) || 0,
+              discount_percent: 0,
+              tax_percent: SHIPPING_GST,
+              product_id: null,
+              description: null,
+            },
+            sameState,
+          )
+        : null,
+    [shippingEnabled, shippingAmount, sameState],
+  );
+
+  const computedAll = useMemo(
+    () => (shippingLine ? [...computed, shippingLine] : computed),
+    [computed, shippingLine],
+  );
+
+  const totals = useMemo(() => computeTotals(computedAll), [computedAll]);
+  const hsnRows = useMemo(() => buildHsnSummary(computedAll, sameState), [computedAll, sameState]);
+
   const [unlocked, setUnlocked] = useState(false);
   const readOnly = status === 'finalized' && !unlocked;
 
