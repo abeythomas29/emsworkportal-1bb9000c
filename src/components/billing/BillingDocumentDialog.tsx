@@ -713,7 +713,8 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
 
         {/* HSN summary + totals */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          <Card className="md:col-span-2">
+          <Card className="md:col-span-2 order-2 md:order-1">
+
             <CardContent className="p-3 overflow-x-auto">
               <div className="text-sm font-medium mb-2">HSN / Tax Summary</div>
               <Table>
