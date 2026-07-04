@@ -446,7 +446,7 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   bankLines.forEach((l, i) => doc.text(l, M + 3, footerY + 10 + i * 4.5));
 
   // UPI QR (only on proforma) — inside bank details column, right side
-  if (input.doc_type === 'proforma' && upiQrImg) {
+  if (upiQrImg) {
     const qrSize = footerH - 12;
     const qrX = M + colW - qrSize - 3;
     const qrY = footerY + 3;
