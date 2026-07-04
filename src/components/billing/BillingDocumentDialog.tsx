@@ -344,8 +344,19 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
             ) : (
               <Badge variant="secondary">Draft</Badge>
             )}
+            {status === 'finalized' && (
+              <Button
+                type="button"
+                size="sm"
+                variant={unlocked ? 'secondary' : 'outline'}
+                onClick={() => setUnlocked((u) => !u)}
+              >
+                {unlocked ? 'Lock' : 'Edit'}
+              </Button>
+            )}
           </DialogTitle>
         </DialogHeader>
+
 
         {/* Header row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
