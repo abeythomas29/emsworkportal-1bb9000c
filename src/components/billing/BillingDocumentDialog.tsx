@@ -224,7 +224,8 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
 
   const totals = useMemo(() => computeTotals(computed), [computed]);
   const hsnRows = useMemo(() => buildHsnSummary(computed, sameState), [computed, sameState]);
-  const readOnly = status === 'finalized';
+  const [unlocked, setUnlocked] = useState(false);
+  const readOnly = status === 'finalized' && !unlocked;
 
   const setLine = (idx: number, patch: Partial<LineRow>) => {
     setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
@@ -343,8 +344,19 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
             ) : (
               <Badge variant="secondary">Draft</Badge>
             )}
+            {status === 'finalized' && (
+              <Button
+                type="button"
+                size="sm"
+                variant={unlocked ? 'secondary' : 'outline'}
+                onClick={() => setUnlocked((u) => !u)}
+              >
+                {unlocked ? 'Lock' : 'Edit'}
+              </Button>
+            )}
           </DialogTitle>
         </DialogHeader>
+
 
         {/* Header row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -802,7 +814,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
 
         {/* Actions */}
         <div className="sticky bottom-0 -mx-4 sm:mx-0 px-4 sm:px-0 py-3 sm:py-4 mt-4 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 flex flex-col-reverse sm:flex-row sm:flex-wrap gap-2 sm:justify-end z-10">
-          {!readOnly ? (
+          {status !== 'finalized' ? (
             <>
               <Button variant="outline" onClick={() => doSave(false)} disabled={save.isPending || finalize.isPending} className="w-full sm:w-auto min-h-11">
                 {save.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
@@ -815,6 +827,12 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
             </>
           ) : (
             <>
+              {unlocked && (
+                <Button onClick={async () => { await doSave(false); setUnlocked(false); }} disabled={save.isPending} className="w-full sm:w-auto min-h-11">
+                  {save.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
+                  Save Changes
+                </Button>
+              )}
               <Button variant="outline" onClick={previewPdf} className="w-full sm:w-auto min-h-11"><Eye className="w-4 h-4 mr-2" /> Preview PDF</Button>
               <Button onClick={downloadPdf} className="w-full sm:w-auto min-h-11"><FileDown className="w-4 h-4 mr-2" /> Download PDF</Button>
               {(docType === 'proforma' || docType === 'estimate') && savedId && onConvert && (
@@ -824,6 +842,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
               )}
             </>
           )}
+
         </div>
 
 
