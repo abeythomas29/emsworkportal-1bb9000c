@@ -753,7 +753,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
                       <Label className="text-xs">HSN/SAC</Label>
-                      <Input value={l.hsn_sac} onChange={(e) => setLine(idx, { hsn_sac: e.target.value })} disabled={readOnly} />
+                      <Input value={l.hsn_sac} onChange={(e) => setLine(idx, { hsn_sac: e.target.value })} list="hsn-suggestions" disabled={readOnly} />
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Unit</Label>
