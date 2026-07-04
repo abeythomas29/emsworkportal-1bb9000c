@@ -137,10 +137,13 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
   const [partyDialogOpen, setPartyDialogOpen] = useState(false);
   const [newProductOpen, setNewProductOpen] = useState(false);
   const [newProductForLine, setNewProductForLine] = useState<number | null>(null);
+  const [shippingEnabled, setShippingEnabled] = useState(false);
+  const [shippingAmount, setShippingAmount] = useState<number>(0);
 
   // load existing
   useEffect(() => {
     if (existing?.doc) {
+
       const d = existing.doc;
       setDocType(d.doc_type);
       setDocDate(d.doc_date);
