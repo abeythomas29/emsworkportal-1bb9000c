@@ -320,75 +320,123 @@ function TypeSection({
             </CardContent>
           </Card>
         ) : (
-          <Card className="border-border/60 overflow-hidden">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent border-border/60">
-                    <TableHead className="text-[11px] uppercase tracking-wider">Number</TableHead>
-                    <TableHead className="text-[11px] uppercase tracking-wider">Date</TableHead>
-                    <TableHead className="text-[11px] uppercase tracking-wider">Party</TableHead>
-                    <TableHead className="text-[11px] uppercase tracking-wider">Status</TableHead>
-                    <TableHead className="text-right text-[11px] uppercase tracking-wider">Total</TableHead>
-                    <TableHead className="text-right text-[11px] uppercase tracking-wider w-24">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((d) => {
-                    const partyName = (d.party_snapshot as { name?: string } | null)?.name || '—';
-                    return (
-                      <TableRow
-                        key={d.id}
-                        className="cursor-pointer border-border/50 hover:bg-muted/40 transition-colors"
-                        onClick={() => onEdit(d.id)}
-                      >
-                        <TableCell className="font-mono text-xs font-medium">
-                          {d.doc_number || <span className="text-muted-foreground italic">DRAFT</span>}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap text-sm">{formatDate(d.doc_date)}</TableCell>
-                        <TableCell className="max-w-[240px] truncate text-sm" title={partyName}>{partyName}</TableCell>
-                        <TableCell>
-                          {d.status === 'finalized' ? (
-                            <Badge className="bg-success/15 text-success border border-success/30 hover:bg-success/20">
-                              Finalized
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="border-border/60 text-muted-foreground">Draft</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right font-semibold tabular-nums text-primary">
-                          {formatCurrency(Number(d.total))}
-                        </TableCell>
-                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => onEdit(d.id)}
-                              aria-label={`Edit ${d.doc_number || 'draft'}`}
-                              className="min-h-9 min-w-9"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => onDelete(d)}
-                              aria-label={`Delete ${d.doc_number || 'draft'}`}
-                              className="min-h-9 min-w-9 hover:bg-destructive/10 hover:text-destructive"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+          <>
+            {/* Desktop table */}
+            <Card className="border-border/60 overflow-hidden hidden md:block">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent border-border/60">
+                      <TableHead className="text-[11px] uppercase tracking-wider">Number</TableHead>
+                      <TableHead className="text-[11px] uppercase tracking-wider">Date</TableHead>
+                      <TableHead className="text-[11px] uppercase tracking-wider">Party</TableHead>
+                      <TableHead className="text-[11px] uppercase tracking-wider">Status</TableHead>
+                      <TableHead className="text-right text-[11px] uppercase tracking-wider">Total</TableHead>
+                      <TableHead className="text-right text-[11px] uppercase tracking-wider w-24">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map((d) => {
+                      const partyName = (d.party_snapshot as { name?: string } | null)?.name || '—';
+                      return (
+                        <TableRow
+                          key={d.id}
+                          className="cursor-pointer border-border/50 hover:bg-muted/40 transition-colors"
+                          onClick={() => onEdit(d.id)}
+                        >
+                          <TableCell className="font-mono text-xs font-medium">
+                            {d.doc_number || <span className="text-muted-foreground italic">DRAFT</span>}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap text-sm">{formatDate(d.doc_date)}</TableCell>
+                          <TableCell className="max-w-[240px] truncate text-sm" title={partyName}>{partyName}</TableCell>
+                          <TableCell>
+                            {d.status === 'finalized' ? (
+                              <Badge className="bg-success/15 text-success border border-success/30 hover:bg-success/20">
+                                Finalized
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="border-border/60 text-muted-foreground">Draft</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right font-semibold tabular-nums text-primary">
+                            {formatCurrency(Number(d.total))}
+                          </TableCell>
+                          <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => onEdit(d.id)}
+                                aria-label={`Edit ${d.doc_number || 'draft'}`}
+                                className="min-h-9 min-w-9"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => onDelete(d)}
+                                aria-label={`Delete ${d.doc_number || 'draft'}`}
+                                className="min-h-9 min-w-9 hover:bg-destructive/10 hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+
+            {/* Mobile card list */}
+            <div className="md:hidden space-y-2.5">
+              {filtered.map((d) => {
+                const partyName = (d.party_snapshot as { name?: string } | null)?.name || '—';
+                return (
+                  <Card
+                    key={d.id}
+                    className="border-border/60 cursor-pointer active:bg-muted/40 transition-colors"
+                    onClick={() => onEdit(d.id)}
+                  >
+                    <CardContent className="p-3.5 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-mono text-xs font-semibold truncate">
+                            {d.doc_number || <span className="text-muted-foreground italic">DRAFT</span>}
+                          </p>
+                          <p className="text-sm font-medium mt-0.5 truncate" title={partyName}>{partyName}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{formatDate(d.doc_date)}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="font-bold tabular-nums text-primary">{formatCurrency(Number(d.total))}</p>
+                          <div className="mt-1">
+                            {d.status === 'finalized' ? (
+                              <Badge className="bg-success/15 text-success border border-success/30 text-[10px]">Finalized</Badge>
+                            ) : (
+                              <Badge variant="outline" className="border-border/60 text-muted-foreground text-[10px]">Draft</Badge>
+                            )}
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/40" onClick={(e) => e.stopPropagation()}>
+                        <Button size="sm" variant="ghost" onClick={() => onEdit(d.id)} className="h-9 gap-1.5">
+                          <Pencil className="w-3.5 h-3.5" /> Edit
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => onDelete(d)} className="h-9 gap-1.5 hover:bg-destructive/10 hover:text-destructive">
+                          <Trash2 className="w-3.5 h-3.5" /> Delete
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
-          </Card>
+          </>
         )}
+
       </div>
     </>
   );
