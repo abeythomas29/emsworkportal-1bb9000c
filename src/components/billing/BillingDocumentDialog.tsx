@@ -90,6 +90,30 @@ function useProductsList() {
   });
 }
 
+function useHsnSuggestions() {
+  return useQuery({
+    queryKey: ['hsn_suggestions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('billing_document_items')
+        .select('hsn_sac')
+        .not('hsn_sac', 'is', null)
+        .limit(1000);
+      if (error) throw error;
+      const counts = new Map<string, number>();
+      for (const r of data || []) {
+        const h = (r as { hsn_sac: string | null }).hsn_sac?.trim();
+        if (!h) continue;
+        counts.set(h, (counts.get(h) || 0) + 1);
+      }
+      return Array.from(counts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .map(([hsn]) => hsn);
+    },
+    staleTime: 60_000,
+  });
+}
+
 const EMS_HSN = '32061110';
 const EMS_SERIES_PRICE: Record<string, number> = { '1': 400, '2': 750, '3': 600, '4': 860, '5': 650 };
 const isEms = (name: string) => name.trim().toLowerCase().startsWith('ems');
