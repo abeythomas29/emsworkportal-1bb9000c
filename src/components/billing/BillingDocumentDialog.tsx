@@ -801,30 +801,31 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
         </div>
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-2 justify-end mt-4 border-t pt-4">
+        <div className="sticky bottom-0 -mx-4 sm:mx-0 px-4 sm:px-0 py-3 sm:py-4 mt-4 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 flex flex-col-reverse sm:flex-row sm:flex-wrap gap-2 sm:justify-end z-10">
           {!readOnly ? (
             <>
-              <Button variant="outline" onClick={() => doSave(false)} disabled={save.isPending || finalize.isPending}>
+              <Button variant="outline" onClick={() => doSave(false)} disabled={save.isPending || finalize.isPending} className="w-full sm:w-auto min-h-11">
                 {save.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Save Draft
               </Button>
-              <Button onClick={() => doSave(true)} disabled={save.isPending || finalize.isPending}>
+              <Button onClick={() => doSave(true)} disabled={save.isPending || finalize.isPending} className="w-full sm:w-auto min-h-11">
                 {finalize.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
                 Finalize
               </Button>
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={previewPdf}><Eye className="w-4 h-4 mr-2" /> Preview PDF</Button>
-              <Button onClick={downloadPdf}><FileDown className="w-4 h-4 mr-2" /> Download PDF</Button>
+              <Button variant="outline" onClick={previewPdf} className="w-full sm:w-auto min-h-11"><Eye className="w-4 h-4 mr-2" /> Preview PDF</Button>
+              <Button onClick={downloadPdf} className="w-full sm:w-auto min-h-11"><FileDown className="w-4 h-4 mr-2" /> Download PDF</Button>
               {(docType === 'proforma' || docType === 'estimate') && savedId && onConvert && (
-                <Button variant="secondary" onClick={() => onConvert(savedId)}>
+                <Button variant="secondary" onClick={() => onConvert(savedId)} className="w-full sm:w-auto min-h-11">
                   <Copy className="w-4 h-4 mr-2" /> Convert to Tax Invoice
                 </Button>
               )}
             </>
           )}
         </div>
+
 
         <PartyDialog
           open={partyDialogOpen}
