@@ -196,7 +196,10 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
       setStatus('draft');
       setDocNumber(null);
       setSavedId(null);
+      setShippingEnabled(false);
+      setShippingAmount(0);
     }
+
   }, [open, documentId, initialType]);
 
   const selectedParty: Party | undefined = useMemo(
