@@ -441,8 +441,9 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
                   <TableHead className="w-[60px]">#</TableHead>
                   <TableHead className="min-w-[220px]">Item</TableHead>
                   <TableHead className="w-[110px]">HSN/SAC</TableHead>
-                  <TableHead className="w-[80px]">Qty</TableHead>
-                  <TableHead className="w-[80px]">Unit</TableHead>
+                  <TableHead className="w-[110px]">Qty</TableHead>
+                  <TableHead className="w-[90px]">Unit</TableHead>
+
                   <TableHead className="w-[110px]">Price</TableHead>
                   <TableHead className="w-[100px]">GST %</TableHead>
                   <TableHead className="w-[110px] text-right">Amount</TableHead>
