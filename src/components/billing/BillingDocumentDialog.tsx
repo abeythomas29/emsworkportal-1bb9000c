@@ -313,9 +313,10 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
       toast.error(err);
       return;
     }
-    const items = computed
+    const items = computedAll
       .filter((l) => l.item_name.trim())
       .map((l, i) => ({
+
         position: i,
         product_id: l.product_id || null,
         item_name: l.item_name,
