@@ -143,6 +143,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
   const { data: parties = [] } = useParties();
   const { data: company } = useCompanySettings();
   const { data: products = [] } = useProductsList();
+  const { data: hsnSuggestions = [] } = useHsnSuggestions();
   const save = useSaveBillingDocument();
   const finalize = useFinalizeDocument();
 
