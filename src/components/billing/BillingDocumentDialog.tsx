@@ -451,21 +451,13 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label>Party *</Label>
-            <div className="flex gap-2">
-              <Select value={partyId} onValueChange={(v) => { setPartyId(v); setPosCode(''); }} disabled={readOnly}>
-                <SelectTrigger><SelectValue placeholder="Select party" /></SelectTrigger>
-                <SelectContent>
-                  {parties.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {!readOnly && (
-                <Button type="button" variant="outline" onClick={() => setPartyDialogOpen(true)}>
-                  <Plus className="w-4 h-4 mr-1" /> New
-                </Button>
-              )}
-            </div>
+            <PartyCombobox
+              parties={parties}
+              value={partyId}
+              onChange={(v) => { setPartyId(v); setPosCode(''); }}
+              onAddNew={() => setPartyDialogOpen(true)}
+              disabled={readOnly}
+            />
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label>Place of Supply *</Label>
