@@ -28,6 +28,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { PartyDialog } from './PartyDialog';
 import { NewProductDialog } from './NewProductDialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type DocType = 'tax_invoice' | 'proforma' | 'estimate';
 
