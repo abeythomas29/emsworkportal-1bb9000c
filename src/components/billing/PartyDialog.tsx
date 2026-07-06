@@ -47,7 +47,22 @@ export function PartyDialog({ open, onOpenChange, party, onSaved }: Props) {
 
   useEffect(() => {
     if (open) {
-      setForm(party ? { ...empty, ...party } as typeof empty : empty);
+      if (party) {
+        // Coerce null/undefined DB fields to empty strings so inputs stay
+        // controlled — otherwise switching parties leaves stale DOM values.
+        const cleaned: Record<string, unknown> = {};
+        for (const k of Object.keys(empty) as (keyof typeof empty)[]) {
+          const v = (party as unknown as Record<string, unknown>)[k];
+          if (k === 'shipping_same') {
+            cleaned[k] = typeof v === 'boolean' ? v : true;
+          } else {
+            cleaned[k] = v == null ? '' : v;
+          }
+        }
+        setForm({ ...empty, ...(cleaned as typeof empty) });
+      } else {
+        setForm(empty);
+      }
     }
   }, [open, party]);
 
