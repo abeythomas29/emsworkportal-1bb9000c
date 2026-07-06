@@ -28,6 +28,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { PartyDialog } from './PartyDialog';
 import { NewProductDialog } from './NewProductDialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type DocType = 'tax_invoice' | 'proforma' | 'estimate';
 
@@ -447,21 +451,13 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label>Party *</Label>
-            <div className="flex gap-2">
-              <Select value={partyId} onValueChange={(v) => { setPartyId(v); setPosCode(''); }} disabled={readOnly}>
-                <SelectTrigger><SelectValue placeholder="Select party" /></SelectTrigger>
-                <SelectContent>
-                  {parties.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {!readOnly && (
-                <Button type="button" variant="outline" onClick={() => setPartyDialogOpen(true)}>
-                  <Plus className="w-4 h-4 mr-1" /> New
-                </Button>
-              )}
-            </div>
+            <PartyCombobox
+              parties={parties}
+              value={partyId}
+              onChange={(v) => { setPartyId(v); setPosCode(''); }}
+              onAddNew={() => setPartyDialogOpen(true)}
+              disabled={readOnly}
+            />
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label>Place of Supply *</Label>
@@ -1016,5 +1012,123 @@ function Row({ label, value, signed = false }: { label: string; value: number; s
       <span className="text-muted-foreground">{label}</span>
       <span>{signed && value > 0 ? '+' : ''}{value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
     </div>
+  );
+}
+
+function PartyCombobox({
+  parties,
+  value,
+  onChange,
+  onAddNew,
+  disabled,
+}: {
+  parties: Party[];
+  value: string;
+  onChange: (id: string) => void;
+  onAddNew: () => void;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const selected = parties.find((p) => p.id === value);
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? parties.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          (p.gstin || '').toLowerCase().includes(q),
+      )
+    : parties;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          disabled={disabled}
+          className={cn('w-full justify-between font-normal', !selected && 'text-muted-foreground')}
+        >
+          {selected ? (
+            <span className="truncate">
+              {selected.name}
+              {selected.gstin && <span className="ml-2 text-xs text-muted-foreground font-mono">{selected.gstin}</span>}
+            </span>
+          ) : (
+            'Search party by name or GSTIN…'
+          )}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="p-0 w-[--radix-popover-trigger-width] min-w-[320px]" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Type name or GSTIN…"
+            value={query}
+            onValueChange={setQuery}
+          />
+          <CommandList>
+            <CommandEmpty>
+              <div className="py-3 px-2 text-sm text-muted-foreground">
+                No party found{query ? ` for "${query}"` : ''}.
+              </div>
+              <div className="px-2 pb-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => {
+                    setOpen(false);
+                    onAddNew();
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-1" /> Add new party
+                </Button>
+              </div>
+            </CommandEmpty>
+            {filtered.length > 0 && (
+              <CommandGroup>
+                {filtered.slice(0, 100).map((p) => (
+                  <CommandItem
+                    key={p.id}
+                    value={p.id}
+                    onSelect={() => {
+                      onChange(p.id);
+                      setOpen(false);
+                      setQuery('');
+                    }}
+                  >
+                    <Check className={cn('mr-2 h-4 w-4', value === p.id ? 'opacity-100' : 'opacity-0')} />
+                    <div className="flex flex-col min-w-0">
+                      <span className="truncate">{p.name}</span>
+                      {p.gstin && (
+                        <span className="text-xs text-muted-foreground font-mono">{p.gstin}</span>
+                      )}
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+            {!disabled && (
+              <div className="border-t p-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="w-full justify-start"
+                  onClick={() => {
+                    setOpen(false);
+                    onAddNew();
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-1" /> Add new party
+                </Button>
+              </div>
+            )}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
