@@ -49,6 +49,17 @@ const DEFAULT_TERMS: Record<DocType, string> = {
   estimate: 'This is only an estimate. Prices and availability are subject to change without notice.',
 };
 
+const DOWNLOAD_NAME_PREFIX: Partial<Record<DocType, string>> = {
+  tax_invoice: 'Tax Invoice_',
+};
+
+const safePdfFileName = (docType: DocType, docNumber: string | null) => {
+  const number = docNumber || 'DRAFT';
+  const prefix = DOWNLOAD_NAME_PREFIX[docType] || '';
+  const name = prefix && !number.toLowerCase().startsWith(prefix.toLowerCase()) ? `${prefix}${number}` : number;
+  return name.replace(/[\\/:*?"<>|]/g, '-');
+};
+
 interface LineRow {
   key: string;
   product_id: string | null;
@@ -397,7 +408,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
     if (!company) return;
     await Promise.all([prepareBrandingAssets(), preloadCompanyImages(company)]);
     const pdf = generateBillingPdf(buildPdfInput());
-    pdf.save(`${docNumber || 'DRAFT'}.pdf`);
+    pdf.save(`${safePdfFileName(docType, docNumber)}.pdf`);
   };
 
   const previewPdf = async () => {
