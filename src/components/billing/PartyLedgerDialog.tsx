@@ -142,9 +142,20 @@ export function PartyLedgerDialog({
     return { rows: list, summary: { invoiced, received, outstanding, pendingCount, txCount: list.length } };
   }, [billingDocs, salesInvoices]);
 
+  const [openDocId, setOpenDocId] = useState<string | null>(null);
+
+  const handleRowClick = (r: LedgerRow) => {
+    if (r.docId) {
+      setOpenDocId(r.docId);
+    } else {
+      toast.info('PDF not available for this legacy invoice.');
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+
         <DialogHeader>
           <DialogTitle className="text-xl">Party Ledger — {partyName || '—'}</DialogTitle>
           <DialogDescription>
