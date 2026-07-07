@@ -86,12 +86,18 @@ export function PartyLedgerDialog({
     const mirroredSalesIds = new Set(
       billingDocs.filter((d) => d.sales_invoice_id).map((d) => d.sales_invoice_id as string),
     );
+    // Map sales_invoice_id -> billing_document.id so ledger rows can open the source doc
+    const salesIdToDocId = new Map<string, string>();
+    for (const d of billingDocs) {
+      if (d.sales_invoice_id) salesIdToDocId.set(d.sales_invoice_id as string, d.id);
+    }
 
     const list: LedgerRow[] = [];
 
     for (const s of salesInvoices) {
       list.push({
         id: `s-${s.id}`,
+        docId: salesIdToDocId.get(s.id) ?? null,
         date: s.invoice_date,
         number: s.invoice_no,
         kind: 'sales_invoice',
@@ -108,6 +114,7 @@ export function PartyLedgerDialog({
       if (d.doc_type === 'tax_invoice' && d.sales_invoice_id && mirroredSalesIds.has(d.sales_invoice_id)) continue;
       list.push({
         id: `d-${d.id}`,
+        docId: d.id,
         date: d.doc_date,
         number: d.doc_number || 'DRAFT',
         kind: d.doc_type as LedgerRow['kind'],
