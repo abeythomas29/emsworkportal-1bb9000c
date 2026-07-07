@@ -1,11 +1,13 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Receipt, FileText, FileCheck2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Loader2, Receipt, FileText, FileCheck2, AlertCircle, CheckCircle2, FileDown } from 'lucide-react';
 import { Party } from '@/hooks/useBilling';
+import { BillingDocumentDialog } from './BillingDocumentDialog';
 
 function inr(v: number) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v || 0);
@@ -16,6 +18,7 @@ function fmtDate(d: string) {
 
 type LedgerRow = {
   id: string;
+  docId: string | null; // linked billing_documents.id for PDF preview (if any)
   date: string;
   number: string;
   kind: 'tax_invoice' | 'proforma' | 'estimate' | 'sales_invoice';
@@ -83,12 +86,18 @@ export function PartyLedgerDialog({
     const mirroredSalesIds = new Set(
       billingDocs.filter((d) => d.sales_invoice_id).map((d) => d.sales_invoice_id as string),
     );
+    // Map sales_invoice_id -> billing_document.id so ledger rows can open the source doc
+    const salesIdToDocId = new Map<string, string>();
+    for (const d of billingDocs) {
+      if (d.sales_invoice_id) salesIdToDocId.set(d.sales_invoice_id as string, d.id);
+    }
 
     const list: LedgerRow[] = [];
 
     for (const s of salesInvoices) {
       list.push({
         id: `s-${s.id}`,
+        docId: salesIdToDocId.get(s.id) ?? null,
         date: s.invoice_date,
         number: s.invoice_no,
         kind: 'sales_invoice',
@@ -105,6 +114,7 @@ export function PartyLedgerDialog({
       if (d.doc_type === 'tax_invoice' && d.sales_invoice_id && mirroredSalesIds.has(d.sales_invoice_id)) continue;
       list.push({
         id: `d-${d.id}`,
+        docId: d.id,
         date: d.doc_date,
         number: d.doc_number || 'DRAFT',
         kind: d.doc_type as LedgerRow['kind'],
@@ -132,9 +142,20 @@ export function PartyLedgerDialog({
     return { rows: list, summary: { invoiced, received, outstanding, pendingCount, txCount: list.length } };
   }, [billingDocs, salesInvoices]);
 
+  const [openDocId, setOpenDocId] = useState<string | null>(null);
+
+  const handleRowClick = (r: LedgerRow) => {
+    if (r.docId) {
+      setOpenDocId(r.docId);
+    } else {
+      toast.info('PDF not available for this legacy invoice.');
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+
         <DialogHeader>
           <DialogTitle className="text-xl">Party Ledger — {partyName || '—'}</DialogTitle>
           <DialogDescription>
@@ -183,6 +204,7 @@ export function PartyLedgerDialog({
                       <TableHead className="text-right text-[11px] uppercase tracking-wider">Amount</TableHead>
                       <TableHead className="text-right text-[11px] uppercase tracking-wider">Received</TableHead>
                       <TableHead className="text-right text-[11px] uppercase tracking-wider">Balance</TableHead>
+                      <TableHead className="text-right text-[11px] uppercase tracking-wider w-16"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -190,8 +212,14 @@ export function PartyLedgerDialog({
                       const meta = KIND_META[r.kind];
                       const Icon = meta.icon;
                       const isOutstanding = r.balance > 0 && !r.cancelled;
+                      const clickable = !!r.docId;
                       return (
-                        <TableRow key={r.id} className="border-border/50">
+                        <TableRow
+                          key={r.id}
+                          onClick={() => handleRowClick(r)}
+                          className={`border-border/50 ${clickable ? 'cursor-pointer hover:bg-muted/40 transition-colors' : 'cursor-not-allowed opacity-80'}`}
+                          title={clickable ? 'Open document' : 'PDF not available for this legacy invoice'}
+                        >
                           <TableCell className="whitespace-nowrap text-sm">{fmtDate(r.date)}</TableCell>
                           <TableCell className="font-mono text-xs font-medium">{r.number}</TableCell>
                           <TableCell>
@@ -214,6 +242,11 @@ export function PartyLedgerDialog({
                           >
                             {isOutstanding ? inr(r.balance) : '—'}
                           </TableCell>
+                          <TableCell className="text-right">
+                            {clickable ? (
+                              <FileDown className="w-4 h-4 inline text-muted-foreground" aria-label="Open PDF" />
+                            ) : null}
+                          </TableCell>
                         </TableRow>
                       );
                     })}
@@ -224,6 +257,13 @@ export function PartyLedgerDialog({
           )}
         </div>
       </DialogContent>
+
+      <BillingDocumentDialog
+        open={!!openDocId}
+        onOpenChange={(o) => { if (!o) setOpenDocId(null); }}
+        documentId={openDocId}
+        initialType="tax_invoice"
+      />
     </Dialog>
   );
 }
