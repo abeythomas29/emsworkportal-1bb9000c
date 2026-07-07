@@ -53,11 +53,21 @@ const DOWNLOAD_NAME_PREFIX: Partial<Record<DocType, string>> = {
   tax_invoice: 'Tax Invoice_',
 };
 
-const safePdfFileName = (docType: DocType, docNumber: string | null) => {
+const safePdfFileName = (docType: DocType, docNumber: string | null, docDate?: string) => {
   const number = docNumber || 'DRAFT';
   const prefix = DOWNLOAD_NAME_PREFIX[docType] || '';
-  const name = prefix && !number.toLowerCase().startsWith(prefix.toLowerCase()) ? `${prefix}${number}` : number;
-  return name.replace(/[\\/:*?"<>|]/g, '-');
+  const base = prefix && !number.toLowerCase().startsWith(prefix.toLowerCase()) ? `${prefix}${number}` : number;
+  let suffix = '';
+  if (docDate) {
+    const d = new Date(docDate);
+    if (!isNaN(d.getTime())) {
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yy = String(d.getFullYear()).slice(-2);
+      suffix = `_${dd}_${mm}_${yy}`;
+    }
+  }
+  return `${base}${suffix}`.replace(/[\\/:*?"<>|]/g, '-');
 };
 
 interface LineRow {
