@@ -418,7 +418,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
     if (!company) return;
     await Promise.all([prepareBrandingAssets(), preloadCompanyImages(company)]);
     const pdf = generateBillingPdf(buildPdfInput());
-    pdf.save(`${safePdfFileName(docType, docNumber)}.pdf`);
+    pdf.save(`${safePdfFileName(docType, docNumber, docDate)}.pdf`);
   };
 
   const previewPdf = async () => {
