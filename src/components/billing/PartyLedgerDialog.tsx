@@ -242,6 +242,11 @@ export function PartyLedgerDialog({
                           >
                             {isOutstanding ? inr(r.balance) : '—'}
                           </TableCell>
+                          <TableCell className="text-right">
+                            {clickable ? (
+                              <FileDown className="w-4 h-4 inline text-muted-foreground" aria-label="Open PDF" />
+                            ) : null}
+                          </TableCell>
                         </TableRow>
                       );
                     })}
@@ -252,6 +257,13 @@ export function PartyLedgerDialog({
           )}
         </div>
       </DialogContent>
+
+      <BillingDocumentDialog
+        open={!!openDocId}
+        onOpenChange={(o) => { if (!o) setOpenDocId(null); }}
+        documentId={openDocId}
+        initialType="tax_invoice"
+      />
     </Dialog>
   );
 }
