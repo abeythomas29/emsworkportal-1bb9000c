@@ -18,6 +18,7 @@ function fmtDate(d: string) {
 
 type LedgerRow = {
   id: string;
+  docId: string | null; // linked billing_documents.id for PDF preview (if any)
   date: string;
   number: string;
   kind: 'tax_invoice' | 'proforma' | 'estimate' | 'sales_invoice';
