@@ -204,6 +204,7 @@ export function PartyLedgerDialog({
                       <TableHead className="text-right text-[11px] uppercase tracking-wider">Amount</TableHead>
                       <TableHead className="text-right text-[11px] uppercase tracking-wider">Received</TableHead>
                       <TableHead className="text-right text-[11px] uppercase tracking-wider">Balance</TableHead>
+                      <TableHead className="text-right text-[11px] uppercase tracking-wider w-16"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -211,8 +212,14 @@ export function PartyLedgerDialog({
                       const meta = KIND_META[r.kind];
                       const Icon = meta.icon;
                       const isOutstanding = r.balance > 0 && !r.cancelled;
+                      const clickable = !!r.docId;
                       return (
-                        <TableRow key={r.id} className="border-border/50">
+                        <TableRow
+                          key={r.id}
+                          onClick={() => handleRowClick(r)}
+                          className={`border-border/50 ${clickable ? 'cursor-pointer hover:bg-muted/40 transition-colors' : 'cursor-not-allowed opacity-80'}`}
+                          title={clickable ? 'Open document' : 'PDF not available for this legacy invoice'}
+                        >
                           <TableCell className="whitespace-nowrap text-sm">{fmtDate(r.date)}</TableCell>
                           <TableCell className="font-mono text-xs font-medium">{r.number}</TableCell>
                           <TableCell>
