@@ -366,6 +366,32 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
       toast.error(err);
       return;
     }
+
+    // If serial number was edited on a finalized doc, validate uniqueness first
+    const trimmedNumber = editableDocNumber.trim();
+    const numberChanged =
+      status === 'finalized' && !!savedId && !!docNumber && trimmedNumber && trimmedNumber !== docNumber;
+    if (status === 'finalized' && !trimmedNumber) {
+      toast.error('Serial number cannot be empty');
+      return;
+    }
+    if (numberChanged) {
+      const { data: dup, error: dupErr } = await supabase
+        .from('billing_documents')
+        .select('id')
+        .eq('doc_number', trimmedNumber)
+        .neq('id', savedId!)
+        .maybeSingle();
+      if (dupErr) {
+        toast.error(dupErr.message);
+        return;
+      }
+      if (dup) {
+        toast.error(`Serial number "${trimmedNumber}" already exists`);
+        return;
+      }
+    }
+
     const items = computedAll
       .filter((l) => l.item_name.trim())
       .map((l, i) => ({
@@ -389,17 +415,39 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
         amount: l.amount,
       }));
 
+    const header = buildHeader();
+    if (numberChanged) {
+      (header as Partial<BillingDocument>).doc_number = trimmedNumber;
+    }
+
     const id = await save.mutateAsync({
       id: savedId ?? undefined,
-      header: buildHeader(),
+      header,
       items,
     });
     setSavedId(id);
+
+    // Mirror serial-number change to sales_invoices if this tax invoice was mirrored
+    if (numberChanged && docType === 'tax_invoice') {
+      const { data: docRow } = await supabase
+        .from('billing_documents')
+        .select('sales_invoice_id')
+        .eq('id', id)
+        .maybeSingle();
+      const salesId = (docRow as { sales_invoice_id: string | null } | null)?.sales_invoice_id;
+      if (salesId) {
+        await supabase.from('sales_invoices').update({ invoice_no: trimmedNumber }).eq('id', salesId);
+        await supabase.from('sales_items').update({ invoice_no: trimmedNumber }).eq('invoice_id', salesId);
+      }
+      setDocNumber(trimmedNumber);
+    }
+
     toast.success('Draft saved');
     if (finalizeAfter) {
       const res = await finalize.mutateAsync({ id, doc_type: docType });
       setStatus('finalized');
       setDocNumber(res.doc_number);
+      setEditableDocNumber(res.doc_number);
     }
   };
 
