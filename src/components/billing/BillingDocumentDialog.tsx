@@ -247,6 +247,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
       setLines([blankLine()]);
       setStatus('draft');
       setDocNumber(null);
+      setEditableDocNumber('');
       setSavedId(null);
       setShippingEnabled(false);
       setShippingAmount(0);
