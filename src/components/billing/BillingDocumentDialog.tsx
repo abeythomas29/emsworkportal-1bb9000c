@@ -183,6 +183,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
   const [lines, setLines] = useState<LineRow[]>([blankLine()]);
   const [status, setStatus] = useState<'draft' | 'finalized'>('draft');
   const [docNumber, setDocNumber] = useState<string | null>(null);
+  const [editableDocNumber, setEditableDocNumber] = useState<string>('');
   const [savedId, setSavedId] = useState<string | null>(documentId ?? null);
   const [partyDialogOpen, setPartyDialogOpen] = useState(false);
   const [newProductOpen, setNewProductOpen] = useState(false);
@@ -205,6 +206,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
       setNotes(d.notes || '');
       setStatus(d.status);
       setDocNumber(d.doc_number);
+      setEditableDocNumber(d.doc_number || '');
       setSavedId(d.id);
       const allItems: BillingDocumentItem[] = existing.items || [];
       const shipItem = allItems.find((i) => i.item_name === SHIPPING_LABEL);
@@ -245,6 +247,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
       setLines([blankLine()]);
       setStatus('draft');
       setDocNumber(null);
+      setEditableDocNumber('');
       setSavedId(null);
       setShippingEnabled(false);
       setShippingAmount(0);
@@ -363,6 +366,32 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
       toast.error(err);
       return;
     }
+
+    // If serial number was edited on a finalized doc, validate uniqueness first
+    const trimmedNumber = editableDocNumber.trim();
+    const numberChanged =
+      status === 'finalized' && !!savedId && !!docNumber && trimmedNumber && trimmedNumber !== docNumber;
+    if (status === 'finalized' && !trimmedNumber) {
+      toast.error('Serial number cannot be empty');
+      return;
+    }
+    if (numberChanged) {
+      const { data: dup, error: dupErr } = await supabase
+        .from('billing_documents')
+        .select('id')
+        .eq('doc_number', trimmedNumber)
+        .neq('id', savedId!)
+        .maybeSingle();
+      if (dupErr) {
+        toast.error(dupErr.message);
+        return;
+      }
+      if (dup) {
+        toast.error(`Serial number "${trimmedNumber}" already exists`);
+        return;
+      }
+    }
+
     const items = computedAll
       .filter((l) => l.item_name.trim())
       .map((l, i) => ({
@@ -386,17 +415,39 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
         amount: l.amount,
       }));
 
+    const header = buildHeader();
+    if (numberChanged) {
+      (header as Partial<BillingDocument>).doc_number = trimmedNumber;
+    }
+
     const id = await save.mutateAsync({
       id: savedId ?? undefined,
-      header: buildHeader(),
+      header,
       items,
     });
     setSavedId(id);
+
+    // Mirror serial-number change to sales_invoices if this tax invoice was mirrored
+    if (numberChanged && docType === 'tax_invoice') {
+      const { data: docRow } = await supabase
+        .from('billing_documents')
+        .select('sales_invoice_id')
+        .eq('id', id)
+        .maybeSingle();
+      const salesId = (docRow as { sales_invoice_id: string | null } | null)?.sales_invoice_id;
+      if (salesId) {
+        await supabase.from('sales_invoices').update({ invoice_no: trimmedNumber }).eq('id', salesId);
+        await supabase.from('sales_items').update({ invoice_no: trimmedNumber }).eq('invoice_id', salesId);
+      }
+      setDocNumber(trimmedNumber);
+    }
+
     toast.success('Draft saved');
     if (finalizeAfter) {
       const res = await finalize.mutateAsync({ id, doc_type: docType });
       setStatus('finalized');
       setDocNumber(res.doc_number);
+      setEditableDocNumber(res.doc_number);
     }
   };
 
@@ -435,7 +486,21 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
           <DialogTitle className="flex flex-wrap items-center gap-2 sm:gap-3 text-base sm:text-lg pr-6">
             {TITLE[docType]}
             {status === 'finalized' ? (
-              <Badge className="bg-success text-success-foreground">Finalized · {docNumber}</Badge>
+              unlocked ? (
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="doc-serial-edit" className="text-xs font-medium text-muted-foreground">
+                    Serial #
+                  </Label>
+                  <Input
+                    id="doc-serial-edit"
+                    value={editableDocNumber}
+                    onChange={(e) => setEditableDocNumber(e.target.value)}
+                    className="h-8 w-48 text-sm"
+                  />
+                </div>
+              ) : (
+                <Badge className="bg-success text-success-foreground">Finalized · {docNumber}</Badge>
+              )
             ) : (
               <Badge variant="secondary">Draft</Badge>
             )}
