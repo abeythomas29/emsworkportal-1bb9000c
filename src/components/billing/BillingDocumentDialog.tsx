@@ -183,6 +183,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
   const [lines, setLines] = useState<LineRow[]>([blankLine()]);
   const [status, setStatus] = useState<'draft' | 'finalized'>('draft');
   const [docNumber, setDocNumber] = useState<string | null>(null);
+  const [editableDocNumber, setEditableDocNumber] = useState<string>('');
   const [savedId, setSavedId] = useState<string | null>(documentId ?? null);
   const [partyDialogOpen, setPartyDialogOpen] = useState(false);
   const [newProductOpen, setNewProductOpen] = useState(false);
