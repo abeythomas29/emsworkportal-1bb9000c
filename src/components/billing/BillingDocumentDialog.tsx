@@ -486,7 +486,21 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
           <DialogTitle className="flex flex-wrap items-center gap-2 sm:gap-3 text-base sm:text-lg pr-6">
             {TITLE[docType]}
             {status === 'finalized' ? (
-              <Badge className="bg-success text-success-foreground">Finalized · {docNumber}</Badge>
+              unlocked ? (
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="doc-serial-edit" className="text-xs font-medium text-muted-foreground">
+                    Serial #
+                  </Label>
+                  <Input
+                    id="doc-serial-edit"
+                    value={editableDocNumber}
+                    onChange={(e) => setEditableDocNumber(e.target.value)}
+                    className="h-8 w-48 text-sm"
+                  />
+                </div>
+              ) : (
+                <Badge className="bg-success text-success-foreground">Finalized · {docNumber}</Badge>
+              )
             ) : (
               <Badge variant="secondary">Draft</Badge>
             )}
