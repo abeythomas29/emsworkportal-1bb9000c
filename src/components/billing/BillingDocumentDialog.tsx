@@ -206,6 +206,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
       setNotes(d.notes || '');
       setStatus(d.status);
       setDocNumber(d.doc_number);
+      setEditableDocNumber(d.doc_number || '');
       setSavedId(d.id);
       const allItems: BillingDocumentItem[] = existing.items || [];
       const shipItem = allItems.find((i) => i.item_name === SHIPPING_LABEL);
