@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Receipt, FileText, FileCheck2, AlertCircle, CheckCircle2, FileDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, Receipt, FileText, FileCheck2, AlertCircle, CheckCircle2, FileDown, Download } from 'lucide-react';
 import { Party } from '@/hooks/useBilling';
 import { BillingDocumentDialog } from './BillingDocumentDialog';
 
@@ -152,15 +154,49 @@ export function PartyLedgerDialog({
     }
   };
 
+  const handleExportExcel = () => {
+    if (rows.length === 0) {
+      toast.info('No transactions to export.');
+      return;
+    }
+    const sheetRows = rows.map((r) => ({
+      Date: fmtDate(r.date),
+      'Document #': r.number,
+      Type: KIND_META[r.kind].label,
+      Status: r.cancelled ? 'Cancelled' : r.status,
+      Amount: r.total,
+      Received: r.received,
+      Balance: r.balance,
+    }));
+    sheetRows.push({
+      Date: '', 'Document #': '', Type: '', Status: 'TOTAL',
+      Amount: summary.invoiced, Received: summary.received, Balance: summary.outstanding,
+    } as any);
+    const ws = XLSX.utils.json_to_sheet(sheetRows);
+    ws['!cols'] = [{ wch: 14 }, { wch: 22 }, { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Ledger');
+    const safeName = (partyName || 'Party').replace(/[\/\\:*?"<>|]+/g, '_').slice(0, 60);
+    const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '_');
+    XLSX.writeFile(wb, `Ledger_${safeName}_${stamp}.xlsx`);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
 
         <DialogHeader>
-          <DialogTitle className="text-xl">Party Ledger — {partyName || '—'}</DialogTitle>
-          <DialogDescription>
-            All transactions and outstanding balances for this customer.
-          </DialogDescription>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <DialogTitle className="text-xl">Party Ledger — {partyName || '—'}</DialogTitle>
+              <DialogDescription>
+                All transactions and outstanding balances for this customer.
+              </DialogDescription>
+            </div>
+            <Button size="sm" variant="outline" onClick={handleExportExcel} disabled={isLoading || rows.length === 0}>
+              <Download className="w-4 h-4 mr-1.5" /> Excel
+            </Button>
+          </div>
         </DialogHeader>
 
         {/* Summary strip */}
