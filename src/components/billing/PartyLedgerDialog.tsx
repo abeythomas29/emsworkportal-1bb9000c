@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Receipt, FileText, FileCheck2, AlertCircle, CheckCircle2, FileDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, Receipt, FileText, FileCheck2, AlertCircle, CheckCircle2, FileDown, Download } from 'lucide-react';
 import { Party } from '@/hooks/useBilling';
 import { BillingDocumentDialog } from './BillingDocumentDialog';
 
