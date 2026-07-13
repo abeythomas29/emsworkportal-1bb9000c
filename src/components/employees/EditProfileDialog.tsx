@@ -21,9 +21,12 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, CalendarIcon } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+
+const DEPARTMENT_OPTIONS = ['Production', 'Research', 'Sales', 'Purchase'];
 
 interface EditProfileDialogProps {
   open: boolean;
@@ -33,6 +36,7 @@ interface EditProfileDialogProps {
     full_name: string;
     phone_number?: string | null;
     department: string | null;
+    additional_departments?: string[] | null;
     employee_id: string | null;
     joining_date: string | null;
     employee_type?: 'online' | 'offline';
@@ -53,6 +57,7 @@ export function EditProfileDialog({
   const [employeeId, setEmployeeId] = useState('');
   const [joiningDate, setJoiningDate] = useState<Date | undefined>(undefined);
   const [employeeType, setEmployeeType] = useState<'online' | 'offline'>('offline');
+  const [additionalDepartments, setAdditionalDepartments] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -63,8 +68,15 @@ export function EditProfileDialog({
       setEmployeeId(profile.employee_id || '');
       setJoiningDate(profile.joining_date ? new Date(profile.joining_date) : undefined);
       setEmployeeType(profile.employee_type || 'offline');
+      setAdditionalDepartments(profile.additional_departments || []);
     }
   }, [profile]);
+
+  const toggleAdditionalDept = (dept: string) => {
+    setAdditionalDepartments((prev) =>
+      prev.includes(dept) ? prev.filter((d) => d !== dept) : [...prev, dept]
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
