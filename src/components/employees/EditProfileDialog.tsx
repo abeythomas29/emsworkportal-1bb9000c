@@ -21,9 +21,12 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, CalendarIcon } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+
+const DEPARTMENT_OPTIONS = ['Production', 'Research', 'Sales', 'Purchase'];
 
 interface EditProfileDialogProps {
   open: boolean;
@@ -33,6 +36,7 @@ interface EditProfileDialogProps {
     full_name: string;
     phone_number?: string | null;
     department: string | null;
+    additional_departments?: string[] | null;
     employee_id: string | null;
     joining_date: string | null;
     employee_type?: 'online' | 'offline';
@@ -53,6 +57,7 @@ export function EditProfileDialog({
   const [employeeId, setEmployeeId] = useState('');
   const [joiningDate, setJoiningDate] = useState<Date | undefined>(undefined);
   const [employeeType, setEmployeeType] = useState<'online' | 'offline'>('offline');
+  const [additionalDepartments, setAdditionalDepartments] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -63,8 +68,15 @@ export function EditProfileDialog({
       setEmployeeId(profile.employee_id || '');
       setJoiningDate(profile.joining_date ? new Date(profile.joining_date) : undefined);
       setEmployeeType(profile.employee_type || 'offline');
+      setAdditionalDepartments(profile.additional_departments || []);
     }
   }, [profile]);
+
+  const toggleAdditionalDept = (dept: string) => {
+    setAdditionalDepartments((prev) =>
+      prev.includes(dept) ? prev.filter((d) => d !== dept) : [...prev, dept]
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,16 +95,30 @@ export function EditProfileDialog({
 
     setIsLoading(true);
 
+    // Don't duplicate the primary department in additional_departments
+    const extraDepts = Array.from(
+      new Set(
+        additionalDepartments
+          .map((d) => d.trim())
+          .filter((d) => d && d.toLowerCase() !== (department || '').trim().toLowerCase())
+      )
+    );
+
+    const updatePayload: Record<string, unknown> = {
+      full_name: fullName.trim(),
+      phone_number: phoneNumber.trim() || null,
+      department: department.trim() || null,
+      employee_id: employeeId.trim() || null,
+      joining_date: joiningDate ? format(joiningDate, 'yyyy-MM-dd') : null,
+      employee_type: employeeType,
+    };
+    if (role === 'admin') {
+      updatePayload.additional_departments = extraDepts;
+    }
+
     const { error } = await supabase
       .from('profiles')
-      .update({
-        full_name: fullName.trim(),
-        phone_number: phoneNumber.trim() || null,
-        department: department.trim() || null,
-        employee_id: employeeId.trim() || null,
-        joining_date: joiningDate ? format(joiningDate, 'yyyy-MM-dd') : null,
-        employee_type: employeeType,
-      })
+      .update(updatePayload)
       .eq('id', profile.id);
 
     setIsLoading(false);
@@ -203,6 +229,31 @@ export function EditProfileDialog({
               <p className="text-xs text-muted-foreground">
                 Online employees must log hours daily. Offline employees only need to check in/out.
               </p>
+            </div>
+          )}
+
+          {role === 'admin' && (
+            <div className="space-y-2">
+              <Label>Additional Department Access</Label>
+              <p className="text-xs text-muted-foreground">
+                Grant access to other department portals in addition to the primary department.
+              </p>
+              <div className="grid grid-cols-2 gap-2 rounded-md border p-3">
+                {DEPARTMENT_OPTIONS.filter(
+                  (d) => d.toLowerCase() !== (department || '').trim().toLowerCase()
+                ).map((dept) => (
+                  <label
+                    key={dept}
+                    className="flex items-center gap-2 text-sm cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={additionalDepartments.includes(dept)}
+                      onCheckedChange={() => toggleAdditionalDept(dept)}
+                    />
+                    <span>{dept}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           )}
 

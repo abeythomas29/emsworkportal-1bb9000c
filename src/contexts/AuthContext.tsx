@@ -14,6 +14,11 @@ interface AuthContextType extends AuthState {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 function mapProfileToUser(profile: Profile, role: UserRole): User {
+  const primary = profile.department ? [profile.department] : [];
+  const extra = Array.isArray(profile.additional_departments) ? profile.additional_departments : [];
+  const departments = Array.from(
+    new Set([...primary, ...extra].map((d) => (d || '').trim().toLowerCase()).filter(Boolean))
+  );
   return {
     id: profile.id,
     email: profile.email,
@@ -21,6 +26,7 @@ function mapProfileToUser(profile: Profile, role: UserRole): User {
     role: role,
     employeeType: profile.employee_type,
     department: profile.department || 'Unassigned',
+    departments,
     employeeId: profile.employee_id || profile.id.slice(0, 8).toUpperCase(),
     joiningDate: profile.joining_date || profile.created_at,
     avatar: profile.avatar_url || undefined,

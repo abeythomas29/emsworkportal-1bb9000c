@@ -1077,6 +1077,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          additional_departments: string[]
           avatar_url: string | null
           base_salary: number
           birthday: string | null
@@ -1094,6 +1095,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          additional_departments?: string[]
           avatar_url?: string | null
           base_salary?: number
           birthday?: string | null
@@ -1111,6 +1113,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          additional_departments?: string[]
           avatar_url?: string | null
           base_salary?: number
           birthday?: string | null

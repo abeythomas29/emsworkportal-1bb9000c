@@ -57,7 +57,7 @@ export default function OvertimePage() {
       const userIds = [...new Set((otData || []).map(r => r.user_id))];
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, full_name, department')
+        .select('id, full_name, department, additional_departments')
         .in('id', userIds);
 
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
@@ -65,8 +65,11 @@ export default function OvertimePage() {
       setAllPendingOT(
         (otData || [])
           .filter(r => {
-            const profile = profileMap.get(r.user_id);
-            return profile?.department?.toLowerCase() === 'production';
+            const profile: any = profileMap.get(r.user_id);
+            if (!profile) return false;
+            const depts = [profile.department, ...((profile.additional_departments as string[] | null) || [])]
+              .map((d: string | null) => (d || '').toLowerCase());
+            return depts.includes('production');
           })
           .map(r => ({
             ...r,
@@ -104,7 +107,7 @@ export default function OvertimePage() {
   };
 
   // Only production employees can see their own OT; admins/managers see the admin view
-  const isProductionEmployee = user?.department?.toLowerCase() === 'production';
+  const isProductionEmployee = user?.departments?.includes('production');
   if (user && !isAdminOrManager && !isProductionEmployee) {
     return <Navigate to="/dashboard" replace />;
   }
