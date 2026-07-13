@@ -202,7 +202,8 @@ export default function DashboardPage() {
             </div>
 
             {/* Production Worker widgets: OT + Low Stock alerts */}
-            {user?.department?.toLowerCase() === 'production' && (
+            {user?.departments?.includes('production') && (
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <ProductionOTSummary />
                 <LowStockWidget />

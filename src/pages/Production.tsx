@@ -24,7 +24,7 @@ import { format } from 'date-fns';
 export default function ProductionPage() {
   const { user, role, profile } = useAuth();
   const isAdmin = role === 'admin';
-  const isProduction = (profile?.department || '').toLowerCase() === 'production';
+  const isProduction = (user?.departments || []).includes('production');
   const canManageCatalog = isAdmin || isProduction;
   const { data: products = [] } = useProducts();
   const { data: rawMaterials = [] } = useRawMaterials();
