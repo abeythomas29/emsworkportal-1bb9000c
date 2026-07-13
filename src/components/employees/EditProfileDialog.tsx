@@ -95,16 +95,30 @@ export function EditProfileDialog({
 
     setIsLoading(true);
 
+    // Don't duplicate the primary department in additional_departments
+    const extraDepts = Array.from(
+      new Set(
+        additionalDepartments
+          .map((d) => d.trim())
+          .filter((d) => d && d.toLowerCase() !== (department || '').trim().toLowerCase())
+      )
+    );
+
+    const updatePayload: Record<string, unknown> = {
+      full_name: fullName.trim(),
+      phone_number: phoneNumber.trim() || null,
+      department: department.trim() || null,
+      employee_id: employeeId.trim() || null,
+      joining_date: joiningDate ? format(joiningDate, 'yyyy-MM-dd') : null,
+      employee_type: employeeType,
+    };
+    if (role === 'admin') {
+      updatePayload.additional_departments = extraDepts;
+    }
+
     const { error } = await supabase
       .from('profiles')
-      .update({
-        full_name: fullName.trim(),
-        phone_number: phoneNumber.trim() || null,
-        department: department.trim() || null,
-        employee_id: employeeId.trim() || null,
-        joining_date: joiningDate ? format(joiningDate, 'yyyy-MM-dd') : null,
-        employee_type: employeeType,
-      })
+      .update(updatePayload)
       .eq('id', profile.id);
 
     setIsLoading(false);
@@ -215,6 +229,31 @@ export function EditProfileDialog({
               <p className="text-xs text-muted-foreground">
                 Online employees must log hours daily. Offline employees only need to check in/out.
               </p>
+            </div>
+          )}
+
+          {role === 'admin' && (
+            <div className="space-y-2">
+              <Label>Additional Department Access</Label>
+              <p className="text-xs text-muted-foreground">
+                Grant access to other department portals in addition to the primary department.
+              </p>
+              <div className="grid grid-cols-2 gap-2 rounded-md border p-3">
+                {DEPARTMENT_OPTIONS.filter(
+                  (d) => d.toLowerCase() !== (department || '').trim().toLowerCase()
+                ).map((dept) => (
+                  <label
+                    key={dept}
+                    className="flex items-center gap-2 text-sm cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={additionalDepartments.includes(dept)}
+                      onCheckedChange={() => toggleAdditionalDept(dept)}
+                    />
+                    <span>{dept}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           )}
 
