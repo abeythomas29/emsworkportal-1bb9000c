@@ -35,6 +35,7 @@ interface EmployeeProfile {
   email: string;
   phone_number: string | null;
   department: string | null;
+  additional_departments: string[] | null;
   employee_id: string | null;
   employee_type: 'online' | 'offline';
   is_active: boolean;
@@ -219,7 +220,9 @@ export default function EmployeeDetailPage() {
     setOtRequests((otData || []) as OTRequest[]);
   };
 
-  const isProductionEmployee = profile?.department?.toLowerCase() === 'production';
+  const profileDepts = [profile?.department, ...((profile?.additional_departments as string[] | null) || [])]
+    .map((d) => (d || '').toLowerCase());
+  const isProductionEmployee = profileDepts.includes('production');
 
   if (isUnauthorized) {
     return <Navigate to="/dashboard" replace />;
