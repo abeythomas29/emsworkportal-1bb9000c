@@ -8,6 +8,7 @@ export interface Profile {
   full_name: string;
   employee_id: string | null;
   department: string | null;
+  additional_departments: string[] | null;
   employee_type: EmployeeType;
   joining_date: string | null;
   birthday: string | null;
@@ -25,6 +26,8 @@ export interface User {
   role: UserRole;
   employeeType: EmployeeType;
   department: string;
+  /** All departments the user belongs to (lowercase), including primary + additional. */
+  departments: string[];
   employeeId: string;
   joiningDate: string;
   avatar?: string;
