@@ -203,7 +203,6 @@ export default function DashboardPage() {
 
             {/* Production Worker widgets: OT + Low Stock alerts */}
             {user?.departments?.includes('production') && (
-
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <ProductionOTSummary />
                 <LowStockWidget />
@@ -211,7 +210,7 @@ export default function DashboardPage() {
             )}
 
             {/* Research dept widget */}
-            {user?.department?.toLowerCase() === 'research' && (
+            {user?.departments?.includes('research') && (
               <ResearchTodayWidget />
             )}
 
