@@ -135,7 +135,7 @@ export function useAttendance() {
       if (error) throw error;
 
       // Auto-create OT for production workers on checkout
-      if (user.department?.toLowerCase() === 'production') {
+      if (user.departments?.includes('production')) {
         // Convert to IST (Asia/Kolkata) so thresholds work regardless of device/server timezone
         const toISTMinutes = (d: Date) => {
           const parts = new Intl.DateTimeFormat('en-GB', {
