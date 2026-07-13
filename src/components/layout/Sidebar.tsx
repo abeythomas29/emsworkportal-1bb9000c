@@ -198,7 +198,8 @@ export function Sidebar() {
     
     // Check department if specified (admins/managers bypass this)
     if (item.departments && role !== 'admin' && role !== 'manager') {
-      if (!user?.department || !item.departments.includes(user.department.toLowerCase())) return false;
+      const userDepts = user?.departments || [];
+      if (!userDepts.some((d) => item.departments!.includes(d))) return false;
     }
     
     // For admins/managers, show work hours even if they're not "online" type
