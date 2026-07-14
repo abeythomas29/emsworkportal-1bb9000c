@@ -18,6 +18,8 @@ import {
   Crown,
   Wallet,
   ArrowUpRight,
+  Sparkles,
+  Package,
 } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useSalesInvoices, useSalesUploads, useUploadSalesExcel } from '@/hooks/useSales';
