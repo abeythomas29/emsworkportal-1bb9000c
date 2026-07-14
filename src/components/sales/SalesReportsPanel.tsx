@@ -65,6 +65,18 @@ function monthLabel(key: string, opts: { short?: boolean } = {}) {
   });
 }
 
+function quarterKey(d: string) {
+  const dt = new Date(d);
+  const q = Math.floor(dt.getMonth() / 3) + 1;
+  return `${dt.getFullYear()}-Q${q}`;
+}
+function quarterLabel(key: string) {
+  return key.replace('-', ' ');
+}
+function yearKey(d: string) {
+  return String(new Date(d).getFullYear());
+}
+
 function useSalesItemsLite() {
   return useQuery({
     queryKey: ['sales-items-lite'],
@@ -73,7 +85,7 @@ function useSalesItemsLite() {
         .from('sales_items')
         .select('invoice_date, item_name, quantity, amount')
         .order('invoice_date', { ascending: false })
-        .limit(5000);
+        .limit(20000);
       if (error) throw error;
       return (data || []) as ItemRow[];
     },
