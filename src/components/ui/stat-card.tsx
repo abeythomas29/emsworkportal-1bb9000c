@@ -16,11 +16,11 @@ interface StatCardProps {
 
 const variantStyles = {
   default: 'bg-card',
-  primary: 'bg-gradient-primary text-primary-foreground',
-  secondary: 'bg-gradient-secondary text-secondary-foreground',
-  success: 'bg-success/10 border-success/20',
-  warning: 'bg-warning/10 border-warning/20',
-  destructive: 'bg-destructive/10 border-destructive/20',
+  primary: 'bg-gradient-primary text-primary-foreground border-transparent',
+  secondary: 'bg-gradient-secondary text-secondary-foreground border-transparent',
+  success: 'bg-success/5 border-success/30',
+  warning: 'bg-warning/10 border-warning/30',
+  destructive: 'bg-destructive/5 border-destructive/30',
 };
 
 export function StatCard({
@@ -33,51 +33,62 @@ export function StatCard({
   className,
 }: StatCardProps) {
   const isPrimary = variant === 'primary' || variant === 'secondary';
-  
+
   return (
-    <div className={cn(
-      'stat-card animate-fade-in',
-      variantStyles[variant],
-      className
-    )}>
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className={cn(
-            'text-sm font-medium mb-1',
-            isPrimary ? 'text-current/80' : 'text-muted-foreground'
-          )}>
+    <div
+      className={cn('stat-card animate-fade-in group', variantStyles[variant], className)}
+      role="figure"
+      aria-label={`${title}: ${value}`}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <p
+            className={cn(
+              'text-xs font-medium uppercase tracking-wider mb-2',
+              isPrimary ? 'text-current/85' : 'text-muted-foreground'
+            )}
+          >
             {title}
           </p>
-          <p className={cn(
-            'text-3xl font-bold',
-            isPrimary ? 'text-current' : 'text-foreground'
-          )}>
+          <p
+            className={cn(
+              'font-display text-3xl md:text-[2rem] font-bold tabular-nums leading-none',
+              isPrimary ? 'text-current' : 'text-foreground'
+            )}
+          >
             {value}
           </p>
           {subtitle && (
-            <p className={cn(
-              'text-sm mt-1',
-              isPrimary ? 'text-current/70' : 'text-muted-foreground'
-            )}>
+            <p
+              className={cn(
+                'text-sm mt-2',
+                isPrimary ? 'text-current/75' : 'text-muted-foreground'
+              )}
+            >
               {subtitle}
             </p>
           )}
           {trend && (
-            <div className={cn(
-              'flex items-center gap-1 mt-2 text-sm font-medium',
-              trend.isPositive ? 'text-success' : 'text-destructive'
-            )}>
-              <span>{trend.isPositive ? '↑' : '↓'}</span>
+            <div
+              className={cn(
+                'flex items-center gap-1.5 mt-3 text-xs font-semibold',
+                trend.isPositive ? 'text-success' : 'text-destructive'
+              )}
+            >
+              <span aria-hidden="true">{trend.isPositive ? '↑' : '↓'}</span>
               <span>{Math.abs(trend.value)}%</span>
               <span className="text-muted-foreground font-normal">vs last month</span>
             </div>
           )}
         </div>
         {icon && (
-          <div className={cn(
-            'p-3 rounded-xl',
-            isPrimary ? 'bg-white/20' : 'bg-primary/10'
-          )}>
+          <div
+            className={cn(
+              'shrink-0 p-3 rounded-xl transition-transform duration-300 group-hover:scale-105',
+              isPrimary ? 'bg-white/20 backdrop-blur-sm' : 'bg-primary/10 ring-1 ring-primary/15'
+            )}
+            aria-hidden="true"
+          >
             {icon}
           </div>
         )}
