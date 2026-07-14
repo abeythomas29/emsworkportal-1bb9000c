@@ -448,16 +448,34 @@ export function SalesReportsPanel() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base font-semibold">Top Products</CardTitle>
+          <CardHeader className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Package className="w-4 h-4 text-primary" /> Top Products
+              </CardTitle>
+            </div>
+            <div className="flex items-center gap-1 rounded-lg bg-muted/50 p-1 text-xs">
+              {(['month', 'quarter', 'year'] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setTopPeriod(p)}
+                  className={`flex-1 px-2 py-1.5 rounded-md font-medium capitalize transition-colors ${
+                    topPeriod === p ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {p === 'month' ? 'Monthly' : p === 'quarter' ? 'Quarterly' : 'Annually'}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground">{topProductsByPeriod.periodLabel}</p>
           </CardHeader>
           <CardContent>
-            {!activeStats?.topProducts.length ? (
-              <p className="text-sm text-muted-foreground py-6 text-center">No product data for this month.</p>
+            {!topProductsByPeriod.products.length ? (
+              <p className="text-sm text-muted-foreground py-6 text-center">No product data for this period.</p>
             ) : (
-              <div className="space-y-2">
-                {activeStats.topProducts.map((p, idx) => {
-                  const max = activeStats.topProducts[0].revenue || 1;
+              <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                {topProductsByPeriod.products.map((p, idx) => {
+                  const max = topProductsByPeriod.products[0].revenue || 1;
                   const pct = Math.max(6, (p.revenue / max) * 100);
                   return (
                     <div key={p.name} className="relative overflow-hidden rounded-lg border border-border p-3">
@@ -486,6 +504,84 @@ export function SalesReportsPanel() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Demand Predictor */}
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+        <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" /> Demand Predictor
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Products projected to grow next {predictHorizon}. Consider increasing production of these.
+            </p>
+          </div>
+          <div className="flex items-center gap-1 rounded-lg bg-muted/50 p-1 text-xs">
+            {(['quarter', 'year'] as const).map((h) => (
+              <button
+                key={h}
+                onClick={() => setPredictHorizon(h)}
+                className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+                  predictHorizon === h ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Next {h === 'quarter' ? 'Quarter' : 'Year'}
+              </button>
+            ))}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {predictions.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">
+              Not enough historical data yet to project demand. Upload more months of sales to unlock predictions.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>#</TableHead>
+                    <TableHead>Product</TableHead>
+                    <TableHead className="text-right">Last {predictHorizon === 'quarter' ? 'Qtr' : 'Yr'} Qty</TableHead>
+                    <TableHead className="text-right">Prior Avg</TableHead>
+                    <TableHead className="text-right">Growth</TableHead>
+                    <TableHead className="text-right">Forecast Qty</TableHead>
+                    <TableHead>Recommendation</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {predictions.map((p, idx) => {
+                    const strong = p.growthPct >= 50;
+                    return (
+                      <TableRow key={p.name}>
+                        <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
+                        <TableCell className="font-medium max-w-[280px] truncate" title={p.name}>{p.name}</TableCell>
+                        <TableCell className="text-right tabular-nums">{p.recentQty.toFixed(2)}</TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground">{p.baseAvg.toFixed(2)}</TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          <span className="inline-flex items-center gap-1 text-success font-semibold">
+                            <TrendingUp className="w-3 h-3" />+{p.growthPct.toFixed(0)}%
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums font-semibold">{p.forecast.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <Badge variant={strong ? 'default' : 'outline'} className={strong ? '' : 'text-success border-success'}>
+                            {strong ? 'Ramp up significantly' : 'Increase supply'}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+              <p className="text-[11px] text-muted-foreground mt-3">
+                Forecasts use a linear trend over the last few {predictHorizon === 'quarter' ? 'quarters' : 'years'}. Treat as guidance, not a guarantee.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
 
       {/* Invoices for the selected month */}
       <Card>
