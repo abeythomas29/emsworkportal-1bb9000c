@@ -165,7 +165,87 @@ export function SalesReportsPanel() {
       .slice(0, 5);
 
     return { revenue, count, avg, topCustomer, delta, topProducts, monthInvoices };
-  }, [activeMonth, invoices, itemsRaw, monthly]);
+
+  // Top products by period (monthly/quarterly/annually)
+  const topProductsByPeriod = useMemo(() => {
+    if (!activeMonth) return { periodLabel: '', products: [] as { name: string; qty: number; revenue: number }[] };
+    const dt = new Date(`${activeMonth}-01`);
+    let filterFn: (it: ItemRow) => boolean;
+    let periodLabel = '';
+    if (topPeriod === 'month') {
+      filterFn = (it) => monthKey(it.invoice_date) === activeMonth;
+      periodLabel = monthLabel(activeMonth);
+    } else if (topPeriod === 'quarter') {
+      const qk = quarterKey(`${activeMonth}-01`);
+      filterFn = (it) => quarterKey(it.invoice_date) === qk;
+      periodLabel = quarterLabel(qk);
+    } else {
+      const yk = String(dt.getFullYear());
+      filterFn = (it) => yearKey(it.invoice_date) === yk;
+      periodLabel = yk;
+    }
+    const prodMap = new Map<string, { qty: number; revenue: number }>();
+    itemsRaw.filter(filterFn).forEach((it) => {
+      const cur = prodMap.get(it.item_name) || { qty: 0, revenue: 0 };
+      cur.qty += Number(it.quantity || 0);
+      cur.revenue += Number(it.amount || 0);
+      prodMap.set(it.item_name, cur);
+    });
+    const products = Array.from(prodMap.entries())
+      .map(([name, v]) => ({ name, qty: v.qty, revenue: v.revenue }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 10);
+    return { periodLabel, products };
+  }, [activeMonth, itemsRaw, topPeriod]);
+
+  // Demand predictor: compare recent period vs prior baseline
+  const predictions = useMemo(() => {
+    if (itemsRaw.length === 0) return [];
+    const keyFn = predictHorizon === 'quarter' ? quarterKey : yearKey;
+    // Bucket qty & revenue per product per period
+    const perProduct = new Map<string, Map<string, { qty: number; revenue: number }>>();
+    const allPeriods = new Set<string>();
+    for (const it of itemsRaw) {
+      const pk = keyFn(it.invoice_date);
+      allPeriods.add(pk);
+      if (!perProduct.has(it.item_name)) perProduct.set(it.item_name, new Map());
+      const pmap = perProduct.get(it.item_name)!;
+      const cur = pmap.get(pk) || { qty: 0, revenue: 0 };
+      cur.qty += Number(it.quantity || 0);
+      cur.revenue += Number(it.amount || 0);
+      pmap.set(pk, cur);
+    }
+    const sortedPeriods = Array.from(allPeriods).sort();
+    if (sortedPeriods.length < 2) return [];
+    const recent = sortedPeriods[sortedPeriods.length - 1];
+    const baseline = sortedPeriods.slice(0, -1).slice(-3); // up to 3 prior periods
+
+    const results = Array.from(perProduct.entries()).map(([name, pmap]) => {
+      const recentQty = pmap.get(recent)?.qty || 0;
+      const recentRev = pmap.get(recent)?.revenue || 0;
+      const baseVals = baseline.map((k) => pmap.get(k)?.qty || 0);
+      const baseAvg = baseVals.length ? baseVals.reduce((a, b) => a + b, 0) / baseVals.length : 0;
+      // Linear trend: simple slope over last N periods including recent
+      const trendWindow = [...baseline, recent];
+      const y = trendWindow.map((k) => pmap.get(k)?.qty || 0);
+      const n = y.length;
+      const meanX = (n - 1) / 2;
+      const meanY = y.reduce((a, b) => a + b, 0) / n;
+      let num = 0, den = 0;
+      y.forEach((v, i) => { num += (i - meanX) * (v - meanY); den += (i - meanX) ** 2; });
+      const slope = den > 0 ? num / den : 0;
+      const forecast = Math.max(0, y[n - 1] + slope);
+      const growthPct = baseAvg > 0 ? ((recentQty - baseAvg) / baseAvg) * 100 : recentQty > 0 ? 100 : 0;
+      // Score = forecast * (1 + growth), weighted by recent revenue for relevance
+      const score = forecast * (1 + Math.max(-0.5, growthPct / 100)) * Math.log(1 + recentRev);
+      return { name, recentQty, baseAvg, forecast, growthPct, recentRev, score };
+    });
+    return results
+      .filter((r) => r.forecast > 0 && r.growthPct > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8);
+  }, [itemsRaw, predictHorizon]);
+
 
   const filteredMonthInvoices = useMemo(() => {
     if (!activeStats) return [] as Invoice[];
