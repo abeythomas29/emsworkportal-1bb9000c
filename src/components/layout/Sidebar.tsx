@@ -216,73 +216,100 @@ export function Sidebar() {
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-4 left-4 z-50 lg:hidden"
+        aria-label={isOpen ? 'Close navigation menu' : 'Open navigation menu'}
+        aria-expanded={isOpen}
+        aria-controls="app-sidebar"
+        className="fixed top-3 left-3 z-50 lg:hidden bg-card/90 backdrop-blur-md border border-border shadow-sm h-11 w-11"
         onClick={() => setIsOpen(!isOpen)}
       >
-        {isOpen ? <X size={24} /> : <Menu size={24} />}
+        {isOpen ? <X size={22} /> : <Menu size={22} />}
       </Button>
 
       {/* Mobile Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-background/70 backdrop-blur-sm z-40 lg:hidden animate-fade-in"
           onClick={() => setIsOpen(false)}
+          aria-hidden="true"
         />
       )}
 
       {/* Sidebar */}
       <aside
+        id="app-sidebar"
+        aria-label="Primary navigation"
         className={cn(
-          'fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar flex flex-col transition-transform duration-300 ease-in-out',
+          'fixed left-0 top-0 z-40 h-dvh w-64 bg-sidebar flex flex-col transition-transform duration-300 ease-out',
+          'border-r border-sidebar-border/60 shadow-lg lg:shadow-none',
           'lg:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {/* Logo */}
-        <Link to="/dashboard" className="flex items-center gap-3 px-6 py-5 border-b border-sidebar-border hover:bg-sidebar-accent/50 transition-colors">
-          <img src={emsLogo} alt="EMS Logo" className="h-10 w-auto" />
+        <Link
+          to="/dashboard"
+          className="flex items-center gap-3 px-5 py-5 border-b border-sidebar-border/60 hover:bg-sidebar-accent/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-inset"
+        >
+          <div className="p-1.5 rounded-lg bg-sidebar-accent/40 ring-1 ring-sidebar-border/60">
+            <img src={emsLogo} alt="EMS" className="h-8 w-auto" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-display text-sm font-bold text-sidebar-foreground leading-tight truncate">
+              Esoteric Minerals
+            </p>
+            <p className="text-[11px] text-sidebar-foreground/55 uppercase tracking-wider">
+              Work Portal
+            </p>
+          </div>
         </Link>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+        <nav
+          className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto"
+          aria-label="Main navigation"
+        >
           {filteredItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                className={cn(
-                  'nav-item',
-                  isActive && 'nav-item-active'
-                )}
+                aria-current={isActive ? 'page' : undefined}
+                className={cn('nav-item', isActive && 'nav-item-active')}
               >
-                {item.icon}
-                <span className="font-medium">{item.label}</span>
+                <span className="shrink-0" aria-hidden="true">
+                  {item.icon}
+                </span>
+                <span className="truncate">{item.label}</span>
               </Link>
             );
           })}
         </nav>
 
         {/* User Profile & Logout */}
-        <div className="border-t border-sidebar-border p-4">
-          <div className="flex items-center gap-3 mb-4 px-2">
-            <div className="w-10 h-10 rounded-full bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground font-semibold">
+        <div className="border-t border-sidebar-border/60 p-3">
+          <div className="flex items-center gap-3 mb-2 px-2 py-2 rounded-lg bg-sidebar-accent/30">
+            <div
+              className="w-9 h-9 rounded-full bg-gradient-primary flex items-center justify-center text-sidebar-primary-foreground font-semibold text-sm shrink-0"
+              aria-hidden="true"
+            >
               {user?.name?.charAt(0) || 'U'}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-sidebar-foreground truncate">
                 {user?.name || 'User'}
               </p>
-              <p className="text-xs text-sidebar-foreground/60 capitalize">
+              <p className="text-[11px] text-sidebar-foreground/55 capitalize">
                 {role || 'Employee'}
               </p>
             </div>
           </div>
           <button
             onClick={logout}
-            className="nav-item w-full hover:bg-destructive/20 hover:text-destructive"
+            className="nav-item w-full hover:bg-destructive/15 hover:text-destructive"
+            aria-label="Sign out"
           >
-            <LogOut size={20} />
+            <LogOut size={18} aria-hidden="true" />
             <span>Sign Out</span>
           </button>
         </div>
@@ -290,3 +317,4 @@ export function Sidebar() {
     </>
   );
 }
+

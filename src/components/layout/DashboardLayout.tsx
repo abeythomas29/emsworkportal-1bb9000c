@@ -55,10 +55,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-primary focus:text-primary-foreground focus:shadow-lg"
+      >
+        Skip to main content
+      </a>
       <Sidebar />
-      <main className="lg:ml-64 min-h-screen">
-        <div className="p-4 pt-16 lg:pt-8 lg:p-8">
+      <main
+        id="main-content"
+        className="lg:ml-64 min-h-dvh"
+        tabIndex={-1}
+      >
+        <div className="mx-auto max-w-[1600px] p-4 pt-16 lg:pt-8 lg:p-8">
           {children}
         </div>
       </main>
