@@ -165,6 +165,7 @@ export function SalesReportsPanel() {
       .slice(0, 5);
 
     return { revenue, count, avg, topCustomer, delta, topProducts, monthInvoices };
+  }, [activeMonth, invoices, itemsRaw, monthly]);
 
   // Top products by period (monthly/quarterly/annually)
   const topProductsByPeriod = useMemo(() => {
