@@ -100,6 +100,8 @@ export function SalesReportsPanel() {
   const upload = useUploadSalesExcel();
   const [search, setSearch] = useState('');
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const [topPeriod, setTopPeriod] = useState<'month' | 'quarter' | 'year'>('month');
+  const [predictHorizon, setPredictHorizon] = useState<'quarter' | 'year'>('quarter');
 
   const invoices = invoicesRaw as unknown as Invoice[];
 
