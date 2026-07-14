@@ -88,29 +88,42 @@ export default function DashboardPage() {
       <ProfileCompletionDialog />
       <div className="space-y-8 animate-fade-in">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              {getGreeting()}, {user?.name?.split(' ')[0] || 'there'}!
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Here's what's happening today,{' '}
-              {new Date().toLocaleDateString('en-US', {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </p>
+        <header className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-hero text-primary-foreground p-6 md:p-8 shadow-md">
+          <div
+            aria-hidden="true"
+            className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-primary/25 blur-3xl"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute -bottom-32 -left-16 w-72 h-72 rounded-full bg-secondary/20 blur-3xl"
+          />
+          <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/90 mb-2">
+                {new Date().toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </p>
+              <h1 className="font-display text-3xl md:text-4xl font-bold text-white leading-tight">
+                {getGreeting()},{' '}
+                <span className="text-gradient-primary">
+                  {user?.name?.split(' ')[0] || 'there'}
+                </span>
+              </h1>
+              <p className="text-white/70 mt-2 text-sm md:text-base">
+                Here's your operational overview for today.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 flex-wrap">
+              <StatusBadge status={todayAttendance?.check_in ? 'present' : 'pending'} />
+              <span className="text-xs md:text-sm text-white/70 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/10">
+                {user?.employeeType === 'online' ? 'Online Employee' : 'Offline Employee'}
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <StatusBadge
-              status={todayAttendance?.check_in ? 'present' : 'pending'}
-            />
-            <span className="text-sm text-muted-foreground">
-              {user?.employeeType === 'online' ? 'Online Employee' : 'Offline Employee'}
-            </span>
-          </div>
-        </div>
+        </header>
 
         {/* Admin: Sales KPI strip (full width) */}
         {role === 'admin' && (
