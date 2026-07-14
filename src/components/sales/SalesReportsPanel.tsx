@@ -18,6 +18,8 @@ import {
   Crown,
   Wallet,
   ArrowUpRight,
+  Sparkles,
+  Package,
 } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useSalesInvoices, useSalesUploads, useUploadSalesExcel } from '@/hooks/useSales';
@@ -63,6 +65,18 @@ function monthLabel(key: string, opts: { short?: boolean } = {}) {
   });
 }
 
+function quarterKey(d: string) {
+  const dt = new Date(d);
+  const q = Math.floor(dt.getMonth() / 3) + 1;
+  return `${dt.getFullYear()}-Q${q}`;
+}
+function quarterLabel(key: string) {
+  return key.replace('-', ' ');
+}
+function yearKey(d: string) {
+  return String(new Date(d).getFullYear());
+}
+
 function useSalesItemsLite() {
   return useQuery({
     queryKey: ['sales-items-lite'],
@@ -71,7 +85,7 @@ function useSalesItemsLite() {
         .from('sales_items')
         .select('invoice_date, item_name, quantity, amount')
         .order('invoice_date', { ascending: false })
-        .limit(5000);
+        .limit(20000);
       if (error) throw error;
       return (data || []) as ItemRow[];
     },
@@ -86,6 +100,8 @@ export function SalesReportsPanel() {
   const upload = useUploadSalesExcel();
   const [search, setSearch] = useState('');
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const [topPeriod, setTopPeriod] = useState<'month' | 'quarter' | 'year'>('month');
+  const [predictHorizon, setPredictHorizon] = useState<'quarter' | 'year'>('quarter');
 
   const invoices = invoicesRaw as unknown as Invoice[];
 
@@ -150,6 +166,87 @@ export function SalesReportsPanel() {
 
     return { revenue, count, avg, topCustomer, delta, topProducts, monthInvoices };
   }, [activeMonth, invoices, itemsRaw, monthly]);
+
+  // Top products by period (monthly/quarterly/annually)
+  const topProductsByPeriod = useMemo(() => {
+    if (!activeMonth) return { periodLabel: '', products: [] as { name: string; qty: number; revenue: number }[] };
+    const dt = new Date(`${activeMonth}-01`);
+    let filterFn: (it: ItemRow) => boolean;
+    let periodLabel = '';
+    if (topPeriod === 'month') {
+      filterFn = (it) => monthKey(it.invoice_date) === activeMonth;
+      periodLabel = monthLabel(activeMonth);
+    } else if (topPeriod === 'quarter') {
+      const qk = quarterKey(`${activeMonth}-01`);
+      filterFn = (it) => quarterKey(it.invoice_date) === qk;
+      periodLabel = quarterLabel(qk);
+    } else {
+      const yk = String(dt.getFullYear());
+      filterFn = (it) => yearKey(it.invoice_date) === yk;
+      periodLabel = yk;
+    }
+    const prodMap = new Map<string, { qty: number; revenue: number }>();
+    itemsRaw.filter(filterFn).forEach((it) => {
+      const cur = prodMap.get(it.item_name) || { qty: 0, revenue: 0 };
+      cur.qty += Number(it.quantity || 0);
+      cur.revenue += Number(it.amount || 0);
+      prodMap.set(it.item_name, cur);
+    });
+    const products = Array.from(prodMap.entries())
+      .map(([name, v]) => ({ name, qty: v.qty, revenue: v.revenue }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 10);
+    return { periodLabel, products };
+  }, [activeMonth, itemsRaw, topPeriod]);
+
+  // Demand predictor: compare recent period vs prior baseline
+  const predictions = useMemo(() => {
+    if (itemsRaw.length === 0) return [];
+    const keyFn = predictHorizon === 'quarter' ? quarterKey : yearKey;
+    // Bucket qty & revenue per product per period
+    const perProduct = new Map<string, Map<string, { qty: number; revenue: number }>>();
+    const allPeriods = new Set<string>();
+    for (const it of itemsRaw) {
+      const pk = keyFn(it.invoice_date);
+      allPeriods.add(pk);
+      if (!perProduct.has(it.item_name)) perProduct.set(it.item_name, new Map());
+      const pmap = perProduct.get(it.item_name)!;
+      const cur = pmap.get(pk) || { qty: 0, revenue: 0 };
+      cur.qty += Number(it.quantity || 0);
+      cur.revenue += Number(it.amount || 0);
+      pmap.set(pk, cur);
+    }
+    const sortedPeriods = Array.from(allPeriods).sort();
+    if (sortedPeriods.length < 2) return [];
+    const recent = sortedPeriods[sortedPeriods.length - 1];
+    const baseline = sortedPeriods.slice(0, -1).slice(-3); // up to 3 prior periods
+
+    const results = Array.from(perProduct.entries()).map(([name, pmap]) => {
+      const recentQty = pmap.get(recent)?.qty || 0;
+      const recentRev = pmap.get(recent)?.revenue || 0;
+      const baseVals = baseline.map((k) => pmap.get(k)?.qty || 0);
+      const baseAvg = baseVals.length ? baseVals.reduce((a, b) => a + b, 0) / baseVals.length : 0;
+      // Linear trend: simple slope over last N periods including recent
+      const trendWindow = [...baseline, recent];
+      const y = trendWindow.map((k) => pmap.get(k)?.qty || 0);
+      const n = y.length;
+      const meanX = (n - 1) / 2;
+      const meanY = y.reduce((a, b) => a + b, 0) / n;
+      let num = 0, den = 0;
+      y.forEach((v, i) => { num += (i - meanX) * (v - meanY); den += (i - meanX) ** 2; });
+      const slope = den > 0 ? num / den : 0;
+      const forecast = Math.max(0, y[n - 1] + slope);
+      const growthPct = baseAvg > 0 ? ((recentQty - baseAvg) / baseAvg) * 100 : recentQty > 0 ? 100 : 0;
+      // Score = forecast * (1 + growth), weighted by recent revenue for relevance
+      const score = forecast * (1 + Math.max(-0.5, growthPct / 100)) * Math.log(1 + recentRev);
+      return { name, recentQty, baseAvg, forecast, growthPct, recentRev, score };
+    });
+    return results
+      .filter((r) => r.forecast > 0 && r.growthPct > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8);
+  }, [itemsRaw, predictHorizon]);
+
 
   const filteredMonthInvoices = useMemo(() => {
     if (!activeStats) return [] as Invoice[];
@@ -351,16 +448,34 @@ export function SalesReportsPanel() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base font-semibold">Top Products</CardTitle>
+          <CardHeader className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Package className="w-4 h-4 text-primary" /> Top Products
+              </CardTitle>
+            </div>
+            <div className="flex items-center gap-1 rounded-lg bg-muted/50 p-1 text-xs">
+              {(['month', 'quarter', 'year'] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setTopPeriod(p)}
+                  className={`flex-1 px-2 py-1.5 rounded-md font-medium capitalize transition-colors ${
+                    topPeriod === p ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {p === 'month' ? 'Monthly' : p === 'quarter' ? 'Quarterly' : 'Annually'}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground">{topProductsByPeriod.periodLabel}</p>
           </CardHeader>
           <CardContent>
-            {!activeStats?.topProducts.length ? (
-              <p className="text-sm text-muted-foreground py-6 text-center">No product data for this month.</p>
+            {!topProductsByPeriod.products.length ? (
+              <p className="text-sm text-muted-foreground py-6 text-center">No product data for this period.</p>
             ) : (
-              <div className="space-y-2">
-                {activeStats.topProducts.map((p, idx) => {
-                  const max = activeStats.topProducts[0].revenue || 1;
+              <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                {topProductsByPeriod.products.map((p, idx) => {
+                  const max = topProductsByPeriod.products[0].revenue || 1;
                   const pct = Math.max(6, (p.revenue / max) * 100);
                   return (
                     <div key={p.name} className="relative overflow-hidden rounded-lg border border-border p-3">
@@ -389,6 +504,84 @@ export function SalesReportsPanel() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Demand Predictor */}
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+        <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" /> Demand Predictor
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Products projected to grow next {predictHorizon}. Consider increasing production of these.
+            </p>
+          </div>
+          <div className="flex items-center gap-1 rounded-lg bg-muted/50 p-1 text-xs">
+            {(['quarter', 'year'] as const).map((h) => (
+              <button
+                key={h}
+                onClick={() => setPredictHorizon(h)}
+                className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+                  predictHorizon === h ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Next {h === 'quarter' ? 'Quarter' : 'Year'}
+              </button>
+            ))}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {predictions.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">
+              Not enough historical data yet to project demand. Upload more months of sales to unlock predictions.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>#</TableHead>
+                    <TableHead>Product</TableHead>
+                    <TableHead className="text-right">Last {predictHorizon === 'quarter' ? 'Qtr' : 'Yr'} Qty</TableHead>
+                    <TableHead className="text-right">Prior Avg</TableHead>
+                    <TableHead className="text-right">Growth</TableHead>
+                    <TableHead className="text-right">Forecast Qty</TableHead>
+                    <TableHead>Recommendation</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {predictions.map((p, idx) => {
+                    const strong = p.growthPct >= 50;
+                    return (
+                      <TableRow key={p.name}>
+                        <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
+                        <TableCell className="font-medium max-w-[280px] truncate" title={p.name}>{p.name}</TableCell>
+                        <TableCell className="text-right tabular-nums">{p.recentQty.toFixed(2)}</TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground">{p.baseAvg.toFixed(2)}</TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          <span className="inline-flex items-center gap-1 text-success font-semibold">
+                            <TrendingUp className="w-3 h-3" />+{p.growthPct.toFixed(0)}%
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums font-semibold">{p.forecast.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <Badge variant={strong ? 'default' : 'outline'} className={strong ? '' : 'text-success border-success'}>
+                            {strong ? 'Ramp up significantly' : 'Increase supply'}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+              <p className="text-[11px] text-muted-foreground mt-3">
+                Forecasts use a linear trend over the last few {predictHorizon === 'quarter' ? 'quarters' : 'years'}. Treat as guidance, not a guarantee.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
 
       {/* Invoices for the selected month */}
       <Card>
