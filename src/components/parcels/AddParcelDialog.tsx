@@ -11,6 +11,7 @@ import { COURIERS, getCourierTrackingUrl, resolveCourierName } from '@/lib/couri
 import { extractParcelFromImage, uploadParcelPhoto, useCreateParcel } from '@/hooks/useParcels';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { ClientNameCombobox } from './ClientNameCombobox';
 
 interface Props {
   open: boolean;
@@ -164,7 +165,13 @@ export function AddParcelDialog({ open, onOpenChange }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Client / Recipient Name {isSample && <span className="text-muted-foreground text-xs">(for sample sales list)</span>}</Label>
-              <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Optional" />
+              <ClientNameCombobox
+                value={clientName}
+                onChange={(name, phone) => {
+                  setClientName(name);
+                  if (phone && !clientPhone.trim()) setClientPhone(phone);
+                }}
+              />
             </div>
             <div>
               <Label>Recipient WhatsApp Number</Label>
