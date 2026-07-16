@@ -166,11 +166,6 @@ export default function ParcelsPage() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const { data: parcels = [], isLoading } = useParcels();
 
-  if (authLoading) {
-    return <DashboardLayout><div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div></DashboardLayout>;
-  }
-  if (!user) return <Navigate to="/login" replace />;
-
   const dateFiltered = useMemo(() => {
     if (!dateRange?.from) return parcels;
     const from = new Date(dateRange.from); from.setHours(0, 0, 0, 0);
@@ -181,6 +176,11 @@ export default function ParcelsPage() {
       return d >= from && d <= to;
     });
   }, [parcels, dateRange]);
+
+  if (authLoading) {
+    return <DashboardLayout><div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div></DashboardLayout>;
+  }
+  if (!user) return <Navigate to="/login" replace />;
 
   const samples = dateFiltered.filter((p) => p.is_sample);
 
