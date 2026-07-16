@@ -10,6 +10,7 @@ import { Loader2, Pencil } from 'lucide-react';
 import { COURIERS, getCourierTrackingUrl, PARCEL_STATUSES } from '@/lib/couriers';
 import { Parcel, useUpdateParcel } from '@/hooks/useParcels';
 import { toast } from 'sonner';
+import { ClientNameCombobox } from './ClientNameCombobox';
 
 interface Props {
   open: boolean;
@@ -108,7 +109,13 @@ export function EditParcelDialog({ open, onOpenChange, parcel }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Client / Recipient Name</Label>
-              <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Optional" />
+              <ClientNameCombobox
+                value={clientName}
+                onChange={(name, phone) => {
+                  setClientName(name);
+                  if (phone && !clientPhone.trim()) setClientPhone(phone);
+                }}
+              />
             </div>
             <div>
               <Label>Recipient WhatsApp Number</Label>
