@@ -7,9 +7,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Receipt, FileText, FileCheck2, AlertCircle, CheckCircle2, FileDown, Download, Phone, MapPin, Building2 } from 'lucide-react';
+import { Loader2, Receipt, FileText, FileCheck2, AlertCircle, CheckCircle2, FileDown, Download, Phone, MapPin, Building2, Pencil } from 'lucide-react';
 import { Party } from '@/hooks/useBilling';
 import { BillingDocumentDialog } from './BillingDocumentDialog';
+import { PartyDialog } from './PartyDialog';
 
 function inr(v: number) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v || 0);
@@ -145,6 +146,7 @@ export function PartyLedgerDialog({
   }, [billingDocs, salesInvoices]);
 
   const [openDocId, setOpenDocId] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   const handleRowClick = (r: LedgerRow) => {
     if (r.docId) {
@@ -193,9 +195,14 @@ export function PartyLedgerDialog({
                 All transactions and outstanding balances for this customer.
               </DialogDescription>
             </div>
-            <Button size="sm" variant="outline" onClick={handleExportExcel} disabled={isLoading || rows.length === 0}>
-              <Download className="w-4 h-4 mr-1.5" /> Excel
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => setEditOpen(true)} disabled={!party}>
+                <Pencil className="w-4 h-4 mr-1.5" /> Edit
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleExportExcel} disabled={isLoading || rows.length === 0}>
+                <Download className="w-4 h-4 mr-1.5" /> Excel
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 
@@ -302,6 +309,12 @@ export function PartyLedgerDialog({
         onOpenChange={(o) => { if (!o) setOpenDocId(null); }}
         documentId={openDocId}
         initialType="tax_invoice"
+      />
+
+      <PartyDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        party={party}
       />
     </Dialog>
   );
