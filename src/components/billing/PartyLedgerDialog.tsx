@@ -310,6 +310,12 @@ export function PartyLedgerDialog({
         documentId={openDocId}
         initialType="tax_invoice"
       />
+
+      <PartyDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        party={party}
+      />
     </Dialog>
   );
 }
