@@ -194,9 +194,14 @@ export function PartyLedgerDialog({
                 All transactions and outstanding balances for this customer.
               </DialogDescription>
             </div>
-            <Button size="sm" variant="outline" onClick={handleExportExcel} disabled={isLoading || rows.length === 0}>
-              <Download className="w-4 h-4 mr-1.5" /> Excel
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => setEditOpen(true)} disabled={!party}>
+                <Pencil className="w-4 h-4 mr-1.5" /> Edit
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleExportExcel} disabled={isLoading || rows.length === 0}>
+                <Download className="w-4 h-4 mr-1.5" /> Excel
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 
