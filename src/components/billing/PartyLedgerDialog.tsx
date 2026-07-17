@@ -146,6 +146,7 @@ export function PartyLedgerDialog({
   }, [billingDocs, salesInvoices]);
 
   const [openDocId, setOpenDocId] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   const handleRowClick = (r: LedgerRow) => {
     if (r.docId) {
