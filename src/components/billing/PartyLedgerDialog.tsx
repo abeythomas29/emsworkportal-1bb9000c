@@ -199,6 +199,9 @@ export function PartyLedgerDialog({
           </div>
         </DialogHeader>
 
+        {/* Contact & Address */}
+        <PartyContactCard party={party} />
+
         {/* Summary strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
           <SummaryTile label="Total Invoiced" value={inr(summary.invoiced)} tone="muted" />
