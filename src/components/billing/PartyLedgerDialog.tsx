@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Receipt, FileText, FileCheck2, AlertCircle, CheckCircle2, FileDown, Download } from 'lucide-react';
+import { Loader2, Receipt, FileText, FileCheck2, AlertCircle, CheckCircle2, FileDown, Download, Phone, MapPin, Building2 } from 'lucide-react';
 import { Party } from '@/hooks/useBilling';
 import { BillingDocumentDialog } from './BillingDocumentDialog';
 
@@ -199,6 +199,9 @@ export function PartyLedgerDialog({
           </div>
         </DialogHeader>
 
+        {/* Contact & Address */}
+        <PartyContactCard party={party} />
+
         {/* Summary strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
           <SummaryTile label="Total Invoiced" value={inr(summary.invoiced)} tone="muted" />
@@ -335,6 +338,70 @@ function SummaryTile({
       </div>
       <p className={`mt-2 text-lg font-bold tabular-nums ${textTones[tone]}`}>{value}</p>
       {hint && <p className="text-xs text-muted-foreground mt-0.5">{hint}</p>}
+    </div>
+  );
+}
+
+function PartyContactCard({ party }: { party: Party | null }) {
+  if (!party) return null;
+  const billingParts = [
+    party.billing_street,
+    party.billing_city,
+    party.billing_state,
+    party.billing_pincode,
+    party.billing_country,
+  ].filter(Boolean);
+  const billing = billingParts.join(', ');
+  const shipping = party.shipping_same
+    ? ''
+    : [
+        party.shipping_street,
+        party.shipping_city,
+        party.shipping_state,
+        party.shipping_pincode,
+        party.shipping_country,
+      ].filter(Boolean).join(', ');
+
+  const hasAny = party.phone || party.gstin || billing || shipping;
+  if (!hasAny) return null;
+
+  return (
+    <div className="mt-3 rounded-xl border border-border/60 bg-muted/20 p-4 grid gap-3 md:grid-cols-2">
+      <div className="space-y-2 text-sm">
+        {party.phone && (
+          <div className="flex items-center gap-2">
+            <Phone className="w-4 h-4 text-primary shrink-0" />
+            <a href={`tel:${party.phone}`} className="hover:underline tabular-nums">{party.phone}</a>
+          </div>
+        )}
+        {party.gstin && (
+          <div className="flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-primary shrink-0" />
+            <span className="font-mono text-xs">{party.gstin}</span>
+            <Badge variant="outline" className="text-[10px] uppercase">{party.gst_type}</Badge>
+          </div>
+        )}
+      </div>
+      <div className="space-y-2 text-sm">
+        {billing && (
+          <div className="flex items-start gap-2">
+            <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Billing address</p>
+              <p className="text-foreground">{billing}</p>
+            </div>
+          </div>
+        )}
+        {shipping && (
+          <div className="flex items-start gap-2">
+            <MapPin className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Shipping address</p>
+              <p className="text-foreground">{shipping}</p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
