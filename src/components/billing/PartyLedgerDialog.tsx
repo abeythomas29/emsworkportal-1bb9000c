@@ -30,9 +30,8 @@ function greetingForNow(): string {
   if (h < 17) return 'Good afternoon';
   return 'Good evening';
 }
-function buildInquiryMessage(partyName: string): string {
-  const first = (partyName || '').trim().split(/\s+/)[0] || 'there';
-  return `${greetingForNow()}, ${first}!\n\nThis is Abey from Esoteric Mineral Solutions — we specialise in pearl (mica-based) pigments and effect colours for coatings, cosmetics, plastics and crafts.\n\nJust checking in to see if you have any upcoming pearl pigment requirements we can support. Happy to share updated pricing, shade cards or samples from our range: https://esotericminerals.com/\n\nLooking forward to hearing from you.`;
+function buildInquiryMessage(_partyName: string): string {
+  return `${greetingForNow()}, Sir!\n\nThis is Abey from Esoteric Mineral Solutions — we specialise in pearl (mica-based) pigments and effect colours for coatings, cosmetics, plastics and crafts.\n\nJust checking in to see if you have any upcoming pearl pigment requirements we can support. Happy to share updated pricing, shade cards or samples from our range: https://esotericminerals.com/\n\nLooking forward to hearing from you.`;
 }
 
 type LedgerRow = {
