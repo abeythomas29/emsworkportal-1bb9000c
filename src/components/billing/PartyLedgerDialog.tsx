@@ -18,6 +18,22 @@ function inr(v: number) {
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
+function normalizePhoneForWa(input: string): string {
+  const digits = (input || '').replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.length === 10) return `91${digits}`;
+  return digits;
+}
+function greetingForNow(): string {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+function buildInquiryMessage(partyName: string): string {
+  const first = (partyName || '').trim().split(/\s+/)[0] || 'there';
+  return `${greetingForNow()}, ${first}!\n\nThis is Tushar from Esoteric Mineral Solutions. Hope you're doing well.\n\nJust checking in to see if you have any upcoming requirements we can help you with. Happy to share updated pricing, samples, or our latest catalogue if useful: https://esotericminerals.com/\n\nLooking forward to hearing from you.`;
+}
 
 type LedgerRow = {
   id: string;
