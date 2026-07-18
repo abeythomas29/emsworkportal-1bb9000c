@@ -32,7 +32,7 @@ function greetingForNow(): string {
 }
 function buildInquiryMessage(partyName: string): string {
   const first = (partyName || '').trim().split(/\s+/)[0] || 'there';
-  return `${greetingForNow()}, ${first}!\n\nThis is Tushar from Esoteric Mineral Solutions. Hope you're doing well.\n\nJust checking in to see if you have any upcoming requirements we can help you with. Happy to share updated pricing, samples, or our latest catalogue if useful: https://esotericminerals.com/\n\nLooking forward to hearing from you.`;
+  return `${greetingForNow()}, ${first}!\n\nThis is Abey from Esoteric Mineral Solutions. Hope you're doing well.\n\nJust checking in to see if you have any upcoming requirements we can help you with. Happy to share updated pricing, samples, or our latest catalogue if useful: https://esotericminerals.com/\n\nLooking forward to hearing from you.`;
 }
 
 type LedgerRow = {
