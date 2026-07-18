@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Receipt, FileText, FileCheck2, AlertCircle, CheckCircle2, FileDown, Download, Phone, MapPin, Building2, Pencil } from 'lucide-react';
+import { Loader2, Receipt, FileText, FileCheck2, AlertCircle, CheckCircle2, FileDown, Download, Phone, MapPin, Building2, Pencil, MessageCircle } from 'lucide-react';
 import { Party } from '@/hooks/useBilling';
 import { BillingDocumentDialog } from './BillingDocumentDialog';
 import { PartyDialog } from './PartyDialog';
