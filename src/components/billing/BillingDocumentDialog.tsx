@@ -486,21 +486,30 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
           <DialogTitle className="flex flex-wrap items-center gap-2 sm:gap-3 text-base sm:text-lg pr-6">
             {TITLE[docType]}
             {status === 'finalized' ? (
-              unlocked ? (
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="doc-serial-edit" className="text-xs font-medium text-muted-foreground">
-                    Serial #
-                  </Label>
-                  <Input
-                    id="doc-serial-edit"
-                    value={editableDocNumber}
-                    onChange={(e) => setEditableDocNumber(e.target.value)}
-                    className="h-8 w-48 text-sm"
-                  />
-                </div>
-              ) : (
-                <Badge className="bg-success text-success-foreground">Finalized · {docNumber}</Badge>
-              )
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge className="bg-success text-success-foreground">Finalized</Badge>
+                <Label htmlFor="doc-serial-edit" className="text-xs font-medium text-muted-foreground">
+                  Serial #
+                </Label>
+                <Input
+                  id="doc-serial-edit"
+                  value={editableDocNumber}
+                  onChange={(e) => setEditableDocNumber(e.target.value)}
+                  className="h-8 w-56 text-sm font-mono"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={
+                    !editableDocNumber.trim() ||
+                    editableDocNumber.trim() === docNumber ||
+                    save.isPending
+                  }
+                  onClick={() => doSave(false)}
+                >
+                  {save.isPending ? 'Saving…' : 'Save #'}
+                </Button>
+              </div>
             ) : (
               <Badge variant="secondary">Draft</Badge>
             )}
@@ -511,7 +520,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
                 variant={unlocked ? 'secondary' : 'outline'}
                 onClick={() => setUnlocked((u) => !u)}
               >
-                {unlocked ? 'Lock' : 'Edit'}
+                {unlocked ? 'Lock fields' : 'Edit fields'}
               </Button>
             )}
           </DialogTitle>
