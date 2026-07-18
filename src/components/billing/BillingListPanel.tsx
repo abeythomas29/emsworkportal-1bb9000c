@@ -25,6 +25,7 @@ import {
 } from '@/hooks/useBilling';
 import { BillingDocumentDialog } from './BillingDocumentDialog';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 type DocType = BillingDocument['doc_type'];
 
