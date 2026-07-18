@@ -211,7 +211,21 @@ export function PartyLedgerDialog({
                 All transactions and outstanding balances for this customer.
               </DialogDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              <Button
+                size="sm"
+                onClick={() => {
+                  const wa = normalizePhoneForWa(party?.phone || '');
+                  if (!wa) { toast.error('No phone number on this party. Add one first.'); return; }
+                  const msg = buildInquiryMessage(partyName);
+                  window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+                }}
+                disabled={!party?.phone}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                title={party?.phone ? 'Send WhatsApp inquiry' : 'Add a phone number to enable WhatsApp'}
+              >
+                <MessageCircle className="w-4 h-4 mr-1.5" /> WhatsApp
+              </Button>
               <Button size="sm" variant="outline" onClick={() => setEditOpen(true)} disabled={!party}>
                 <Pencil className="w-4 h-4 mr-1.5" /> Edit
               </Button>
