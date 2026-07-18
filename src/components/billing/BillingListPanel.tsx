@@ -25,6 +25,7 @@ import {
 } from '@/hooks/useBilling';
 import { BillingDocumentDialog } from './BillingDocumentDialog';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 type DocType = BillingDocument['doc_type'];
 
@@ -525,6 +526,7 @@ function ConvertToTaxInvoiceRunner({ sourceId, onDone }: { sourceId: string; onD
           amount: i.amount,
         })),
       });
+      await supabase.from('billing_documents').update({ converted_to_id: newId } as never).eq('id', sourceId);
       onDone(newId);
     })();
   }

@@ -1057,10 +1057,13 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
               )}
               <Button variant="outline" onClick={previewPdf} className="w-full sm:w-auto min-h-11"><Eye className="w-4 h-4 mr-2" /> Preview PDF</Button>
               <Button onClick={downloadPdf} className="w-full sm:w-auto min-h-11"><FileDown className="w-4 h-4 mr-2" /> Download PDF</Button>
-              {(docType === 'proforma' || docType === 'estimate') && savedId && onConvert && (
+              {(docType === 'proforma' || docType === 'estimate') && savedId && onConvert && !(existing?.doc as { converted_to_id?: string | null } | undefined)?.converted_to_id && (
                 <Button variant="secondary" onClick={() => onConvert(savedId)} className="w-full sm:w-auto min-h-11">
                   <Copy className="w-4 h-4 mr-2" /> Convert to Tax Invoice
                 </Button>
+              )}
+              {(docType === 'proforma' || docType === 'estimate') && (existing?.doc as { converted_to_id?: string | null } | undefined)?.converted_to_id && (
+                <span className="text-xs text-muted-foreground self-center">Already converted to Tax Invoice</span>
               )}
             </>
           )}
