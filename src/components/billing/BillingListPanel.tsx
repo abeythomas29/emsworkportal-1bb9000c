@@ -272,6 +272,7 @@ function TypeSection({
   onEdit,
   onDelete,
   onDuplicate,
+  onPdfAction,
   ActiveIcon,
 }: {
   docType: DocType;
@@ -285,6 +286,7 @@ function TypeSection({
   onEdit: (id: string) => void;
   onDelete: (d: BillingDocument) => void;
   onDuplicate: (id: string) => void;
+  onPdfAction: (id: string, action: PdfAction) => void;
   ActiveIcon: React.ComponentType<{ className?: string }>;
 }) {
   const monthly = useMemo(() => {
