@@ -74,6 +74,7 @@ export function BillingListPanel() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [initialType, setInitialType] = useState<DocType>('tax_invoice');
   const [convertSourceId, setConvertSourceId] = useState<string | null>(null);
+  const [duplicateSourceId, setDuplicateSourceId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<BillingDocument | null>(null);
 
   const openNew = (type: DocType) => {
