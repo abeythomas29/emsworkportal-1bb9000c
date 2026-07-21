@@ -169,6 +169,19 @@ export function BillingListPanel() {
         />
       )}
 
+      {duplicateSourceId && (
+        <DuplicateDocumentRunner
+          sourceId={duplicateSourceId}
+          onDone={(newId, docType) => {
+            setDuplicateSourceId(null);
+            setInitialType(docType);
+            setActiveType(docType);
+            setEditingId(newId);
+            setDialogOpen(true);
+          }}
+        />
+      )}
+
       <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
