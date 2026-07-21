@@ -385,7 +385,7 @@ function TypeSection({
     return true;
   });
 
-  const activeLabel = TYPE_LABEL_FULL[activeType];
+  const activeLabel = TYPE_LABEL_FULL[docType];
 
   return (
     <>
