@@ -143,6 +143,7 @@ export function BillingListPanel() {
           onNew={() => openNew(activeType)}
           onEdit={(id) => { setEditingId(id); setDialogOpen(true); }}
           onDelete={(d) => setPendingDelete(d)}
+          onDuplicate={(id) => setDuplicateSourceId(id)}
           ActiveIcon={ActiveIcon}
         />
       </div>
