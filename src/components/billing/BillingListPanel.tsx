@@ -427,34 +427,14 @@ function TypeSection({
                             {formatCurrency(Number(d.total))}
                           </TableCell>
                           <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-end gap-1">
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => onEdit(d.id)}
-                                aria-label={`Edit ${d.doc_number || 'draft'}`}
-                                className="min-h-9 min-w-9"
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => onDuplicate(d.id)}
-                                aria-label={`Duplicate ${d.doc_number || 'draft'}`}
-                                className="min-h-9 min-w-9"
-                              >
-                                <Copy className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => onDelete(d)}
-                                aria-label={`Delete ${d.doc_number || 'draft'}`}
-                                className="min-h-9 min-w-9 hover:bg-destructive/10 hover:text-destructive"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                            <div className="flex items-center justify-end">
+                              <RowActionsMenu
+                                doc={d}
+                                onEdit={onEdit}
+                                onDuplicate={onDuplicate}
+                                onDelete={onDelete}
+                                onPdfAction={onPdfAction}
+                              />
                             </div>
                           </TableCell>
                         </TableRow>
