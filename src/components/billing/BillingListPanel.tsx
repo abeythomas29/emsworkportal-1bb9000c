@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Search, Loader2, Pencil, Trash2, FileText, Receipt, FileCheck2, FilePlus2 } from 'lucide-react';
+import { Plus, Search, Loader2, Pencil, Trash2, FileText, Receipt, FileCheck2, FilePlus2, Copy } from 'lucide-react';
 import {
   BillingDocument,
   useBillingDocument,
