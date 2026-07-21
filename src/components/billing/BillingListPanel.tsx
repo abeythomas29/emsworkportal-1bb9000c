@@ -15,17 +15,51 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Search, Loader2, Pencil, Trash2, FileText, Receipt, FileCheck2, FilePlus2, Copy } from 'lucide-react';
+import { Plus, Search, Loader2, Pencil, Trash2, FileText, Receipt, FileCheck2, FilePlus2, Copy, MoreHorizontal, Download, Eye, Printer } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   BillingDocument,
   useBillingDocument,
   useBillingDocuments,
+  useCompanySettings,
   useDeleteBillingDocument,
   useSaveBillingDocument,
 } from '@/hooks/useBilling';
 import { BillingDocumentDialog } from './BillingDocumentDialog';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { generateBillingPdf, prepareBrandingAssets, preloadCompanyImages } from '@/lib/billing/pdf';
+import { computeLine } from '@/lib/billing/calc';
+import { toast } from 'sonner';
+
+type PdfAction = 'download' | 'preview' | 'print';
+
+const DOWNLOAD_NAME_PREFIX: Partial<Record<BillingDocument['doc_type'], string>> = {
+  tax_invoice: 'Tax Invoice_',
+};
+
+function safePdfFileName(docType: BillingDocument['doc_type'], docNumber: string | null, docDate?: string) {
+  const number = docNumber || 'DRAFT';
+  const prefix = DOWNLOAD_NAME_PREFIX[docType] || '';
+  const base = prefix && !number.toLowerCase().startsWith(prefix.toLowerCase()) ? `${prefix}${number}` : number;
+  let suffix = '';
+  if (docDate) {
+    const d = new Date(docDate);
+    if (!isNaN(d.getTime())) {
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yy = String(d.getFullYear()).slice(-2);
+      suffix = `_${dd}_${mm}_${yy}`;
+    }
+  }
+  return `${base}${suffix}`.replace(/[\\/:*?"<>|]/g, '-');
+}
 
 type DocType = BillingDocument['doc_type'];
 
