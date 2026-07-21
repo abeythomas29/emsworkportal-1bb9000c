@@ -562,3 +562,66 @@ function ConvertToTaxInvoiceRunner({ sourceId, onDone }: { sourceId: string; onD
 
   return null;
 }
+
+// Duplicates a document (of any type) as a new draft of the SAME type that the user can edit.
+function DuplicateDocumentRunner({
+  sourceId,
+  onDone,
+}: {
+  sourceId: string;
+  onDone: (newId: string, docType: DocType) => void;
+}) {
+  const { data } = useBillingDocument(sourceId);
+  const save = useSaveBillingDocument();
+  const [ran, setRan] = useState(false);
+
+  if (data && !ran) {
+    setRan(true);
+    (async () => {
+      const { doc, items } = data;
+      const newId = await save.mutateAsync({
+        header: {
+          doc_type: doc.doc_type,
+          doc_date: new Date().toISOString().slice(0, 10),
+          party_id: doc.party_id,
+          party_snapshot: doc.party_snapshot as Record<string, unknown>,
+          place_of_supply_state: doc.place_of_supply_state,
+          place_of_supply_code: doc.place_of_supply_code,
+          payment_mode: doc.payment_mode,
+          terms: doc.terms,
+          notes: doc.notes,
+          sub_total: doc.sub_total,
+          total_discount: doc.total_discount,
+          total_tax: doc.total_tax,
+          round_off: doc.round_off,
+          total: doc.total,
+          total_in_words: doc.total_in_words,
+          tax_summary: doc.tax_summary as never,
+          financial_year: doc.financial_year,
+        },
+        items: items.map((i, idx) => ({
+          position: idx,
+          product_id: i.product_id,
+          item_name: i.item_name,
+          description: i.description,
+          hsn_sac: i.hsn_sac,
+          quantity: i.quantity,
+          unit: i.unit,
+          unit_price: i.unit_price,
+          discount_percent: i.discount_percent,
+          discount_amount: i.discount_amount,
+          tax_percent: i.tax_percent,
+          taxable_value: i.taxable_value,
+          cgst: i.cgst,
+          sgst: i.sgst,
+          igst: i.igst,
+          tax_amount: i.tax_amount,
+          amount: i.amount,
+        })),
+      });
+      onDone(newId, doc.doc_type);
+    })();
+  }
+
+  return null;
+}
