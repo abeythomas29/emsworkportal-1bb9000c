@@ -648,3 +648,145 @@ function DuplicateDocumentRunner({
 
   return null;
 }
+
+function RowActionsMenu({
+  doc,
+  onEdit,
+  onDuplicate,
+  onDelete,
+  onPdfAction,
+}: {
+  doc: BillingDocument;
+  onEdit: (id: string) => void;
+  onDuplicate: (id: string) => void;
+  onDelete: (d: BillingDocument) => void;
+  onPdfAction: (id: string, action: PdfAction) => void;
+}) {
+  const label = doc.doc_number || 'draft';
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          size="icon"
+          variant="ghost"
+          aria-label={`Actions for ${label}`}
+          className="min-h-9 min-w-9"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <MoreHorizontal className="w-4 h-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44" onClick={(e) => e.stopPropagation()}>
+        <DropdownMenuItem onSelect={() => onEdit(doc.id)}>
+          <Pencil className="w-4 h-4 mr-2" /> Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onPdfAction(doc.id, 'preview')}>
+          <Eye className="w-4 h-4 mr-2" /> Preview
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onPdfAction(doc.id, 'download')}>
+          <Download className="w-4 h-4 mr-2" /> Download
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onPdfAction(doc.id, 'print')}>
+          <Printer className="w-4 h-4 mr-2" /> Print
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onDuplicate(doc.id)}>
+          <Copy className="w-4 h-4 mr-2" /> Duplicate
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onSelect={() => onDelete(doc)}
+          className="text-destructive focus:text-destructive focus:bg-destructive/10"
+        >
+          <Trash2 className="w-4 h-4 mr-2" /> Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// Fetches doc + items + company on demand and performs a PDF action (download/preview/print).
+function PdfActionRunner({
+  sourceId,
+  action,
+  onDone,
+}: {
+  sourceId: string;
+  action: PdfAction;
+  onDone: () => void;
+}) {
+  const { data } = useBillingDocument(sourceId);
+  const { data: company } = useCompanySettings();
+  const [ran, setRan] = useState(false);
+
+  if (data && company && !ran) {
+    setRan(true);
+    (async () => {
+      try {
+        const { doc, items } = data;
+        await Promise.all([prepareBrandingAssets(), preloadCompanyImages(company)]);
+
+        const party = (doc.party_snapshot as Record<string, unknown> | null) || { name: 'Unknown' };
+        const partyStateCode = (party as { billing_state_code?: string | null }).billing_state_code || '';
+        const sameState = !!company.state_code && company.state_code === partyStateCode;
+
+        const lines = items.map((i) =>
+          computeLine(
+            {
+              item_name: i.item_name,
+              hsn_sac: i.hsn_sac,
+              quantity: Number(i.quantity) || 0,
+              unit: i.unit,
+              unit_price: Number(i.unit_price) || 0,
+              discount_percent: Number(i.discount_percent) || 0,
+              tax_percent: Number(i.tax_percent) || 0,
+              product_id: i.product_id,
+              description: i.description,
+            },
+            sameState,
+          ),
+        );
+
+        const pdf = generateBillingPdf({
+          doc_type: doc.doc_type,
+          doc_number: doc.doc_number || 'DRAFT',
+          doc_date: doc.doc_date,
+          place_of_supply_state: doc.place_of_supply_state,
+          place_of_supply_code: doc.place_of_supply_code,
+          payment_mode: doc.payment_mode,
+          terms: doc.terms,
+          company,
+          party: party as never,
+          lines,
+          sameState,
+        });
+
+        if (action === 'download') {
+          pdf.save(`${safePdfFileName(doc.doc_type, doc.doc_number, doc.doc_date)}.pdf`);
+        } else if (action === 'preview') {
+          window.open(pdf.output('bloburl'), '_blank');
+        } else if (action === 'print') {
+          const url = pdf.output('bloburl');
+          const w = window.open(url, '_blank');
+          if (w) {
+            w.addEventListener('load', () => {
+              try {
+                w.focus();
+                w.print();
+              } catch {
+                /* ignore */
+              }
+            });
+          } else {
+            toast.error('Allow pop-ups to print this document');
+          }
+        }
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Failed to generate PDF');
+      } finally {
+        onDone();
+      }
+    })();
+  }
+
+  return null;
+}
