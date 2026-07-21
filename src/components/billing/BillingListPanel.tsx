@@ -393,6 +393,15 @@ function TypeSection({
                               <Button
                                 size="icon"
                                 variant="ghost"
+                                onClick={() => onDuplicate(d.id)}
+                                aria-label={`Duplicate ${d.doc_number || 'draft'}`}
+                                className="min-h-9 min-w-9"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
                                 onClick={() => onDelete(d)}
                                 aria-label={`Delete ${d.doc_number || 'draft'}`}
                                 className="min-h-9 min-w-9 hover:bg-destructive/10 hover:text-destructive"
