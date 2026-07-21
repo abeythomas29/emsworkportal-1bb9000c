@@ -482,17 +482,6 @@ function TypeSection({
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/40" onClick={(e) => e.stopPropagation()}>
-                        <Button size="sm" variant="ghost" onClick={() => onEdit(d.id)} className="h-9 gap-1.5">
-                          <Pencil className="w-3.5 h-3.5" /> Edit
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => onDuplicate(d.id)} className="h-9 gap-1.5">
-                          <Copy className="w-3.5 h-3.5" /> Duplicate
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => onDelete(d)} className="h-9 gap-1.5 hover:bg-destructive/10 hover:text-destructive">
-                          <Trash2 className="w-3.5 h-3.5" /> Delete
-                        </Button>
-                      </div>
                     </CardContent>
                   </Card>
                 );
