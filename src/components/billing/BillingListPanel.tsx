@@ -15,17 +15,51 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Search, Loader2, Pencil, Trash2, FileText, Receipt, FileCheck2, FilePlus2, Copy } from 'lucide-react';
+import { Plus, Search, Loader2, Pencil, Trash2, FileText, Receipt, FileCheck2, FilePlus2, Copy, MoreHorizontal, Download, Eye, Printer } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   BillingDocument,
   useBillingDocument,
   useBillingDocuments,
+  useCompanySettings,
   useDeleteBillingDocument,
   useSaveBillingDocument,
 } from '@/hooks/useBilling';
 import { BillingDocumentDialog } from './BillingDocumentDialog';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { generateBillingPdf, prepareBrandingAssets, preloadCompanyImages } from '@/lib/billing/pdf';
+import { computeLine } from '@/lib/billing/calc';
+import { toast } from 'sonner';
+
+type PdfAction = 'download' | 'preview' | 'print';
+
+const DOWNLOAD_NAME_PREFIX: Partial<Record<BillingDocument['doc_type'], string>> = {
+  tax_invoice: 'Tax Invoice_',
+};
+
+function safePdfFileName(docType: BillingDocument['doc_type'], docNumber: string | null, docDate?: string) {
+  const number = docNumber || 'DRAFT';
+  const prefix = DOWNLOAD_NAME_PREFIX[docType] || '';
+  const base = prefix && !number.toLowerCase().startsWith(prefix.toLowerCase()) ? `${prefix}${number}` : number;
+  let suffix = '';
+  if (docDate) {
+    const d = new Date(docDate);
+    if (!isNaN(d.getTime())) {
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yy = String(d.getFullYear()).slice(-2);
+      suffix = `_${dd}_${mm}_${yy}`;
+    }
+  }
+  return `${base}${suffix}`.replace(/[\\/:*?"<>|]/g, '-');
+}
 
 type DocType = BillingDocument['doc_type'];
 
@@ -75,6 +109,7 @@ export function BillingListPanel() {
   const [initialType, setInitialType] = useState<DocType>('tax_invoice');
   const [convertSourceId, setConvertSourceId] = useState<string | null>(null);
   const [duplicateSourceId, setDuplicateSourceId] = useState<string | null>(null);
+  const [pdfRequest, setPdfRequest] = useState<{ id: string; action: PdfAction } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<BillingDocument | null>(null);
 
   const openNew = (type: DocType) => {
@@ -144,6 +179,7 @@ export function BillingListPanel() {
           onEdit={(id) => { setEditingId(id); setDialogOpen(true); }}
           onDelete={(d) => setPendingDelete(d)}
           onDuplicate={(id) => setDuplicateSourceId(id)}
+          onPdfAction={(id, action) => setPdfRequest({ id, action })}
           ActiveIcon={ActiveIcon}
         />
       </div>
@@ -181,6 +217,15 @@ export function BillingListPanel() {
           }}
         />
       )}
+
+      {pdfRequest && (
+        <PdfActionRunner
+          sourceId={pdfRequest.id}
+          action={pdfRequest.action}
+          onDone={() => setPdfRequest(null)}
+        />
+      )}
+
 
       <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
         <AlertDialogContent>
@@ -227,6 +272,7 @@ function TypeSection({
   onEdit,
   onDelete,
   onDuplicate,
+  onPdfAction,
   ActiveIcon,
 }: {
   docType: DocType;
@@ -240,6 +286,7 @@ function TypeSection({
   onEdit: (id: string) => void;
   onDelete: (d: BillingDocument) => void;
   onDuplicate: (id: string) => void;
+  onPdfAction: (id: string, action: PdfAction) => void;
   ActiveIcon: React.ComponentType<{ className?: string }>;
 }) {
   const monthly = useMemo(() => {
@@ -380,34 +427,14 @@ function TypeSection({
                             {formatCurrency(Number(d.total))}
                           </TableCell>
                           <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-end gap-1">
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => onEdit(d.id)}
-                                aria-label={`Edit ${d.doc_number || 'draft'}`}
-                                className="min-h-9 min-w-9"
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => onDuplicate(d.id)}
-                                aria-label={`Duplicate ${d.doc_number || 'draft'}`}
-                                className="min-h-9 min-w-9"
-                              >
-                                <Copy className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => onDelete(d)}
-                                aria-label={`Delete ${d.doc_number || 'draft'}`}
-                                className="min-h-9 min-w-9 hover:bg-destructive/10 hover:text-destructive"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                            <div className="flex items-center justify-end">
+                              <RowActionsMenu
+                                doc={d}
+                                onEdit={onEdit}
+                                onDuplicate={onDuplicate}
+                                onDelete={onDelete}
+                                onPdfAction={onPdfAction}
+                              />
                             </div>
                           </TableCell>
                         </TableRow>
@@ -437,27 +464,23 @@ function TypeSection({
                           <p className="text-sm font-medium mt-0.5 truncate" title={partyName}>{partyName}</p>
                           <p className="text-xs text-muted-foreground mt-0.5">{formatDate(d.doc_date)}</p>
                         </div>
-                        <div className="text-right shrink-0">
-                          <p className="font-bold tabular-nums text-primary">{formatCurrency(Number(d.total))}</p>
-                          <div className="mt-1">
-                            {d.status === 'finalized' ? (
-                              <Badge className="bg-success/15 text-success border border-success/30 text-[10px]">Finalized</Badge>
-                            ) : (
-                              <Badge variant="outline" className="border-border/60 text-muted-foreground text-[10px]">Draft</Badge>
-                            )}
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <RowActionsMenu
+                              doc={d}
+                              onEdit={onEdit}
+                              onDuplicate={onDuplicate}
+                              onDelete={onDelete}
+                              onPdfAction={onPdfAction}
+                            />
                           </div>
+                          <p className="font-bold tabular-nums text-primary">{formatCurrency(Number(d.total))}</p>
+                          {d.status === 'finalized' ? (
+                            <Badge className="bg-success/15 text-success border border-success/30 text-[10px]">Finalized</Badge>
+                          ) : (
+                            <Badge variant="outline" className="border-border/60 text-muted-foreground text-[10px]">Draft</Badge>
+                          )}
                         </div>
-                      </div>
-                      <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/40" onClick={(e) => e.stopPropagation()}>
-                        <Button size="sm" variant="ghost" onClick={() => onEdit(d.id)} className="h-9 gap-1.5">
-                          <Pencil className="w-3.5 h-3.5" /> Edit
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => onDuplicate(d.id)} className="h-9 gap-1.5">
-                          <Copy className="w-3.5 h-3.5" /> Duplicate
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => onDelete(d)} className="h-9 gap-1.5 hover:bg-destructive/10 hover:text-destructive">
-                          <Trash2 className="w-3.5 h-3.5" /> Delete
-                        </Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -620,6 +643,148 @@ function DuplicateDocumentRunner({
         })),
       });
       onDone(newId, doc.doc_type);
+    })();
+  }
+
+  return null;
+}
+
+function RowActionsMenu({
+  doc,
+  onEdit,
+  onDuplicate,
+  onDelete,
+  onPdfAction,
+}: {
+  doc: BillingDocument;
+  onEdit: (id: string) => void;
+  onDuplicate: (id: string) => void;
+  onDelete: (d: BillingDocument) => void;
+  onPdfAction: (id: string, action: PdfAction) => void;
+}) {
+  const label = doc.doc_number || 'draft';
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          size="icon"
+          variant="ghost"
+          aria-label={`Actions for ${label}`}
+          className="min-h-9 min-w-9"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <MoreHorizontal className="w-4 h-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44" onClick={(e) => e.stopPropagation()}>
+        <DropdownMenuItem onSelect={() => onEdit(doc.id)}>
+          <Pencil className="w-4 h-4 mr-2" /> Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onPdfAction(doc.id, 'preview')}>
+          <Eye className="w-4 h-4 mr-2" /> Preview
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onPdfAction(doc.id, 'download')}>
+          <Download className="w-4 h-4 mr-2" /> Download
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onPdfAction(doc.id, 'print')}>
+          <Printer className="w-4 h-4 mr-2" /> Print
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onDuplicate(doc.id)}>
+          <Copy className="w-4 h-4 mr-2" /> Duplicate
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onSelect={() => onDelete(doc)}
+          className="text-destructive focus:text-destructive focus:bg-destructive/10"
+        >
+          <Trash2 className="w-4 h-4 mr-2" /> Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// Fetches doc + items + company on demand and performs a PDF action (download/preview/print).
+function PdfActionRunner({
+  sourceId,
+  action,
+  onDone,
+}: {
+  sourceId: string;
+  action: PdfAction;
+  onDone: () => void;
+}) {
+  const { data } = useBillingDocument(sourceId);
+  const { data: company } = useCompanySettings();
+  const [ran, setRan] = useState(false);
+
+  if (data && company && !ran) {
+    setRan(true);
+    (async () => {
+      try {
+        const { doc, items } = data;
+        await Promise.all([prepareBrandingAssets(), preloadCompanyImages(company)]);
+
+        const party = (doc.party_snapshot as Record<string, unknown> | null) || { name: 'Unknown' };
+        const partyStateCode = (party as { billing_state_code?: string | null }).billing_state_code || '';
+        const sameState = !!company.state_code && company.state_code === partyStateCode;
+
+        const lines = items.map((i) =>
+          computeLine(
+            {
+              item_name: i.item_name,
+              hsn_sac: i.hsn_sac,
+              quantity: Number(i.quantity) || 0,
+              unit: i.unit,
+              unit_price: Number(i.unit_price) || 0,
+              discount_percent: Number(i.discount_percent) || 0,
+              tax_percent: Number(i.tax_percent) || 0,
+              product_id: i.product_id,
+              description: i.description,
+            },
+            sameState,
+          ),
+        );
+
+        const pdf = generateBillingPdf({
+          doc_type: doc.doc_type,
+          doc_number: doc.doc_number || 'DRAFT',
+          doc_date: doc.doc_date,
+          place_of_supply_state: doc.place_of_supply_state,
+          place_of_supply_code: doc.place_of_supply_code,
+          payment_mode: doc.payment_mode,
+          terms: doc.terms,
+          company,
+          party: party as never,
+          lines,
+          sameState,
+        });
+
+        if (action === 'download') {
+          pdf.save(`${safePdfFileName(doc.doc_type, doc.doc_number, doc.doc_date)}.pdf`);
+        } else if (action === 'preview') {
+          window.open(pdf.output('bloburl'), '_blank');
+        } else if (action === 'print') {
+          const url = pdf.output('bloburl');
+          const w = window.open(url, '_blank');
+          if (w) {
+            w.addEventListener('load', () => {
+              try {
+                w.focus();
+                w.print();
+              } catch {
+                /* ignore */
+              }
+            });
+          } else {
+            toast.error('Allow pop-ups to print this document');
+          }
+        }
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Failed to generate PDF');
+      } finally {
+        onDone();
+      }
     })();
   }
 
