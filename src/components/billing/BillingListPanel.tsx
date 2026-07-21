@@ -226,6 +226,7 @@ function TypeSection({
   onNew,
   onEdit,
   onDelete,
+  onDuplicate,
   ActiveIcon,
 }: {
   docType: DocType;
@@ -238,6 +239,7 @@ function TypeSection({
   onNew: () => void;
   onEdit: (id: string) => void;
   onDelete: (d: BillingDocument) => void;
+  onDuplicate: (id: string) => void;
   ActiveIcon: React.ComponentType<{ className?: string }>;
 }) {
   const monthly = useMemo(() => {
