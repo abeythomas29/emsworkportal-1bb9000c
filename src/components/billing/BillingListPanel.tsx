@@ -89,6 +89,62 @@ function formatDate(d: string) {
 function formatCurrency(v: number) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v || 0);
 }
+function toISODate(d: Date) {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+function formatRangeLabel(from: string, to: string) {
+  const f = new Date(from).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' });
+  const t = new Date(to).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' });
+  return `${f} → ${t}`;
+}
+
+type RangePreset = 'this_month' | 'last_month' | 'last_3m' | 'last_6m' | 'this_fy' | 'last_fy' | 'all' | 'custom';
+
+function fyStart(d: Date) {
+  // Indian FY: Apr 1 - Mar 31
+  const y = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1;
+  return new Date(y, 3, 1);
+}
+function computeRange(preset: RangePreset, from: string, to: string): { from: string; to: string } {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const startOfMonth = (dt: Date) => new Date(dt.getFullYear(), dt.getMonth(), 1);
+  const endOfMonth = (dt: Date) => new Date(dt.getFullYear(), dt.getMonth() + 1, 0);
+  switch (preset) {
+    case 'this_month':
+      return { from: toISODate(startOfMonth(today)), to: toISODate(endOfMonth(today)) };
+    case 'last_month': {
+      const lm = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      return { from: toISODate(startOfMonth(lm)), to: toISODate(endOfMonth(lm)) };
+    }
+    case 'last_3m': {
+      const s = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+      return { from: toISODate(s), to: toISODate(endOfMonth(today)) };
+    }
+    case 'last_6m': {
+      const s = new Date(today.getFullYear(), today.getMonth() - 5, 1);
+      return { from: toISODate(s), to: toISODate(endOfMonth(today)) };
+    }
+    case 'this_fy': {
+      const s = fyStart(today);
+      return { from: toISODate(s), to: toISODate(new Date(s.getFullYear() + 1, 2, 31)) };
+    }
+    case 'last_fy': {
+      const s = fyStart(today);
+      const prev = new Date(s.getFullYear() - 1, 3, 1);
+      return { from: toISODate(prev), to: toISODate(new Date(prev.getFullYear() + 1, 2, 31)) };
+    }
+    case 'all':
+      return { from: '1970-01-01', to: '2999-12-31' };
+    case 'custom':
+    default:
+      return { from, to };
+  }
+}
+
 function monthKey(d: string) {
   const dt = new Date(d);
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
@@ -289,23 +345,37 @@ function TypeSection({
   onPdfAction: (id: string, action: PdfAction) => void;
   ActiveIcon: React.ComponentType<{ className?: string }>;
 }) {
-  const monthly = useMemo(() => {
-    const map = new Map<string, { total: number; count: number }>();
-    for (const d of docs) {
-      const k = monthKey(d.doc_date);
-      const cur = map.get(k) || { total: 0, count: 0 };
-      cur.total += Number(d.total) || 0;
-      cur.count += 1;
-      map.set(k, cur);
+  const [rangePreset, setRangePreset] = useState<RangePreset>('this_month');
+  const [customFrom, setCustomFrom] = useState<string>(() => {
+    const d = new Date();
+    return toISODate(new Date(d.getFullYear(), d.getMonth(), 1));
+  });
+  const [customTo, setCustomTo] = useState<string>(() => {
+    const d = new Date();
+    return toISODate(new Date(d.getFullYear(), d.getMonth() + 1, 0));
+  });
+
+  const range = useMemo(() => computeRange(rangePreset, customFrom, customTo), [rangePreset, customFrom, customTo]);
+
+  const docsInRange = useMemo(
+    () => docs.filter((d) => d.doc_date >= range.from && d.doc_date <= range.to),
+    [docs, range.from, range.to],
+  );
+
+  const summary = useMemo(() => {
+    let total = 0;
+    let finalizedTotal = 0;
+    let draftTotal = 0;
+    for (const d of docsInRange) {
+      const v = Number(d.total) || 0;
+      total += v;
+      if (d.status === 'finalized') finalizedTotal += v;
+      else draftTotal += v;
     }
-    return Array.from(map.entries())
-      .sort((a, b) => (a[0] < b[0] ? 1 : -1))
-      .slice(0, 6);
-  }, [docs]);
+    return { total, finalizedTotal, draftTotal, count: docsInRange.length };
+  }, [docsInRange]);
 
-  const totalAll = useMemo(() => docs.reduce((s, d) => s + Number(d.total || 0), 0), [docs]);
-
-  const filtered = docs.filter((d) => {
+  const filtered = docsInRange.filter((d) => {
     if (statusFilter !== 'all' && d.status !== statusFilter) return false;
     if (q) {
       const term = q.toLowerCase();
@@ -315,30 +385,75 @@ function TypeSection({
     return true;
   });
 
+  const activeLabel = TYPE_LABEL_FULL[docType];
+
   return (
     <>
-      {/* Monthly totals strip */}
-      {monthly.length > 0 && (
-        <section aria-label="Monthly totals" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {monthly.map(([k, v], idx) => (
-            <Card
-              key={k}
-              className={cn(
-                'border-border/60 transition-colors',
-                idx === 0 && 'border-primary/40 bg-gradient-to-br from-primary/10 via-card to-card',
-              )}
-            >
-              <CardContent className="p-4">
-                <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
-                  {monthLabel(k)}
-                </p>
-                <p className="text-lg font-bold mt-1.5 tabular-nums text-foreground">{formatCurrency(v.total)}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{v.count} {v.count === 1 ? 'doc' : 'docs'}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </section>
-      )}
+      {/* Range filter + summary */}
+      <section
+        aria-label="Date range filter"
+        className="rounded-2xl border border-border/60 bg-card/60 p-3 md:p-4 space-y-3"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Filter by</span>
+          <Select value={rangePreset} onValueChange={(v) => setRangePreset(v as RangePreset)}>
+            <SelectTrigger className="h-9 w-auto min-w-[10rem] rounded-full bg-background/70 border-border/60" aria-label="Date range preset">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="this_month">This Month</SelectItem>
+              <SelectItem value="last_month">Last Month</SelectItem>
+              <SelectItem value="last_3m">Last 3 Months</SelectItem>
+              <SelectItem value="last_6m">Last 6 Months</SelectItem>
+              <SelectItem value="this_fy">This FY</SelectItem>
+              <SelectItem value="last_fy">Last FY</SelectItem>
+              <SelectItem value="all">All Time</SelectItem>
+              <SelectItem value="custom">Custom</SelectItem>
+            </SelectContent>
+          </Select>
+          {rangePreset === 'custom' ? (
+            <div className="flex items-center gap-2">
+              <Input
+                type="date"
+                value={customFrom}
+                max={customTo}
+                onChange={(e) => setCustomFrom(e.target.value)}
+                className="h-9 w-[9.5rem] rounded-full bg-background/70 border-border/60"
+                aria-label="From date"
+              />
+              <span className="text-xs text-muted-foreground">to</span>
+              <Input
+                type="date"
+                value={customTo}
+                min={customFrom}
+                onChange={(e) => setCustomTo(e.target.value)}
+                className="h-9 w-[9.5rem] rounded-full bg-background/70 border-border/60"
+                aria-label="To date"
+              />
+            </div>
+          ) : rangePreset !== 'all' ? (
+            <span className="text-xs text-muted-foreground px-2">{formatRangeLabel(range.from, range.to)}</span>
+          ) : null}
+        </div>
+
+        <Card className="border-border/60 bg-gradient-to-br from-primary/10 via-card to-card">
+          <CardContent className="p-4">
+            <p className="text-xs uppercase tracking-widest font-semibold text-muted-foreground">
+              Total {activeLabel}s
+            </p>
+            <p className="text-2xl md:text-3xl font-bold mt-1 tabular-nums text-foreground">
+              {formatCurrency(summary.total)}
+            </p>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
+              <span>{summary.count} {summary.count === 1 ? 'document' : 'documents'}</span>
+              <span className="hidden md:inline text-border">|</span>
+              <span>Finalized: <span className="font-semibold text-foreground tabular-nums">{formatCurrency(summary.finalizedTotal)}</span></span>
+              <span className="hidden md:inline text-border">|</span>
+              <span>Draft: <span className="font-semibold text-foreground tabular-nums">{formatCurrency(summary.draftTotal)}</span></span>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
 
       {/* Filter bar */}
       <div className="flex flex-col md:flex-row md:items-center gap-3 rounded-2xl border border-border/60 bg-card/60 p-3 md:p-4">
@@ -364,9 +479,9 @@ function TypeSection({
         </Select>
         <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground px-2 whitespace-nowrap">
           <span className="tabular-nums font-semibold text-foreground">{filtered.length}</span>
-          <span>of {docs.length} · total</span>
-          <span className="tabular-nums font-semibold text-primary">{formatCurrency(totalAll)}</span>
+          <span>of {docsInRange.length} in range</span>
         </div>
+
       </div>
 
       {/* List */}
