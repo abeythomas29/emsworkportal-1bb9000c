@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Search, Loader2, Pencil, Trash2, FileText, Receipt, FileCheck2, FilePlus2 } from 'lucide-react';
+import { Plus, Search, Loader2, Pencil, Trash2, FileText, Receipt, FileCheck2, FilePlus2, Copy } from 'lucide-react';
 import {
   BillingDocument,
   useBillingDocument,
@@ -74,6 +74,7 @@ export function BillingListPanel() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [initialType, setInitialType] = useState<DocType>('tax_invoice');
   const [convertSourceId, setConvertSourceId] = useState<string | null>(null);
+  const [duplicateSourceId, setDuplicateSourceId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<BillingDocument | null>(null);
 
   const openNew = (type: DocType) => {
@@ -142,6 +143,7 @@ export function BillingListPanel() {
           onNew={() => openNew(activeType)}
           onEdit={(id) => { setEditingId(id); setDialogOpen(true); }}
           onDelete={(d) => setPendingDelete(d)}
+          onDuplicate={(id) => setDuplicateSourceId(id)}
           ActiveIcon={ActiveIcon}
         />
       </div>
@@ -161,6 +163,19 @@ export function BillingListPanel() {
             setConvertSourceId(null);
             setInitialType('tax_invoice');
             setActiveType('tax_invoice');
+            setEditingId(newId);
+            setDialogOpen(true);
+          }}
+        />
+      )}
+
+      {duplicateSourceId && (
+        <DuplicateDocumentRunner
+          sourceId={duplicateSourceId}
+          onDone={(newId, docType) => {
+            setDuplicateSourceId(null);
+            setInitialType(docType);
+            setActiveType(docType);
             setEditingId(newId);
             setDialogOpen(true);
           }}
@@ -211,6 +226,7 @@ function TypeSection({
   onNew,
   onEdit,
   onDelete,
+  onDuplicate,
   ActiveIcon,
 }: {
   docType: DocType;
@@ -223,6 +239,7 @@ function TypeSection({
   onNew: () => void;
   onEdit: (id: string) => void;
   onDelete: (d: BillingDocument) => void;
+  onDuplicate: (id: string) => void;
   ActiveIcon: React.ComponentType<{ className?: string }>;
 }) {
   const monthly = useMemo(() => {
@@ -376,6 +393,15 @@ function TypeSection({
                               <Button
                                 size="icon"
                                 variant="ghost"
+                                onClick={() => onDuplicate(d.id)}
+                                aria-label={`Duplicate ${d.doc_number || 'draft'}`}
+                                className="min-h-9 min-w-9"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
                                 onClick={() => onDelete(d)}
                                 aria-label={`Delete ${d.doc_number || 'draft'}`}
                                 className="min-h-9 min-w-9 hover:bg-destructive/10 hover:text-destructive"
@@ -425,6 +451,9 @@ function TypeSection({
                       <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/40" onClick={(e) => e.stopPropagation()}>
                         <Button size="sm" variant="ghost" onClick={() => onEdit(d.id)} className="h-9 gap-1.5">
                           <Pencil className="w-3.5 h-3.5" /> Edit
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => onDuplicate(d.id)} className="h-9 gap-1.5">
+                          <Copy className="w-3.5 h-3.5" /> Duplicate
                         </Button>
                         <Button size="sm" variant="ghost" onClick={() => onDelete(d)} className="h-9 gap-1.5 hover:bg-destructive/10 hover:text-destructive">
                           <Trash2 className="w-3.5 h-3.5" /> Delete
@@ -528,6 +557,69 @@ function ConvertToTaxInvoiceRunner({ sourceId, onDone }: { sourceId: string; onD
       });
       await supabase.from('billing_documents').update({ converted_to_id: newId } as never).eq('id', sourceId);
       onDone(newId);
+    })();
+  }
+
+  return null;
+}
+
+// Duplicates a document (of any type) as a new draft of the SAME type that the user can edit.
+function DuplicateDocumentRunner({
+  sourceId,
+  onDone,
+}: {
+  sourceId: string;
+  onDone: (newId: string, docType: DocType) => void;
+}) {
+  const { data } = useBillingDocument(sourceId);
+  const save = useSaveBillingDocument();
+  const [ran, setRan] = useState(false);
+
+  if (data && !ran) {
+    setRan(true);
+    (async () => {
+      const { doc, items } = data;
+      const newId = await save.mutateAsync({
+        header: {
+          doc_type: doc.doc_type,
+          doc_date: new Date().toISOString().slice(0, 10),
+          party_id: doc.party_id,
+          party_snapshot: doc.party_snapshot as Record<string, unknown>,
+          place_of_supply_state: doc.place_of_supply_state,
+          place_of_supply_code: doc.place_of_supply_code,
+          payment_mode: doc.payment_mode,
+          terms: doc.terms,
+          notes: doc.notes,
+          sub_total: doc.sub_total,
+          total_discount: doc.total_discount,
+          total_tax: doc.total_tax,
+          round_off: doc.round_off,
+          total: doc.total,
+          total_in_words: doc.total_in_words,
+          tax_summary: doc.tax_summary as never,
+          financial_year: doc.financial_year,
+        },
+        items: items.map((i, idx) => ({
+          position: idx,
+          product_id: i.product_id,
+          item_name: i.item_name,
+          description: i.description,
+          hsn_sac: i.hsn_sac,
+          quantity: i.quantity,
+          unit: i.unit,
+          unit_price: i.unit_price,
+          discount_percent: i.discount_percent,
+          discount_amount: i.discount_amount,
+          tax_percent: i.tax_percent,
+          taxable_value: i.taxable_value,
+          cgst: i.cgst,
+          sgst: i.sgst,
+          igst: i.igst,
+          tax_amount: i.tax_amount,
+          amount: i.amount,
+        })),
+      });
+      onDone(newId, doc.doc_type);
     })();
   }
 
