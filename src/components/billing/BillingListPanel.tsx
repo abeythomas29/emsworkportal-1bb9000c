@@ -464,15 +464,22 @@ function TypeSection({
                           <p className="text-sm font-medium mt-0.5 truncate" title={partyName}>{partyName}</p>
                           <p className="text-xs text-muted-foreground mt-0.5">{formatDate(d.doc_date)}</p>
                         </div>
-                        <div className="text-right shrink-0">
-                          <p className="font-bold tabular-nums text-primary">{formatCurrency(Number(d.total))}</p>
-                          <div className="mt-1">
-                            {d.status === 'finalized' ? (
-                              <Badge className="bg-success/15 text-success border border-success/30 text-[10px]">Finalized</Badge>
-                            ) : (
-                              <Badge variant="outline" className="border-border/60 text-muted-foreground text-[10px]">Draft</Badge>
-                            )}
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <RowActionsMenu
+                              doc={d}
+                              onEdit={onEdit}
+                              onDuplicate={onDuplicate}
+                              onDelete={onDelete}
+                              onPdfAction={onPdfAction}
+                            />
                           </div>
+                          <p className="font-bold tabular-nums text-primary">{formatCurrency(Number(d.total))}</p>
+                          {d.status === 'finalized' ? (
+                            <Badge className="bg-success/15 text-success border border-success/30 text-[10px]">Finalized</Badge>
+                          ) : (
+                            <Badge variant="outline" className="border-border/60 text-muted-foreground text-[10px]">Draft</Badge>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/40" onClick={(e) => e.stopPropagation()}>
