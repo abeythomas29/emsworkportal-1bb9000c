@@ -218,6 +218,15 @@ export function BillingListPanel() {
         />
       )}
 
+      {pdfRequest && (
+        <PdfActionRunner
+          sourceId={pdfRequest.id}
+          action={pdfRequest.action}
+          onDone={() => setPdfRequest(null)}
+        />
+      )}
+
+
       <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
