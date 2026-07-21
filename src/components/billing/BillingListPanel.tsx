@@ -89,6 +89,62 @@ function formatDate(d: string) {
 function formatCurrency(v: number) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v || 0);
 }
+function toISODate(d: Date) {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+function formatRangeLabel(from: string, to: string) {
+  const f = new Date(from).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' });
+  const t = new Date(to).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' });
+  return `${f} → ${t}`;
+}
+
+type RangePreset = 'this_month' | 'last_month' | 'last_3m' | 'last_6m' | 'this_fy' | 'last_fy' | 'all' | 'custom';
+
+function fyStart(d: Date) {
+  // Indian FY: Apr 1 - Mar 31
+  const y = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1;
+  return new Date(y, 3, 1);
+}
+function computeRange(preset: RangePreset, from: string, to: string): { from: string; to: string } {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const startOfMonth = (dt: Date) => new Date(dt.getFullYear(), dt.getMonth(), 1);
+  const endOfMonth = (dt: Date) => new Date(dt.getFullYear(), dt.getMonth() + 1, 0);
+  switch (preset) {
+    case 'this_month':
+      return { from: toISODate(startOfMonth(today)), to: toISODate(endOfMonth(today)) };
+    case 'last_month': {
+      const lm = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      return { from: toISODate(startOfMonth(lm)), to: toISODate(endOfMonth(lm)) };
+    }
+    case 'last_3m': {
+      const s = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+      return { from: toISODate(s), to: toISODate(endOfMonth(today)) };
+    }
+    case 'last_6m': {
+      const s = new Date(today.getFullYear(), today.getMonth() - 5, 1);
+      return { from: toISODate(s), to: toISODate(endOfMonth(today)) };
+    }
+    case 'this_fy': {
+      const s = fyStart(today);
+      return { from: toISODate(s), to: toISODate(new Date(s.getFullYear() + 1, 2, 31)) };
+    }
+    case 'last_fy': {
+      const s = fyStart(today);
+      const prev = new Date(s.getFullYear() - 1, 3, 1);
+      return { from: toISODate(prev), to: toISODate(new Date(prev.getFullYear() + 1, 2, 31)) };
+    }
+    case 'all':
+      return { from: '1970-01-01', to: '2999-12-31' };
+    case 'custom':
+    default:
+      return { from, to };
+  }
+}
+
 function monthKey(d: string) {
   const dt = new Date(d);
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
