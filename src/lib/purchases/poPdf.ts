@@ -62,8 +62,13 @@ function addressLines(a: {
   billing_country?: string | null;
 }): string[] {
   const cityLine = [a.billing_city, a.billing_state, a.billing_pincode].filter(Boolean).join(', ');
-  return [a.billing_street, cityLine, a.billing_country].filter((x): x is string => !!x && x.trim().length > 0);
+  return [a.billing_street, cityLine, a.billing_country]
+    .filter((x): x is string => !!x && x.trim().length > 0)
+    .flatMap((x) => x.split(/\r?\n/))
+    .map((x) => x.trim())
+    .filter(Boolean);
 }
+
 
 function companyAddressLines(c: CompanySettings | null): string[] {
   if (!c) return [];
