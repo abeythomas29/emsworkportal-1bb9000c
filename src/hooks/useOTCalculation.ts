@@ -44,20 +44,11 @@ export const useOTCalculation = (
   return useMemo(() => {
     const otHourlyRate = (baseSalary / 30 / workingHours) * otMultiplier;
 
-    // Calculate auto OT (5:30 PM - 6:00 PM = 30 mins if checked out at or after 6 PM)
-    let autoOTMinutes = 0;
-    if (attendance?.check_out) {
-      const checkOutTime = new Date(attendance.check_out);
-      const hours = checkOutTime.getHours();
-      const minutes = checkOutTime.getMinutes();
-      const totalMinutes = hours * 60 + minutes;
-
-      if (totalMinutes >= 18 * 60) {
-        autoOTMinutes = 30;
-      } else if (totalMinutes > 17 * 60 + 30) {
-        autoOTMinutes = totalMinutes - (17 * 60 + 30);
-      }
-    }
+    // Auto 30-min OT is persisted into ot_requests on checkout, so it's already
+    // included in approvedOTMinutes below. Do NOT re-derive it here or it double-counts.
+    const autoOTMinutes = otRequests
+      .filter(req => req.ot_type === 'auto_30min' && req.status === 'approved')
+      .reduce((sum, req) => sum + req.ot_minutes, 0);
 
     const approvedOTMinutes = otRequests
       .filter(req => req.status === 'approved')
@@ -67,7 +58,7 @@ export const useOTCalculation = (
       .filter(req => req.status === 'pending')
       .reduce((sum, req) => sum + req.ot_minutes, 0);
 
-    const totalApprovedOTMinutes = autoOTMinutes + approvedOTMinutes;
+    const totalApprovedOTMinutes = approvedOTMinutes;
     const totalOTPayment = (totalApprovedOTMinutes / 60) * otHourlyRate;
 
     return {
@@ -108,18 +99,10 @@ export const useMonthlyOTSummary = (
       return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
     });
 
-    let monthlyAutoOTMinutes = 0;
-    thisMonthAttendance.forEach(a => {
-      if (a.check_out) {
-        const checkOutTime = new Date(a.check_out);
-        const totalMinutes = checkOutTime.getHours() * 60 + checkOutTime.getMinutes();
-        if (totalMinutes >= 18 * 60) {
-          monthlyAutoOTMinutes += 30;
-        } else if (totalMinutes > 17 * 60 + 30) {
-          monthlyAutoOTMinutes += totalMinutes - (17 * 60 + 30);
-        }
-      }
-    });
+    // Auto 30-min OT is persisted in ot_requests, so it's already inside monthlyApprovedOT.
+    const monthlyAutoOTMinutes = thisMonthOTRequests
+      .filter(r => r.ot_type === 'auto_30min' && r.status === 'approved')
+      .reduce((sum, r) => sum + r.ot_minutes, 0);
 
     const monthlyApprovedOT = thisMonthOTRequests
       .filter(r => r.status === 'approved')
@@ -129,7 +112,7 @@ export const useMonthlyOTSummary = (
       .filter(r => r.status === 'pending')
       .reduce((sum, r) => sum + r.ot_minutes, 0);
 
-    const totalMonthlyOTMinutes = monthlyAutoOTMinutes + monthlyApprovedOT;
+    const totalMonthlyOTMinutes = monthlyApprovedOT;
     const totalMonthlyPayment = (totalMonthlyOTMinutes / 60) * otHourlyRate;
 
     return {
