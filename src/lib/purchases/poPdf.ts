@@ -187,19 +187,25 @@ export async function generatePOPdf(
     doc.text(label, x, partsY);
     doc.setTextColor(...INK);
     doc.setFontSize(12);
-    doc.text(name || '—', x, partsY + 16);
+    const nameLines = doc.splitTextToSize(name || '—', colW) as string[];
+    nameLines.forEach((l, i) => doc.text(l, x, partsY + 16 + i * 14));
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(...MUTED);
-    let yy = partsY + 30;
-    lines.forEach((l) => { doc.text(l, x, yy); yy += 12; });
+    let yy = partsY + 30 + (nameLines.length - 1) * 14;
+    lines.forEach((l) => {
+      (doc.splitTextToSize(l, colW) as string[]).forEach((wrapped) => {
+        doc.text(wrapped, x, yy);
+        yy += 12;
+      });
+    });
     if (gstin) {
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...INK);
       doc.text('GSTIN', x, yy + 4);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...MUTED);
-      doc.text(gstin, x + 40, yy + 4);
+      doc.text(gstin, x + 40, yy + 4, { maxWidth: colW - 40 });
       yy += 14;
     }
     if (phone) {
@@ -208,10 +214,11 @@ export async function generatePOPdf(
       doc.text('Phone', x, yy + 4);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...MUTED);
-      doc.text(phone, x + 40, yy + 4);
+      doc.text(phone, x + 40, yy + 4, { maxWidth: colW - 40 });
       yy += 14;
     }
     return yy;
+
   };
 
   const vendorLines = vendor ? addressLines(vendor) : [];
