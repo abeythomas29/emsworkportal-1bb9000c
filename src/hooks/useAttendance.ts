@@ -174,18 +174,20 @@ export function useAttendance() {
         if (checkOutMinutes > fiveThirty) {
           // 5:30-6:00 PM → auto-approved (full 30 min if checked out at/after 6 PM, partial otherwise)
           if (checkOutMinutes >= sixPM && !existingTypes.has('auto_30min')) {
-            await supabase.from('ot_requests').insert({
+            const { error: autoErr } = await supabase.from('ot_requests').insert({
               user_id: user.id, date: today, ot_type: 'auto_30min', ot_minutes: 30,
               status: 'approved', notes: 'Auto-approved: 30 min OT (5:30-6:00 PM)',
               approved_at: now.toISOString(),
             });
+            if (autoErr) logError('useAttendance.autoOT.30min', autoErr);
           } else if (checkOutMinutes < sixPM && !existingTypes.has('auto_30min')) {
             const partialMinutes = checkOutMinutes - fiveThirty;
-            await supabase.from('ot_requests').insert({
+            const { error: autoErr } = await supabase.from('ot_requests').insert({
               user_id: user.id, date: today, ot_type: 'auto_30min', ot_minutes: partialMinutes,
               status: 'approved', notes: `Auto-approved: ${partialMinutes} min OT (5:30 PM - checkout)`,
               approved_at: now.toISOString(),
             });
+            if (autoErr) logError('useAttendance.autoOT.partial', autoErr);
           }
 
           // After 6 PM → pending approval
