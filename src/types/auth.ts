@@ -15,6 +15,7 @@ export interface Profile {
   avatar_url: string | null;
   phone_number: string | null;
   is_active: boolean;
+  ot_eligible?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -30,6 +31,8 @@ export interface User {
   departments: string[];
   employeeId: string;
   joiningDate: string;
+  /** Whether overtime (auto + manual) is enabled for this employee by an admin. */
+  otEligible: boolean;
   avatar?: string;
 }
 

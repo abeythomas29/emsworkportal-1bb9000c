@@ -107,7 +107,7 @@ export default function OvertimePage() {
   };
 
   // Only production employees can see their own OT; admins/managers see the admin view
-  const isProductionEmployee = user?.departments?.includes('production');
+  const isProductionEmployee = user?.departments?.includes('production') && user?.otEligible;
   if (user && !isAdminOrManager && !isProductionEmployee) {
     return <Navigate to="/dashboard" replace />;
   }

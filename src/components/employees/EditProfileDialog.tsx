@@ -22,6 +22,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, CalendarIcon } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,6 +41,7 @@ interface EditProfileDialogProps {
     employee_id: string | null;
     joining_date: string | null;
     employee_type?: 'online' | 'offline';
+    ot_eligible?: boolean | null;
   } | null;
   onSuccess: () => void;
 }
@@ -58,6 +60,7 @@ export function EditProfileDialog({
   const [joiningDate, setJoiningDate] = useState<Date | undefined>(undefined);
   const [employeeType, setEmployeeType] = useState<'online' | 'offline'>('offline');
   const [additionalDepartments, setAdditionalDepartments] = useState<string[]>([]);
+  const [otEligible, setOtEligible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -69,6 +72,7 @@ export function EditProfileDialog({
       setJoiningDate(profile.joining_date ? new Date(profile.joining_date) : undefined);
       setEmployeeType(profile.employee_type || 'offline');
       setAdditionalDepartments(profile.additional_departments || []);
+      setOtEligible(Boolean(profile.ot_eligible));
     }
   }, [profile]);
 
@@ -114,6 +118,7 @@ export function EditProfileDialog({
     };
     if (role === 'admin') {
       updatePayload.additional_departments = extraDepts;
+      updatePayload.ot_eligible = otEligible;
     }
 
     const { error } = await supabase
@@ -254,6 +259,18 @@ export function EditProfileDialog({
                   </label>
                 ))}
               </div>
+            </div>
+          )}
+
+          {role === 'admin' && (
+            <div className="flex items-start justify-between gap-4 rounded-md border p-3">
+              <div className="space-y-1">
+                <Label htmlFor="otEligible">Overtime Enabled</Label>
+                <p className="text-xs text-muted-foreground">
+                  When off, no overtime (automatic or manual) is tracked or paid for this employee.
+                </p>
+              </div>
+              <Switch id="otEligible" checked={otEligible} onCheckedChange={setOtEligible} />
             </div>
           )}
 

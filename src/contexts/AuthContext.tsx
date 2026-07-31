@@ -29,6 +29,7 @@ function mapProfileToUser(profile: Profile, role: UserRole): User {
     departments,
     employeeId: profile.employee_id || profile.id.slice(0, 8).toUpperCase(),
     joiningDate: profile.joining_date || profile.created_at,
+    otEligible: Boolean((profile as any).ot_eligible),
     avatar: profile.avatar_url || undefined,
   };
 }

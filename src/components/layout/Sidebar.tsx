@@ -37,6 +37,7 @@ interface NavItem {
   roles: string[];
   employeeTypes?: string[];
   departments?: string[];
+  requiresOtEligible?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -107,6 +108,7 @@ const navItems: NavItem[] = [
     path: '/overtime',
     roles: ['admin', 'manager', 'employee'],
     departments: ['production'],
+    requiresOtEligible: true,
   },
   {
     icon: <Factory size={20} />,
@@ -202,6 +204,11 @@ export function Sidebar() {
       if (!userDepts.some((d) => item.departments!.includes(d))) return false;
     }
     
+    // Overtime access must be enabled per-employee by an admin
+    if (item.requiresOtEligible && role !== 'admin' && role !== 'manager' && !user?.otEligible) {
+      return false;
+    }
+
     // For admins/managers, show work hours even if they're not "online" type
     if (item.path === '/work-hours' && (role === 'admin' || role === 'manager')) {
       return true;

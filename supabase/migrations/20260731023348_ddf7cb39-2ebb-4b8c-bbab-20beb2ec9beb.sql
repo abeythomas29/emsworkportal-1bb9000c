@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS ot_eligible boolean NOT NULL DEFAULT false;

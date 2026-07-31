@@ -1101,6 +1101,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           joining_date: string | null
+          ot_eligible: boolean
           phone_number: string | null
           updated_at: string
         }
@@ -1119,6 +1120,7 @@ export type Database = {
           id: string
           is_active?: boolean | null
           joining_date?: string | null
+          ot_eligible?: boolean
           phone_number?: string | null
           updated_at?: string
         }
@@ -1137,6 +1139,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           joining_date?: string | null
+          ot_eligible?: boolean
           phone_number?: string | null
           updated_at?: string
         }
