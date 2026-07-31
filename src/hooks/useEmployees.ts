@@ -14,6 +14,7 @@ export interface Employee {
   joining_date: string | null;
   avatar_url: string | null;
   is_active: boolean;
+  ot_eligible?: boolean;
   deleted_at: string | null;
   role?: 'admin' | 'manager' | 'employee';
 }
