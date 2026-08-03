@@ -362,6 +362,18 @@ function TypeSection({
     [docs, range.from, range.to],
   );
 
+  // Quotations (estimates / proformas) that are still open — i.e. not yet converted
+  // to a tax invoice — stay visible even when their date falls outside the range.
+  const isQuotation = docType === 'estimate' || docType === 'proforma';
+  const carriedOpen = useMemo(() => {
+    if (!isQuotation) return [] as BillingDocument[];
+    return docs.filter(
+      (d) => !d.converted_to_id && !(d.doc_date >= range.from && d.doc_date <= range.to),
+    );
+  }, [docs, isQuotation, range.from, range.to]);
+
+  const visibleDocs = useMemo(() => [...docsInRange, ...carriedOpen], [docsInRange, carriedOpen]);
+
   const summary = useMemo(() => {
     let total = 0;
     let finalizedTotal = 0;
@@ -375,7 +387,13 @@ function TypeSection({
     return { total, finalizedTotal, draftTotal, count: docsInRange.length };
   }, [docsInRange]);
 
-  const filtered = docsInRange.filter((d) => {
+  const openSummary = useMemo(() => {
+    if (!isQuotation) return { count: 0, total: 0 };
+    const open = docs.filter((d) => !d.converted_to_id);
+    return { count: open.length, total: open.reduce((s, d) => s + (Number(d.total) || 0), 0) };
+  }, [docs, isQuotation]);
+
+  const filtered = visibleDocs.filter((d) => {
     if (statusFilter !== 'all' && d.status !== statusFilter) return false;
     if (q) {
       const term = q.toLowerCase();
@@ -450,7 +468,18 @@ function TypeSection({
               <span>Finalized: <span className="font-semibold text-foreground tabular-nums">{formatCurrency(summary.finalizedTotal)}</span></span>
               <span className="hidden md:inline text-border">|</span>
               <span>Draft: <span className="font-semibold text-foreground tabular-nums">{formatCurrency(summary.draftTotal)}</span></span>
+              {isQuotation && openSummary.count > 0 && (
+                <>
+                  <span className="hidden md:inline text-border">|</span>
+                  <span>Open (all time): <span className="font-semibold text-foreground tabular-nums">{openSummary.count} · {formatCurrency(openSummary.total)}</span></span>
+                </>
+              )}
             </div>
+            {isQuotation && carriedOpen.length > 0 && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Showing {carriedOpen.length} open {activeLabel.toLowerCase()}{carriedOpen.length === 1 ? '' : 's'} carried over from outside this range.
+              </p>
+            )}
           </CardContent>
         </Card>
       </section>
@@ -479,7 +508,7 @@ function TypeSection({
         </Select>
         <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground px-2 whitespace-nowrap">
           <span className="tabular-nums font-semibold text-foreground">{filtered.length}</span>
-          <span>of {docsInRange.length} in range</span>
+          <span>of {visibleDocs.length} shown</span>
         </div>
 
       </div>

@@ -17,6 +17,7 @@ import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
 import { SalesKpiStrip } from '@/components/dashboard/SalesKpiStrip';
 import { PendingLeavesCompact } from '@/components/dashboard/PendingLeavesCompact';
 import { PurchaseRequestsWidget } from '@/components/dashboard/PurchaseRequestsWidget';
+import { OpenQuotationsWidget } from '@/components/dashboard/OpenQuotationsWidget';
 import { ResearchTodayWidget } from '@/components/dashboard/ResearchTodayWidget';
 import {
   Users,
@@ -194,8 +195,12 @@ export default function DashboardPage() {
               <OnLeaveToday />
             </div>
 
+            {/* Open Quotations + Purchase Requests */}
+            {role === 'admin' && <OpenQuotationsWidget />}
+
             {/* Purchase Requests */}
             <PurchaseRequestsWidget />
+
 
             {/* Birthdays + Check In/Out */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
