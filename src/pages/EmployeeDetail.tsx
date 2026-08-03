@@ -222,7 +222,7 @@ export default function EmployeeDetailPage() {
 
   const profileDepts = [profile?.department, ...((profile?.additional_departments as string[] | null) || [])]
     .map((d) => (d || '').toLowerCase());
-  const isProductionEmployee = profileDepts.includes('production');
+  const isProductionEmployee = profileDepts.includes('production') && Boolean((profile as any)?.ot_eligible);
 
   if (isUnauthorized) {
     return <Navigate to="/dashboard" replace />;

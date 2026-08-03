@@ -58,7 +58,7 @@ export default function SalaryPage() {
       // Fetch all active employees
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, full_name, department, base_salary, employee_type, joining_date')
+        .select('id, full_name, department, base_salary, employee_type, joining_date, ot_eligible')
         .eq('is_active', true)
         .order('full_name');
 
@@ -118,7 +118,7 @@ export default function SalaryPage() {
       });
 
       // Fetch approved OT requests (production only)
-      const productionIds = profiles.filter(p => p.department?.toLowerCase() === 'production').map(p => p.id);
+      const productionIds = profiles.filter(p => (p as any).ot_eligible).map(p => p.id);
       let otMap = new Map<string, number>();
       if (productionIds.length > 0) {
         const { data: otData } = await supabase
@@ -135,7 +135,7 @@ export default function SalaryPage() {
       }
 
       const salaryData: EmployeeSalary[] = profiles.map(p => {
-        const isProduction = p.department?.toLowerCase() === 'production';
+        const isProduction = Boolean((p as any).ot_eligible);
         const lwpDays = lwpMap.get(p.id) || 0;
         const presentDays = presentMap.get(p.id) || 0;
 
@@ -160,8 +160,8 @@ export default function SalaryPage() {
         const effectiveSalary = Math.round((proratedBase - deductions) * 100) / 100;
 
         const approvedOTMins = isProduction ? (otMap.get(p.id) || 0) : 0;
-        const autoOTMins = isProduction ? (autoOTMap.get(p.id) || 0) : 0;
-        const totalOTMins = approvedOTMins + autoOTMins;
+        // Auto OT is already persisted as approved rows in ot_requests — do not re-derive.
+        const totalOTMins = approvedOTMins;
         const otHourlyRate = (p.base_salary / 30 / 8.5) * 1.5;
         const otPayment = isProduction ? Math.round((totalOTMins / 60) * otHourlyRate * 100) / 100 : 0;
 
@@ -175,7 +175,7 @@ export default function SalaryPage() {
           totalWorkingDays,
           lwpDays,
           approvedOTMinutes: approvedOTMins,
-          autoOTMinutes: autoOTMins,
+          autoOTMinutes: 0,
           otPayment,
           deductions,
           effectiveSalary,
@@ -353,7 +353,7 @@ export default function SalaryPage() {
                 <tbody>
                   {employees.map(emp => {
                     const totalOTMins = emp.approvedOTMinutes + emp.autoOTMinutes;
-                    const isProduction = emp.department?.toLowerCase() === 'production';
+                    const isProduction = emp.otPayment > 0;
                     return (
                       <tr key={emp.id} className="border-b last:border-0 hover:bg-muted/50">
                         <td className="py-3 px-2 font-medium">{emp.full_name}</td>
