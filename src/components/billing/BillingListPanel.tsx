@@ -735,7 +735,9 @@ function ConvertToTaxInvoiceRunner({ sourceId, onDone }: { sourceId: string; onD
         })),
       });
       await supabase.from('billing_documents').update({ converted_to_id: newId } as never).eq('id', sourceId);
+      await qc.invalidateQueries({ queryKey: ['billing_documents'] });
       onDone(newId);
+
     })();
   }
 
