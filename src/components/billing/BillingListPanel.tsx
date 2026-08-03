@@ -559,7 +559,11 @@ function TypeSection({
                           <TableCell className="whitespace-nowrap text-sm">{formatDate(d.doc_date)}</TableCell>
                           <TableCell className="max-w-[240px] truncate text-sm" title={partyName}>{partyName}</TableCell>
                           <TableCell>
-                            {d.status === 'finalized' ? (
+                            {d.converted_to_id ? (
+                              <Badge className="bg-primary/15 text-primary border border-primary/30 hover:bg-primary/20">
+                                Converted to Tax Invoice
+                              </Badge>
+                            ) : d.status === 'finalized' ? (
                               <Badge className="bg-success/15 text-success border border-success/30 hover:bg-success/20">
                                 Finalized
                               </Badge>
@@ -567,6 +571,7 @@ function TypeSection({
                               <Badge variant="outline" className="border-border/60 text-muted-foreground">Draft</Badge>
                             )}
                           </TableCell>
+
                           <TableCell className="text-right font-semibold tabular-nums text-primary">
                             {formatCurrency(Number(d.total))}
                           </TableCell>
