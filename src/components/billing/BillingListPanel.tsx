@@ -508,7 +508,7 @@ function TypeSection({
         </Select>
         <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground px-2 whitespace-nowrap">
           <span className="tabular-nums font-semibold text-foreground">{filtered.length}</span>
-          <span>of {docsInRange.length} in range</span>
+          <span>of {visibleDocs.length} shown</span>
         </div>
 
       </div>
