@@ -17,6 +17,7 @@ import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
 import { SalesKpiStrip } from '@/components/dashboard/SalesKpiStrip';
 import { PendingLeavesCompact } from '@/components/dashboard/PendingLeavesCompact';
 import { PurchaseRequestsWidget } from '@/components/dashboard/PurchaseRequestsWidget';
+import { OpenQuotationsWidget } from '@/components/dashboard/OpenQuotationsWidget';
 import { ResearchTodayWidget } from '@/components/dashboard/ResearchTodayWidget';
 import {
   Users,
