@@ -686,7 +686,9 @@ function EmptyState({
 function ConvertToTaxInvoiceRunner({ sourceId, onDone }: { sourceId: string; onDone: (id: string) => void }) {
   const { data } = useBillingDocument(sourceId);
   const save = useSaveBillingDocument();
+  const qc = useQueryClient();
   const [ran, setRan] = useState(false);
+
 
   if (data && !ran) {
     setRan(true);
