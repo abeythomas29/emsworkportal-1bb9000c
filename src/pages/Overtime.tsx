@@ -57,7 +57,7 @@ export default function OvertimePage() {
       const userIds = [...new Set((otData || []).map(r => r.user_id))];
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, full_name, department, additional_departments')
+        .select('id, full_name, department, additional_departments, ot_eligible')
         .in('id', userIds);
 
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
@@ -69,7 +69,7 @@ export default function OvertimePage() {
             if (!profile) return false;
             const depts = [profile.department, ...((profile.additional_departments as string[] | null) || [])]
               .map((d: string | null) => (d || '').toLowerCase());
-            return depts.includes('production');
+            return Boolean(profile.ot_eligible) && depts.includes('production');
           })
           .map(r => ({
             ...r,
