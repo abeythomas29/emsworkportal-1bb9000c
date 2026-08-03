@@ -468,7 +468,18 @@ function TypeSection({
               <span>Finalized: <span className="font-semibold text-foreground tabular-nums">{formatCurrency(summary.finalizedTotal)}</span></span>
               <span className="hidden md:inline text-border">|</span>
               <span>Draft: <span className="font-semibold text-foreground tabular-nums">{formatCurrency(summary.draftTotal)}</span></span>
+              {isQuotation && openSummary.count > 0 && (
+                <>
+                  <span className="hidden md:inline text-border">|</span>
+                  <span>Open (all time): <span className="font-semibold text-foreground tabular-nums">{openSummary.count} · {formatCurrency(openSummary.total)}</span></span>
+                </>
+              )}
             </div>
+            {isQuotation && carriedOpen.length > 0 && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Showing {carriedOpen.length} open {activeLabel.toLowerCase()}{carriedOpen.length === 1 ? '' : 's'} carried over from outside this range.
+              </p>
+            )}
           </CardContent>
         </Card>
       </section>
