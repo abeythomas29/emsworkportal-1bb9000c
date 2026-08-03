@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -559,7 +561,11 @@ function TypeSection({
                           <TableCell className="whitespace-nowrap text-sm">{formatDate(d.doc_date)}</TableCell>
                           <TableCell className="max-w-[240px] truncate text-sm" title={partyName}>{partyName}</TableCell>
                           <TableCell>
-                            {d.status === 'finalized' ? (
+                            {d.converted_to_id ? (
+                              <Badge className="bg-primary/15 text-primary border border-primary/30 hover:bg-primary/20">
+                                Converted to Tax Invoice
+                              </Badge>
+                            ) : d.status === 'finalized' ? (
                               <Badge className="bg-success/15 text-success border border-success/30 hover:bg-success/20">
                                 Finalized
                               </Badge>
@@ -567,6 +573,7 @@ function TypeSection({
                               <Badge variant="outline" className="border-border/60 text-muted-foreground">Draft</Badge>
                             )}
                           </TableCell>
+
                           <TableCell className="text-right font-semibold tabular-nums text-primary">
                             {formatCurrency(Number(d.total))}
                           </TableCell>
@@ -619,11 +626,14 @@ function TypeSection({
                             />
                           </div>
                           <p className="font-bold tabular-nums text-primary">{formatCurrency(Number(d.total))}</p>
-                          {d.status === 'finalized' ? (
+                          {d.converted_to_id ? (
+                            <Badge className="bg-primary/15 text-primary border border-primary/30 text-[10px]">Converted</Badge>
+                          ) : d.status === 'finalized' ? (
                             <Badge className="bg-success/15 text-success border border-success/30 text-[10px]">Finalized</Badge>
                           ) : (
                             <Badge variant="outline" className="border-border/60 text-muted-foreground text-[10px]">Draft</Badge>
                           )}
+
                         </div>
                       </div>
                     </CardContent>
@@ -676,7 +686,9 @@ function EmptyState({
 function ConvertToTaxInvoiceRunner({ sourceId, onDone }: { sourceId: string; onDone: (id: string) => void }) {
   const { data } = useBillingDocument(sourceId);
   const save = useSaveBillingDocument();
+  const qc = useQueryClient();
   const [ran, setRan] = useState(false);
+
 
   if (data && !ran) {
     setRan(true);
@@ -723,7 +735,9 @@ function ConvertToTaxInvoiceRunner({ sourceId, onDone }: { sourceId: string; onD
         })),
       });
       await supabase.from('billing_documents').update({ converted_to_id: newId } as never).eq('id', sourceId);
+      await qc.invalidateQueries({ queryKey: ['billing_documents'] });
       onDone(newId);
+
     })();
   }
 
