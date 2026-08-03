@@ -353,7 +353,7 @@ export default function SalaryPage() {
                 <tbody>
                   {employees.map(emp => {
                     const totalOTMins = emp.approvedOTMinutes + emp.autoOTMinutes;
-                    const isProduction = emp.department?.toLowerCase() === 'production';
+                    const isProduction = emp.otPayment > 0;
                     return (
                       <tr key={emp.id} className="border-b last:border-0 hover:bg-muted/50">
                         <td className="py-3 px-2 font-medium">{emp.full_name}</td>
