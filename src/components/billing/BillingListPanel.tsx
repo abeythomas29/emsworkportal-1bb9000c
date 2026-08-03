@@ -624,11 +624,14 @@ function TypeSection({
                             />
                           </div>
                           <p className="font-bold tabular-nums text-primary">{formatCurrency(Number(d.total))}</p>
-                          {d.status === 'finalized' ? (
+                          {d.converted_to_id ? (
+                            <Badge className="bg-primary/15 text-primary border border-primary/30 text-[10px]">Converted</Badge>
+                          ) : d.status === 'finalized' ? (
                             <Badge className="bg-success/15 text-success border border-success/30 text-[10px]">Finalized</Badge>
                           ) : (
                             <Badge variant="outline" className="border-border/60 text-muted-foreground text-[10px]">Draft</Badge>
                           )}
+
                         </div>
                       </div>
                     </CardContent>
