@@ -175,7 +175,7 @@ export default function SalaryPage() {
           totalWorkingDays,
           lwpDays,
           approvedOTMinutes: approvedOTMins,
-          autoOTMinutes: autoOTMins,
+          autoOTMinutes: 0,
           otPayment,
           deductions,
           effectiveSalary,
