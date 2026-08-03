@@ -362,6 +362,18 @@ function TypeSection({
     [docs, range.from, range.to],
   );
 
+  // Quotations (estimates / proformas) that are still open — i.e. not yet converted
+  // to a tax invoice — stay visible even when their date falls outside the range.
+  const isQuotation = docType === 'estimate' || docType === 'proforma';
+  const carriedOpen = useMemo(() => {
+    if (!isQuotation) return [] as BillingDocument[];
+    return docs.filter(
+      (d) => !d.converted_to_id && !(d.doc_date >= range.from && d.doc_date <= range.to),
+    );
+  }, [docs, isQuotation, range.from, range.to]);
+
+  const visibleDocs = useMemo(() => [...docsInRange, ...carriedOpen], [docsInRange, carriedOpen]);
+
   const summary = useMemo(() => {
     let total = 0;
     let finalizedTotal = 0;
@@ -375,7 +387,13 @@ function TypeSection({
     return { total, finalizedTotal, draftTotal, count: docsInRange.length };
   }, [docsInRange]);
 
-  const filtered = docsInRange.filter((d) => {
+  const openSummary = useMemo(() => {
+    if (!isQuotation) return { count: 0, total: 0 };
+    const open = docs.filter((d) => !d.converted_to_id);
+    return { count: open.length, total: open.reduce((s, d) => s + (Number(d.total) || 0), 0) };
+  }, [docs, isQuotation]);
+
+  const filtered = visibleDocs.filter((d) => {
     if (statusFilter !== 'all' && d.status !== statusFilter) return false;
     if (q) {
       const term = q.toLowerCase();
