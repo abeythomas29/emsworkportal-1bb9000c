@@ -195,8 +195,12 @@ export default function DashboardPage() {
               <OnLeaveToday />
             </div>
 
+            {/* Open Quotations + Purchase Requests */}
+            {role === 'admin' && <OpenQuotationsWidget />}
+
             {/* Purchase Requests */}
             <PurchaseRequestsWidget />
+
 
             {/* Birthdays + Check In/Out */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
