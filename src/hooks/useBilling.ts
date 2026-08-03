@@ -191,6 +191,7 @@ export interface BillingDocument {
   total_in_words: string | null;
   tax_summary: unknown;
   sales_invoice_id: string | null;
+  converted_to_id?: string | null;
   finalized_at: string | null;
   created_at: string;
   updated_at: string;
