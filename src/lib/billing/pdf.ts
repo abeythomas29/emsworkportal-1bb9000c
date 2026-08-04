@@ -405,9 +405,11 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   const wordsWrapped = doc.splitTextToSize(words, infoW - 6);
   const wordsH = 5 + wordsWrapped.length * 4 + 3;
 
+  ensure(wordsH + 2);
   doc.setDrawColor(...BRAND_CHARCOAL);
   doc.setLineWidth(0.2);
   doc.rect(M, y, infoW, wordsH);
+
   doc.setFillColor(...BRAND_GOLD_SOFT);
   doc.rect(M, y, infoW, 5, 'F');
   doc.setFont('helvetica', 'bold');
