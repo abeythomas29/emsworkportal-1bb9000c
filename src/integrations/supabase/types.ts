@@ -1979,6 +1979,10 @@ export type Database = {
     Functions: {
       accrue_earned_leave: { Args: never; Returns: undefined }
       cap_earned_leave_year_end: { Args: never; Returns: undefined }
+      delete_research_series: {
+        Args: { _series_id: string }
+        Returns: undefined
+      }
       finalize_billing_document: {
         Args: { _document_id: string }
         Returns: Json
