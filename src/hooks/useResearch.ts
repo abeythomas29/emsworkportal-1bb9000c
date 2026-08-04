@@ -62,6 +62,50 @@ export function useCreateSeries() {
   });
 }
 
+export function useUpdateSeries() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...patch }: { id: string; name?: string; description?: string | null }) => {
+      const { data, error } = await supabase
+        .from('research_series')
+        .update(patch)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Series updated');
+      qc.invalidateQueries({ queryKey: ['research_series'] });
+      qc.invalidateQueries({ queryKey: ['research_tests'] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useDeleteSeries() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // Detach tests first so they are preserved without a series
+      const { error: detachError } = await supabase
+        .from('research_tests')
+        .update({ series_id: null })
+        .eq('series_id', id);
+      if (detachError) throw detachError;
+      const { error } = await supabase.from('research_series').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Series deleted');
+      qc.invalidateQueries({ queryKey: ['research_series'] });
+      qc.invalidateQueries({ queryKey: ['research_tests'] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
 export function useResearchTests(opts?: { todayOnly?: boolean; mineOnly?: boolean }) {
   const { user } = useAuth();
   return useQuery({
