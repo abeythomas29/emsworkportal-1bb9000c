@@ -383,9 +383,11 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
       .map(([u, q]) => `${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 }).format(q)} ${u}`)
       .join('   ·   ');
     const qtyH = 8;
+    ensure(qtyH + 2);
     doc.setDrawColor(...BRAND_CHARCOAL);
     doc.setLineWidth(0.2);
     doc.rect(M, y, infoW, qtyH);
+
     doc.setFillColor(...BRAND_GOLD_SOFT);
     doc.rect(M, y, 45, qtyH, 'F');
     doc.setFont('helvetica', 'bold');
