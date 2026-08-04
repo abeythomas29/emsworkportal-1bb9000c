@@ -333,9 +333,19 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
 
   y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 3;
 
+  const pageH = doc.internal.pageSize.getHeight();
+  const ensure = (needed: number) => {
+    if (y + needed > pageH - M) {
+      doc.addPage();
+      y = M;
+    }
+  };
+
   // ---- Totals block
+  ensure(5 + 5 * 5 + 6);
   const totalsX = pageW - M - 70;
   doc.setFontSize(9);
+
   const totalsRows: [string, string][] = [
     ['Sub Total', inr(totals.total_taxable)],
     showSplit ? ['CGST', inr(totals.total_cgst)] : ['IGST', inr(totals.total_igst)],
