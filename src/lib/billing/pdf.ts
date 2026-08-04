@@ -333,9 +333,19 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
 
   y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 3;
 
+  const pageH = doc.internal.pageSize.getHeight();
+  const ensure = (needed: number) => {
+    if (y + needed > pageH - M) {
+      doc.addPage();
+      y = M;
+    }
+  };
+
   // ---- Totals block
+  ensure(5 + 5 * 5 + 6);
   const totalsX = pageW - M - 70;
   doc.setFontSize(9);
+
   const totalsRows: [string, string][] = [
     ['Sub Total', inr(totals.total_taxable)],
     showSplit ? ['CGST', inr(totals.total_cgst)] : ['IGST', inr(totals.total_igst)],
@@ -373,9 +383,11 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
       .map(([u, q]) => `${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 }).format(q)} ${u}`)
       .join('   ·   ');
     const qtyH = 8;
+    ensure(qtyH + 2);
     doc.setDrawColor(...BRAND_CHARCOAL);
     doc.setLineWidth(0.2);
     doc.rect(M, y, infoW, qtyH);
+
     doc.setFillColor(...BRAND_GOLD_SOFT);
     doc.rect(M, y, 45, qtyH, 'F');
     doc.setFont('helvetica', 'bold');
@@ -393,9 +405,11 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   const wordsWrapped = doc.splitTextToSize(words, infoW - 6);
   const wordsH = 5 + wordsWrapped.length * 4 + 3;
 
+  ensure(wordsH + 2);
   doc.setDrawColor(...BRAND_CHARCOAL);
   doc.setLineWidth(0.2);
   doc.rect(M, y, infoW, wordsH);
+
   doc.setFillColor(...BRAND_GOLD_SOFT);
   doc.rect(M, y, infoW, 5, 'F');
   doc.setFont('helvetica', 'bold');
@@ -411,7 +425,9 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
   if (input.terms) {
     const t = doc.splitTextToSize(input.terms, infoW - 6);
     const termsH = 5 + t.length * 4 + 3;
+    ensure(termsH + 2);
     doc.rect(M, y, infoW, termsH);
+
     doc.setFillColor(...BRAND_GOLD_SOFT);
     doc.rect(M, y, infoW, 5, 'F');
     doc.setFont('helvetica', 'bold');
@@ -427,7 +443,9 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
 
   // Footer: Bank details + Signature
   const footerH = 34;
+  ensure(footerH + 4);
   const footerY = y + 2;
+
   doc.rect(M, footerY, pageW - 2 * M, footerH);
   doc.line(M + colW, footerY, M + colW, footerY + footerH);
 
