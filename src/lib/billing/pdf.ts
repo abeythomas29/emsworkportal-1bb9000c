@@ -443,7 +443,9 @@ export function generateBillingPdf(input: PdfDocInput): jsPDF {
 
   // Footer: Bank details + Signature
   const footerH = 34;
+  ensure(footerH + 4);
   const footerY = y + 2;
+
   doc.rect(M, footerY, pageW - 2 * M, footerH);
   doc.line(M + colW, footerY, M + colW, footerY + footerH);
 
