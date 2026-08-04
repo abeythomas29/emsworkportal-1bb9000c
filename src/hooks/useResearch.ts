@@ -88,13 +88,8 @@ export function useDeleteSeries() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      // Detach tests first so they are preserved without a series
-      const { error: detachError } = await supabase
-        .from('research_tests')
-        .update({ series_id: null })
-        .eq('series_id', id);
-      if (detachError) throw detachError;
-      const { error } = await supabase.from('research_series').delete().eq('id', id);
+      // Detaches tests (kept, moved to "No series") then removes the series
+      const { error } = await supabase.rpc('delete_research_series', { _series_id: id });
       if (error) throw error;
     },
     onSuccess: () => {
