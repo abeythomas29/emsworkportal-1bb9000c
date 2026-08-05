@@ -129,7 +129,8 @@ function extractMicaGrade(src: string): { params: ParsedParam[]; masked: string 
         nameRaw && !/^(mica|grade|type|size|psd|of|is|used|take|add)$/i.test(nameRaw)
           ? nameRaw
           : nameFromLine ?? '';
-      const grade = `${name ? name + ' ' : ''}${minRaw}-${maxRaw}`.trim();
+      const pretty = name ? name.charAt(0).toUpperCase() + name.slice(1) : '';
+      const grade = `${pretty ? pretty + ' ' : ''}${minRaw}-${maxRaw}`.trim();
       params.push({ key: 'mica_grade', label: 'Mica Grade', value: NaN, unit: '', text: grade });
       params.push({ key: 'mica_size_min', label: 'Mica Size (min)', value: min, unit: 'µm' });
       params.push({ key: 'mica_size_max', label: 'Mica Size (max)', value: max, unit: 'µm' });
