@@ -78,6 +78,34 @@ const GENERIC = new RegExp(
 // plus min/max size params, and mask it out of the text so the numbers are
 // never mistaken for a mica quantity.
 // ---------------------------------------------------------------------------
+// Known mica source / brand names used in the lab. Any of these (with or
+// without a size range) identifies the mica type.
+const MICA_NAMES = [
+  'ranchi',
+  'paras',
+  'bihar',
+  'jharkhand',
+  'giridih',
+  'kodarma',
+  'koderma',
+  'chennai',
+  'madras',
+  'andhra',
+  'nellore',
+  'rajasthan',
+  'china',
+  'chinese',
+  'imported',
+  'synthetic',
+  'muscovite',
+  'phlogopite',
+  'sericite',
+  'borosilicate',
+  'silica',
+];
+
+const MICA_NAME_RX = new RegExp(`\\b(${MICA_NAMES.join('|')})\\b`, 'i');
+
 const MICA_GRADE = new RegExp(
   String.raw`(?:^|[^a-z0-9])(?:mica\s*(?:grade|type)?\s*[:=-]?\s*)?([A-Za-z][A-Za-z]{2,15})?\s*(\d{1,4})\s*(?:-|–|to)\s*(\d{1,4})\s*(?:micron?s?|microns|µm|um|mesh)?`,
   'i',
@@ -96,14 +124,31 @@ function extractMicaGrade(src: string): { params: ParsedParam[]; masked: string 
     const min = parseFloat(minRaw);
     const max = parseFloat(maxRaw);
     if (!Number.isNaN(min) && !Number.isNaN(max) && max > min) {
-      const name = nameRaw && !/^(mica|grade|type|size|psd)$/i.test(nameRaw) ? nameRaw : '';
-      const grade = `${name ? name + ' ' : ''}${minRaw}-${maxRaw}`.trim();
+      const nameFromLine = target.match(MICA_NAME_RX)?.[1];
+      const name =
+        nameRaw && !/^(mica|grade|type|size|psd|of|is|used|take|add)$/i.test(nameRaw)
+          ? nameRaw
+          : nameFromLine ?? '';
+      const pretty = name ? name.charAt(0).toUpperCase() + name.slice(1) : '';
+      const grade = `${pretty ? pretty + ' ' : ''}${minRaw}-${maxRaw}`.trim();
       params.push({ key: 'mica_grade', label: 'Mica Grade', value: NaN, unit: '', text: grade });
       params.push({ key: 'mica_size_min', label: 'Mica Size (min)', value: min, unit: 'µm' });
       params.push({ key: 'mica_size_max', label: 'Mica Size (max)', value: max, unit: 'µm' });
       // mask only the numeric range so a real "Mica: 100 g" elsewhere still parses
       const range = full.slice(full.indexOf(minRaw));
       masked = src.replace(range, ' '.repeat(range.length));
+    }
+  } else {
+    // No size range written — still capture a known mica type name if present
+    const nameOnly = target.match(MICA_NAME_RX)?.[1];
+    if (nameOnly) {
+      params.push({
+        key: 'mica_grade',
+        label: 'Mica Grade',
+        value: NaN,
+        unit: '',
+        text: nameOnly.charAt(0).toUpperCase() + nameOnly.slice(1),
+      });
     }
   }
   return { params, masked };
