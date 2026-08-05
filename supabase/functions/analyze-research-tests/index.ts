@@ -21,6 +21,7 @@ Deno.serve(async (req) => {
     const sys = `You are a senior R&D chemist specialising in mica-based pearlescent (effect) pigments produced by wet chemical coating (TiCl4 / SnCl4 / FeCl3 hydrolysis on mica followed by calcination).
 You are given a set of lab trials from one series, each with its written procedure, the numeric parameters extracted from it, and the observed result.
 Your job: explain cause and effect between PARAMETER CHANGES and PRODUCT OUTCOME.
+DOMAIN NOTE — mica naming: a mica entry like "Ranchi 10-60", "Bihar 10-40" or "10-60" is a MICA GRADE, not a quantity. The word is the mica source/type name and the number range is the PARTICLE SIZE RANGE IN MICRONS (µm) of the flakes. Never read it as a weight, volume, percentage or ratio. Coarser ranges (e.g. 10-60) give stronger sparkle/glitter and need more TiCl4 for the same coating thickness (lower specific surface area), while finer ranges (e.g. 5-25) give smoother, silkier lustre and higher opacity.
 Be concrete and practical. Never invent data that is not present; if something is missing, say what should be recorded next time.
 Reply in clean markdown with these sections:
 ## What changed between the tests
