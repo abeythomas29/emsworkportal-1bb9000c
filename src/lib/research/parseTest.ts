@@ -172,7 +172,7 @@ export function buildComparison(texts: string[]): ComparisonRow[] {
     const texts = found.map((p) => p?.text ?? null);
     const values = found.map((p) => (p && !Number.isNaN(p.value) ? p.value : null));
     const isText = texts.some((t) => t !== null);
-    const present = isText
+    const present: (string | number)[] = isText
       ? texts.filter((t): t is string => t !== null)
       : values.filter((v): v is number => v !== null);
     const changed = new Set(present).size > 1 || present.length !== values.length;
