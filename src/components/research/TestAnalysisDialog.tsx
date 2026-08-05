@@ -46,7 +46,9 @@ export function TestAnalysisDialog({ tests, seriesName, open, onOpenChange }: Pr
             instructions: t.instructions,
             observation: t.observation,
             next_test_changes: t.next_test_changes,
-            params: Object.fromEntries(parseTestParams(t.instructions || '').map((p) => [p.label, `${p.value}${p.unit}`])),
+            params: Object.fromEntries(
+              parseTestParams(t.instructions || '').map((p) => [p.label, p.text ?? `${p.value}${p.unit}`]),
+            ),
           })),
         },
       });
@@ -85,7 +87,7 @@ export function TestAnalysisDialog({ tests, seriesName, open, onOpenChange }: Pr
               <h3 className="text-sm font-semibold mb-2">Parameter changes across tests</h3>
               {rows.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No numeric parameters detected. Write values as “Mica: 100 g”, “TiCl4: 250 ml”, “Flow rate: 3 ml/min” for automatic comparison.
+                  No parameters detected. Write values as “Mica: Ranchi 10-60” (grade + particle size in microns), “Mica: 100 g”, “TiCl4: 250 ml”, “Flow rate: 3 ml/min” for automatic comparison.
                 </p>
               ) : (
                 <div className="rounded-md border overflow-x-auto">
@@ -110,10 +112,11 @@ export function TestAnalysisDialog({ tests, seriesName, open, onOpenChange }: Pr
                             {r.label} {r.unit && <span className="text-xs text-muted-foreground">({r.unit})</span>}
                           </TableCell>
                           {r.values.map((v, i) => {
-                            const d = i > 0 ? pctDelta(r.values[i - 1], v) : null;
+                            const txt = r.texts?.[i] ?? null;
+                            const d = txt === null && i > 0 ? pctDelta(r.values[i - 1], v) : null;
                             return (
                               <TableCell key={i} className="font-mono text-sm whitespace-nowrap">
-                                {v === null ? <span className="text-muted-foreground">—</span> : v}
+                                {txt !== null ? txt : v === null ? <span className="text-muted-foreground">—</span> : v}
                                 {d !== null && Math.abs(d) > 0.01 && (
                                   <span className={`ml-2 text-xs inline-flex items-center ${d > 0 ? 'text-success' : 'text-destructive'}`}>
                                     {d > 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
