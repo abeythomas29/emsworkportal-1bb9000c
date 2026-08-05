@@ -79,7 +79,7 @@ const GENERIC = new RegExp(
 // never mistaken for a mica quantity.
 // ---------------------------------------------------------------------------
 const MICA_GRADE = new RegExp(
-  String.raw`(?:^|[^a-z0-9])(?:mica\s*(?:grade|type)?\s*[:=-]?\s*)?([A-Za-z][A-Za-z]{2,15})?\s*(\d{1,4})\s*[-–to]{1,2}\s*(\d{1,4})\s*(?:micron?s?|microns|µm|um|mesh)?`,
+  String.raw`(?:^|[^a-z0-9])(?:mica\s*(?:grade|type)?\s*[:=-]?\s*)?([A-Za-z][A-Za-z]{2,15})?\s*(\d{1,4})\s*(?:-|–|to)\s*(\d{1,4})\s*(?:micron?s?|microns|µm|um|mesh)?`,
   'i',
 );
 
