@@ -187,7 +187,7 @@ export function BillingListPanel() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div
             role="tablist"
-            aria-label="Document type"
+            aria-label="where is invoice number 56, its not visible what happened to it , ones something is made tax invoice its should not be deleted it can be only cancelled or deleted before next number of invoice is added but right now i dont know where is invoice number 56 in july month"
             className="inline-flex flex-wrap gap-1 p-1.5 rounded-xl bg-muted/60 border border-border/60"
           >
             {DOC_TYPES.map((t) => {
