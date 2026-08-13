@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { buildComparison, parseTestParams, pctDelta } from '@/lib/research/parseTest';
-import type { ResearchTest } from '@/hooks/useResearch';
+import { useResearchMessages, type ResearchTest } from '@/hooks/useResearch';
 import { format } from 'date-fns';
 import { ArrowDownRight, ArrowUpRight, Loader2, Sparkles } from 'lucide-react';
 
@@ -21,6 +21,14 @@ interface Props {
 export function TestAnalysisDialog({ tests, seriesName, open, onOpenChange }: Props) {
   const [analysis, setAnalysis] = useState<string>('');
   const [loading, setLoading] = useState(false);
+
+  // Fetch messages for all dates involved in these tests
+  const dates = useMemo(() => Array.from(new Set(tests.map(t => t.test_date))), [tests]);
+  const { data: allMessages = [] } = useResearchMessages();
+  
+  const relevantMessages = useMemo(() => {
+    return allMessages.filter(m => dates.includes(m.message_date));
+  }, [allMessages, dates]);
 
   // Chronological order so deltas read left → right in time
   const ordered = useMemo(
@@ -40,6 +48,7 @@ export function TestAnalysisDialog({ tests, seriesName, open, onOpenChange }: Pr
         body: {
           seriesName,
           comparison: rows,
+          dailyContext: relevantMessages.map(m => ({ date: m.message_date, content: m.content })),
           tests: ordered.map((t) => ({
             title: t.title,
             test_date: t.test_date,
@@ -150,6 +159,24 @@ export function TestAnalysisDialog({ tests, seriesName, open, onOpenChange }: Pr
                 ))}
               </div>
             </section>
+
+            {relevantMessages.length > 0 && (
+              <section>
+                <h3 className="text-sm font-semibold mb-2">Daily Team Discussion (Context)</h3>
+                <div className="space-y-3">
+                  {relevantMessages.map((m) => (
+                    <div key={m.id} className="rounded-md border bg-muted/20 p-3">
+                      <p className="text-xs text-muted-foreground mb-1">
+                        {format(new Date(m.message_date), 'dd MMM yyyy')} · Group Chat
+                      </p>
+                      <p className="text-sm whitespace-pre-wrap font-mono text-muted-foreground line-clamp-6">
+                        {m.content}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
             <section>
               <div className="flex items-center justify-between mb-2">

@@ -20,6 +20,7 @@ import { NewSeriesDialog } from '@/components/research/NewSeriesDialog';
 import { EditSeriesDialog } from '@/components/research/EditSeriesDialog';
 import { TestAnalysisDialog } from '@/components/research/TestAnalysisDialog';
 import { FeedbackDialog } from '@/components/research/FeedbackDialog';
+import { ResearchMessageDialog } from '@/components/research/ResearchMessageDialog';
 import { FlowRateCalculator } from '@/components/research/FlowRateCalculator';
 import {
   FlaskConical,
@@ -174,6 +175,7 @@ export default function ResearchPage() {
             <p className="text-muted-foreground mt-1">Log tests, capture feedback, and share learnings across the team.</p>
           </div>
           <div className="flex gap-2">
+            <ResearchMessageDialog />
             <NewSeriesDialog />
             <NewTestDialog />
           </div>
