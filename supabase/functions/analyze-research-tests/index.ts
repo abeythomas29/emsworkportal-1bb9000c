@@ -7,7 +7,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { tests, comparison, seriesName } = await req.json();
+    const { tests, comparison, seriesName, dailyContext } = await req.json();
     if (!Array.isArray(tests) || tests.length === 0) {
       return new Response(JSON.stringify({ error: 'tests required' }), {
         status: 400,
@@ -23,6 +23,7 @@ You are given a set of lab trials from one series, each with its written procedu
 Your job: explain cause and effect between PARAMETER CHANGES and PRODUCT OUTCOME.
 DOMAIN NOTE — mica naming: a mica entry like "Ranchi 10-60", "Paras 10-60", "Bihar 10-40" or just "10-60" is a MICA GRADE (Ranchi, Paras, Bihar, Chennai, muscovite, sericite etc. are mica types/sources), not a quantity. The word is the mica source/type name and the number range is the PARTICLE SIZE RANGE IN MICRONS (µm) of the flakes. Never read it as a weight, volume, percentage or ratio. Coarser ranges (e.g. 10-60) give stronger sparkle/glitter and need more TiCl4 for the same coating thickness (lower specific surface area), while finer ranges (e.g. 5-25) give smoother, silkier lustre and higher opacity.
 Be concrete and practical. Never invent data that is not present; if something is missing, say what should be recorded next time.
+Use the provided "dailyContext" (team group chat messages) to understand the *intent*, *unrecorded observations*, or *informal feedback* that might explain the numeric results.
 Reply in clean markdown with these sections:
 ## What changed between the tests
 ## Effect of each change on the product
@@ -46,7 +47,10 @@ Planned next changes: ${t.next_test_changes || '(none)'}`;
 Parameter comparison matrix (per test, in order):
 ${JSON.stringify(comparison ?? [], null, 1)}
 
-${body}`;
+${body}
+
+Team Discussion Context (Daily):
+${JSON.stringify(dailyContext ?? [], null, 1)}`;
 
     const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { type Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -204,11 +205,11 @@ export function useResearchMessages(opts?: { date?: string; series_id?: string }
     queryKey: ['research_messages', opts?.date, opts?.series_id],
     queryFn: async () => {
       let q = supabase.from('research_messages').select('*').order('message_date', { ascending: false });
-      if (opts?.date) q = q.eq('message_date', opts.date);
-      if (opts?.series_id) q = q.eq('series_id', opts.series_id);
+      if (opts?.date) q = (q as any).eq('message_date', opts.date);
+      if (opts?.series_id) q = (q as any).eq('message_date', opts.series_id);
       const { data, error } = await q;
       if (error) throw error;
-      return data as ResearchMessage[];
+      return data as any[];
     },
   });
 }
