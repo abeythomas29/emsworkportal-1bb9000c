@@ -6,6 +6,7 @@ import { BillingModule } from '@/components/billing/BillingModule';
 import { SalesReportsPanel } from '@/components/sales/SalesReportsPanel';
 import { Loader2, IndianRupee, FileSpreadsheet, Receipt } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import FixBillingLinks from '@/components/billing/FixBillingLinks';
 
 type SalesTab = 'billing' | 'reports';
 
@@ -28,6 +29,7 @@ export default function SalesPage() {
   return (
     <DashboardLayout>
       <div className="space-y-8 animate-fade-in">
+        <FixBillingLinks />
         {/* Header */}
         <header className="flex flex-col gap-4 md:gap-5 md:flex-row md:items-end md:justify-between border-b border-border/60 pb-5 md:pb-6">
           <div className="space-y-3 md:space-y-4 min-w-0">
