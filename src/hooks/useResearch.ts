@@ -187,3 +187,61 @@ export function useDeleteTest() {
     onError: (e: Error) => toast.error(e.message),
   });
 }
+
+export interface ResearchMessage {
+  id: string;
+  user_id: string;
+  series_id: string | null;
+  message_date: string;
+  content: string;
+  source: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export function useResearchMessages(opts?: { date?: string; series_id?: string }) {
+  return useQuery({
+    queryKey: ['research_messages', opts?.date, opts?.series_id],
+    queryFn: async () => {
+      let q = supabase.from('research_messages').select('*').order('message_date', { ascending: false });
+      if (opts?.date) q = q.eq('message_date', opts.date);
+      if (opts?.series_id) q = q.eq('series_id', opts.series_id);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data as ResearchMessage[];
+    },
+  });
+}
+
+export function useCreateResearchMessage() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (payload: {
+      content: string;
+      message_date: string;
+      series_id?: string | null;
+      source?: string;
+    }) => {
+      if (!user) throw new Error('Not authenticated');
+      const { data, error } = await supabase
+        .from('research_messages')
+        .insert({
+          user_id: user.id,
+          content: payload.content,
+          message_date: payload.message_date,
+          series_id: payload.series_id ?? null,
+          source: payload.source ?? 'whatsapp',
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Messages saved to portal');
+      qc.invalidateQueries({ queryKey: ['research_messages'] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
