@@ -196,6 +196,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
     if (existing?.doc) {
 
       const d = existing.doc;
+      console.log('Existing doc loaded:', d.id, 'doc_type:', d.doc_type, 'converted_to_id:', d.converted_to_id);
       setDocType(d.doc_type);
       setDocDate(d.doc_date);
       setPartyId(d.party_id || '');
@@ -1062,13 +1063,16 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
               )}
               <Button variant="outline" onClick={previewPdf} className="w-full sm:w-auto min-h-11"><Eye className="w-4 h-4 mr-2" /> Preview PDF</Button>
               <Button onClick={downloadPdf} className="w-full sm:w-auto min-h-11"><FileDown className="w-4 h-4 mr-2" /> Download PDF</Button>
-              {(docType === 'proforma' || docType === 'estimate') && savedId && onConvert && !(existing?.doc as { converted_to_id?: string | null } | undefined)?.converted_to_id && (
+              {(docType === 'proforma' || docType === 'estimate') && savedId && onConvert && !existing?.doc?.converted_to_id && (
                 <Button variant="secondary" onClick={() => onConvert(savedId)} className="w-full sm:w-auto min-h-11">
                   <Copy className="w-4 h-4 mr-2" /> Convert to Tax Invoice
                 </Button>
               )}
-              {(docType === 'proforma' || docType === 'estimate') && (existing?.doc as { converted_to_id?: string | null } | undefined)?.converted_to_id && (
-                <span className="text-xs text-muted-foreground self-center">Already converted to Tax Invoice</span>
+              {(docType === 'proforma' || docType === 'estimate') && existing?.doc?.converted_to_id && (
+                <div className="flex flex-col items-center">
+                  <span className="text-xs text-muted-foreground">Already converted to Tax Invoice</span>
+                  <span className="text-[10px] text-muted-foreground/60 font-mono">{existing.doc.converted_to_id}</span>
+                </div>
               )}
             </>
           )}
