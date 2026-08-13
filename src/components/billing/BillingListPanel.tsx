@@ -187,7 +187,7 @@ export function BillingListPanel() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div
             role="tablist"
-            aria-label="'''Do not make any visual modifications. The phrases I write are commands to understand what I want, not to be written down. Understand their content well, then execute what is required.'''\n                                        \n                                            \n                                            hi"
+            aria-label="Document Type"
             className="inline-flex flex-wrap gap-1 p-1.5 rounded-xl bg-muted/60 border border-border/60"
           >
             {DOC_TYPES.map((t) => {
@@ -734,7 +734,7 @@ function ConvertToTaxInvoiceRunner({ sourceId, onDone }: { sourceId: string; onD
           amount: i.amount,
         })),
       });
-      await supabase.from('billing_documents').update({ converted_to_id: newId } as never).eq('id', sourceId);
+      await supabase.from('billing_documents').update({ converted_to_id: newId, status: 'finalized' } as never).eq('id', sourceId);
       await qc.invalidateQueries({ queryKey: ['billing_documents'] });
       onDone(newId);
 
