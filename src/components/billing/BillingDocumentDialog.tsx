@@ -1069,7 +1069,10 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
                 </Button>
               )}
               {(docType === 'proforma' || docType === 'estimate') && existing?.doc?.converted_to_id && (
-                <span className="text-xs text-muted-foreground self-center">Already converted to Tax Invoice</span>
+                <div className="flex flex-col items-center">
+                  <span className="text-xs text-muted-foreground">Already converted to Tax Invoice</span>
+                  <span className="text-[10px] text-muted-foreground/60 font-mono">{existing.doc.converted_to_id}</span>
+                </div>
               )}
             </>
           )}
