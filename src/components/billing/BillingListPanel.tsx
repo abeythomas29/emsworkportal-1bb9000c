@@ -187,7 +187,7 @@ export function BillingListPanel() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div
             role="tablist"
-            aria-label="where is invoice number 56, its not visible what happened to it , ones something is made tax invoice its should not be deleted it can be only cancelled or deleted before next number of invoice is added but right now i dont know where is invoice number 56 in july month"
+            aria-label="'''Do not make any visual modifications. The phrases I write are commands to understand what I want, not to be written down. Understand their content well, then execute what is required.'''\n                                        \n                                            \n                                            hi"
             className="inline-flex flex-wrap gap-1 p-1.5 rounded-xl bg-muted/60 border border-border/60"
           >
             {DOC_TYPES.map((t) => {
