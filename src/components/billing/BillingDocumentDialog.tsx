@@ -487,7 +487,12 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
             {TITLE[docType]}
             {status === 'finalized' ? (
               <div className="flex items-center gap-2 flex-wrap">
-                <Badge className="bg-success text-success-foreground">Finalized</Badge>
+                <Badge className={cn(
+                  "bg-success text-success-foreground",
+                  existing?.doc?.converted_to_id && "bg-blue-500"
+                )}>
+                  {existing?.doc?.converted_to_id ? "Converted to Tax Invoice" : "Finalized"}
+                </Badge>
                 <Label htmlFor="doc-serial-edit" className="text-xs font-medium text-muted-foreground">
                   Serial #
                 </Label>
