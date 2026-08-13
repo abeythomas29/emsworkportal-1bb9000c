@@ -734,7 +734,11 @@ function ConvertToTaxInvoiceRunner({ sourceId, onDone }: { sourceId: string; onD
           amount: i.amount,
         })),
       });
-      await supabase.from('billing_documents').update({ converted_to_id: newId, status: 'finalized' } as never).eq('id', sourceId);
+      const { error: linkErr } = await supabase.from('billing_documents').update({ converted_to_id: newId, status: 'finalized' } as any).eq('id', sourceId);
+      if (linkErr) {
+        console.error('Error linking converted document:', linkErr);
+        toast.error('Failed to update status on source document');
+      }
       await qc.invalidateQueries({ queryKey: ['billing_documents'] });
       onDone(newId);
 
