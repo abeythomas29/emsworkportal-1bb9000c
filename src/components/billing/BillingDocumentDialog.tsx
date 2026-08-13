@@ -196,6 +196,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
     if (existing?.doc) {
 
       const d = existing.doc;
+      console.log('Existing doc loaded:', d.id, 'converted_to_id:', d.converted_to_id);
       setDocType(d.doc_type);
       setDocDate(d.doc_date);
       setPartyId(d.party_id || '');
