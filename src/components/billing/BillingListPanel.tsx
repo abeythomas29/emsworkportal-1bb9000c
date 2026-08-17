@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -157,7 +158,8 @@ function monthLabel(key: string) {
 }
 
 export function BillingListPanel() {
-  const { data: docs = [], isLoading } = useBillingDocuments();
+  const { session } = useAuth();
+  const { data: docs = [], isLoading } = useBillingDocuments({ enabled: !!session });
   const del = useDeleteBillingDocument();
   const [activeType, setActiveType] = useState<DocType>('tax_invoice');
   const [q, setQ] = useState('');
