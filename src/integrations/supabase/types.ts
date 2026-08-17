@@ -1594,6 +1594,47 @@ export type Database = {
         }
         Relationships: []
       }
+      research_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          message_date: string
+          series_id: string | null
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          message_date?: string
+          series_id?: string | null
+          source?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          message_date?: string
+          series_id?: string | null
+          source?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_messages_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "research_series"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       research_series: {
         Row: {
           created_at: string

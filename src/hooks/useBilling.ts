@@ -219,9 +219,10 @@ export interface BillingDocumentItem {
   amount: number;
 }
 
-export function useBillingDocuments() {
+export function useBillingDocuments(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['billing_documents'],
+    enabled: options?.enabled ?? true,
     queryFn: async (): Promise<BillingDocument[]> => {
       const { data, error } = await supabase
         .from('billing_documents')

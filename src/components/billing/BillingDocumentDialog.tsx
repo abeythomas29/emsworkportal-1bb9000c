@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +20,7 @@ import {
   useFinalizeDocument,
   useParties,
   useSaveBillingDocument,
+  useBillingDocuments,
 } from '@/hooks/useBilling';
 import { INDIAN_STATES } from '@/lib/billing/states';
 import { computeLine, computeTotals, financialYearOf, buildHsnSummary } from '@/lib/billing/calc';
@@ -164,6 +166,7 @@ const SHIPPING_GST = 18;
 
 
 export function BillingDocumentDialog({ open, onOpenChange, documentId, initialType = 'tax_invoice', onConvert }: Props) {
+  const { session } = useAuth();
   const { data: existing } = useBillingDocument(documentId ?? null);
   const { data: parties = [] } = useParties();
   const { data: company } = useCompanySettings();
@@ -171,6 +174,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
   const { data: hsnSuggestions = [] } = useHsnSuggestions();
   const save = useSaveBillingDocument();
   const finalize = useFinalizeDocument();
+  const { data: allDocs = [] } = useBillingDocuments({ enabled: !!session });
 
   const [docType, setDocType] = useState<DocType>(initialType);
   const [docDate, setDocDate] = useState<string>(new Date().toISOString().slice(0, 10));

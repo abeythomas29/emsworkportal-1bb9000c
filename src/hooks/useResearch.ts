@@ -204,9 +204,9 @@ export function useResearchMessages(opts?: { date?: string; series_id?: string }
   return useQuery({
     queryKey: ['research_messages', opts?.date, opts?.series_id],
     queryFn: async () => {
-      let q = supabase.from('research_messages').select('*').order('message_date', { ascending: false });
+      let q = supabase.from('research_messages' as any).select('*').order('message_date', { ascending: false });
       if (opts?.date) q = (q as any).eq('message_date', opts.date);
-      if (opts?.series_id) q = (q as any).eq('message_date', opts.series_id);
+      if (opts?.series_id) q = (q as any).eq('series_id', opts.series_id);
       const { data, error } = await q;
       if (error) throw error;
       return data as any[];
@@ -226,7 +226,7 @@ export function useCreateResearchMessage() {
     }) => {
       if (!user) throw new Error('Not authenticated');
       const { data, error } = await supabase
-        .from('research_messages')
+        .from('research_messages' as any)
         .insert({
           user_id: user.id,
           content: payload.content,

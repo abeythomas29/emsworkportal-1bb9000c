@@ -9,6 +9,7 @@ interface AuthContextType extends AuthState {
   signup: (email: string, password: string, fullName: string) => Promise<{ error: string | null }>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  session: Session | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -180,6 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user, profile, role,
     isAuthenticated: !!session && !!user,
     isLoading, login, signup, logout, refreshProfile,
+    session,
   };
 
   return (
