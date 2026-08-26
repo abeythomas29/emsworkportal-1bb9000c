@@ -16,6 +16,7 @@ interface Props {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   party?: Party | null;
+  initialName?: string;
   onSaved?: (party: Party) => void;
 }
 
@@ -40,7 +41,7 @@ const empty = {
   notes: '',
 };
 
-export function PartyDialog({ open, onOpenChange, party, onSaved }: Props) {
+export function PartyDialog({ open, onOpenChange, party, initialName = '', onSaved }: Props) {
   const [form, setForm] = useState<typeof empty>(empty);
   const [fetching, setFetching] = useState(false);
   const upsert = useUpsertParty();
@@ -61,10 +62,10 @@ export function PartyDialog({ open, onOpenChange, party, onSaved }: Props) {
         }
         setForm({ ...empty, ...(cleaned as typeof empty) });
       } else {
-        setForm(empty);
+        setForm({ ...empty, name: initialName });
       }
     }
-  }, [open, party]);
+  }, [open, party, initialName]);
 
   const setField = <K extends keyof typeof empty>(k: K, v: (typeof empty)[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
