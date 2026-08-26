@@ -190,6 +190,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
   const [editableDocNumber, setEditableDocNumber] = useState<string>('');
   const [savedId, setSavedId] = useState<string | null>(documentId ?? null);
   const [partyDialogOpen, setPartyDialogOpen] = useState(false);
+  const [newPartyName, setNewPartyName] = useState('');
   const [newProductOpen, setNewProductOpen] = useState(false);
   const [newProductForLine, setNewProductForLine] = useState<number | null>(null);
   const [shippingEnabled, setShippingEnabled] = useState(false);
@@ -560,7 +561,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
               parties={parties}
               value={partyId}
               onChange={(v) => { setPartyId(v); setPosCode(''); }}
-              onAddNew={() => setPartyDialogOpen(true)}
+               onAddNew={(name) => { setNewPartyName(name); setPartyDialogOpen(true); }}
               disabled={readOnly}
             />
           </div>
@@ -1092,8 +1093,9 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
 
         <PartyDialog
           open={partyDialogOpen}
-          onOpenChange={setPartyDialogOpen}
-          onSaved={(p) => { setPartyId(p.id); setPosState(p.billing_state || ''); setPosCode(p.billing_state_code || ''); }}
+          onOpenChange={(open) => { setPartyDialogOpen(open); if (!open) setNewPartyName(''); }}
+          initialName={newPartyName}
+          onSaved={(p) => { setPartyId(p.id); setPosState(p.billing_state || ''); setPosCode(p.billing_state_code || ''); setNewPartyName(''); }}
         />
 
         <NewProductDialog
@@ -1136,7 +1138,7 @@ function PartyCombobox({
   parties: Party[];
   value: string;
   onChange: (id: string) => void;
-  onAddNew: () => void;
+  onAddNew: (name: string) => void;
   disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -1191,7 +1193,7 @@ function PartyCombobox({
                   className="w-full"
                   onClick={() => {
                     setOpen(false);
-                    onAddNew();
+                    onAddNew(query.trim());
                   }}
                 >
                   <Plus className="w-4 h-4 mr-1" /> Add new party
@@ -1230,7 +1232,7 @@ function PartyCombobox({
                   className="w-full justify-start"
                   onClick={() => {
                     setOpen(false);
-                    onAddNew();
+                    onAddNew(query.trim());
                   }}
                 >
                   <Plus className="w-4 h-4 mr-1" /> Add new party
