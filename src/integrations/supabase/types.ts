@@ -53,6 +53,48 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_document_audit: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          created_at: string
+          doc_number: string | null
+          doc_type: string | null
+          document_id: string | null
+          financial_year: string | null
+          id: string
+          reason: string | null
+          snapshot: Json | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          doc_number?: string | null
+          doc_type?: string | null
+          document_id?: string | null
+          financial_year?: string | null
+          id?: string
+          reason?: string | null
+          snapshot?: Json | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          doc_number?: string | null
+          doc_type?: string | null
+          document_id?: string | null
+          financial_year?: string | null
+          id?: string
+          reason?: string | null
+          snapshot?: Json | null
+        }
+        Relationships: []
+      }
       billing_document_items: {
         Row: {
           amount: number
@@ -231,6 +273,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      billing_number_allocations: {
+        Row: {
+          allocated_by: string | null
+          created_at: string
+          doc_number: string
+          doc_type: string
+          financial_year: string
+          id: string
+          seq: number
+        }
+        Insert: {
+          allocated_by?: string | null
+          created_at?: string
+          doc_number: string
+          doc_type: string
+          financial_year: string
+          id?: string
+          seq: number
+        }
+        Update: {
+          allocated_by?: string | null
+          created_at?: string
+          doc_number?: string
+          doc_type?: string
+          financial_year?: string
+          id?: string
+          seq?: number
+        }
+        Relationships: []
       }
       billing_number_series: {
         Row: {
@@ -2019,6 +2091,10 @@ export type Database = {
     }
     Functions: {
       accrue_earned_leave: { Args: never; Returns: undefined }
+      cancel_billing_document: {
+        Args: { _document_id: string; _reason: string }
+        Returns: Json
+      }
       cap_earned_leave_year_end: { Args: never; Returns: undefined }
       delete_research_series: {
         Args: { _series_id: string }

@@ -172,7 +172,7 @@ export function useUpdateSeries() {
 export interface BillingDocument {
   id: string;
   doc_type: 'tax_invoice' | 'proforma' | 'estimate';
-  status: 'draft' | 'finalized';
+  status: 'draft' | 'finalized' | 'cancelled';
   doc_number: string | null;
   financial_year: string | null;
   doc_date: string;
@@ -313,13 +313,15 @@ export function useDeleteBillingDocument() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      // If it's a finalized tax invoice mirrored into sales, remove the mirror
-      // (this also restores stock via the apply_sale_to_stock trigger on delete).
+      // Finalized documents are protected in the database: they can only be cancelled.
       const { data: doc } = await supabase
         .from('billing_documents')
-        .select('sales_invoice_id')
+        .select('sales_invoice_id, status')
         .eq('id', id)
         .maybeSingle();
+      if ((doc as { status?: string } | null)?.status === 'finalized') {
+        throw new Error('Finalized documents cannot be deleted — cancel them instead.');
+      }
       if (doc?.sales_invoice_id) {
         await supabase.from('sales_items').delete().eq('invoice_id', doc.sales_invoice_id);
         await supabase.from('sales_invoices').delete().eq('id', doc.sales_invoice_id);
@@ -332,8 +334,85 @@ export function useDeleteBillingDocument() {
       qc.invalidateQueries({ queryKey: ['sales-invoices'] });
       qc.invalidateQueries({ queryKey: ['sales-dashboard-stats'] });
       qc.invalidateQueries({ queryKey: ['products'] });
+      qc.invalidateQueries({ queryKey: ['billing_document_audit'] });
       toast.success('Document deleted');
     },
     onError: (e: Error) => toast.error(e.message),
   });
 }
+
+export function useCancelBillingDocument() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
+      const { error } = await supabase.rpc('cancel_billing_document' as never, {
+        _document_id: id,
+        _reason: reason,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['billing_documents'] });
+      qc.invalidateQueries({ queryKey: ['sales-invoices'] });
+      qc.invalidateQueries({ queryKey: ['sales-dashboard-stats'] });
+      qc.invalidateQueries({ queryKey: ['billing_document_audit'] });
+      toast.success('Document cancelled');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+// ---------- Audit trail & number allocations ----------
+export interface BillingAuditEntry {
+  id: string;
+  document_id: string | null;
+  doc_type: string | null;
+  financial_year: string | null;
+  doc_number: string | null;
+  action: string;
+  reason: string | null;
+  actor_id: string | null;
+  snapshot: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export function useBillingAudit(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ['billing_document_audit'],
+    enabled: options?.enabled ?? true,
+    queryFn: async (): Promise<BillingAuditEntry[]> => {
+      const { data, error } = await supabase
+        .from('billing_document_audit' as never)
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as unknown as BillingAuditEntry[];
+    },
+  });
+}
+
+export interface NumberAllocation {
+  id: string;
+  doc_type: string;
+  financial_year: string;
+  seq: number;
+  doc_number: string;
+  allocated_by: string | null;
+  created_at: string;
+}
+
+export function useNumberAllocations(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ['billing_number_allocations'],
+    enabled: options?.enabled ?? true,
+    queryFn: async (): Promise<NumberAllocation[]> => {
+      const { data, error } = await supabase
+        .from('billing_number_allocations' as never)
+        .select('*')
+        .order('seq', { ascending: false });
+      if (error) throw error;
+      return (data || []) as unknown as NumberAllocation[];
+    },
+  });
+}
+

@@ -161,6 +161,7 @@ export function BillingListPanel() {
   const { session } = useAuth();
   const { data: docs = [], isLoading } = useBillingDocuments({ enabled: !!session });
   const del = useDeleteBillingDocument();
+  const cancelDoc = useCancelBillingDocument();
   const [activeType, setActiveType] = useState<DocType>('tax_invoice');
   const [q, setQ] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -171,6 +172,10 @@ export function BillingListPanel() {
   const [duplicateSourceId, setDuplicateSourceId] = useState<string | null>(null);
   const [pdfRequest, setPdfRequest] = useState<{ id: string; action: PdfAction } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<BillingDocument | null>(null);
+  const [pendingCancel, setPendingCancel] = useState<BillingDocument | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [auditOpen, setAuditOpen] = useState(false);
+
 
   const openNew = (type: DocType) => {
     setInitialType(type);
