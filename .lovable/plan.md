@@ -1,35 +1,41 @@
-# Research Portal Enhancement Plan: WhatsApp Integration & Daily Context
+# Invoice numbering integrity: no duplicates, no silent gaps
 
-Integrate external communication (WhatsApp group updates) into the Research Lab to provide historical context for daily tests and results.
+## What I found (verified in the database)
 
-## User-facing changes
+Tax invoices for FY 26-27 currently jump: **56, 67, 68, 75 are missing** (55 → 57, 66 → 69, 74 → 76). The counter is at 78.
 
-- **Message Ingestion**: A new "+ Paste Daily Messages" button in the Research Lab.
-- **Context Display**: Research tests will now show relevant group messages from the same day, helping teams see "what else was happening" or "what was planned" alongside the formal log.
-- **Series Integration**: Optionally link pasted messages to a specific series to keep project-specific discussions organized.
-- **Daily View**: A "Daily Context" section in the test analysis dialog to show team communication alongside data.
+Two root causes are possible and both are currently unguarded:
 
-## Technical details
+- `billing_documents` has **no uniqueness rule** on the invoice number — only a plain (non-unique) index. Two documents can carry the same number.
+- Deleting a document is a **hard delete** with no record kept. Once a finalized invoice is deleted, its number vanishes with no trace, leaving exactly the kind of gap you are seeing.
 
-### 1. Database Schema
-Create a new table `public.research_messages`:
-- `id`: uuid (PK)
-- `user_id`: uuid (FK to profiles)
-- `series_id`: uuid (FK to research_series, optional)
-- `message_date`: date (default today)
-- `content`: text (the raw pasted transcript)
-- `source`: text (e.g., 'whatsapp')
-- `metadata`: jsonb (for AI-extracted info later if needed)
+There is no way to tell today which of the four numbers were deleted vs. never completed, because nothing was recorded.
 
-### 2. Frontend Components
-- **`ResearchMessageDialog`**: A modal to paste group messages.
-- **`DailyContextCard`**: A small component to display messages for a specific date.
-- **`useResearchMessages`**: A React Query hook to fetch and save these messages.
+## What I will build
 
-### 3. Integration Points
-- **Research Page**: Add the button to log daily communication.
-- **Test Card**: If messages exist for `test_date`, show a "Team Discussion" indicator/link.
-- **Analysis Dialog**: Include relevant messages in the chronological view to provide a fuller picture for the R&D chemist (and the AI analyzer).
+**1. Numbers can never repeat**
+A database-level uniqueness rule on invoice number per document type and financial year. Any attempt to save a duplicate is rejected by the database itself, not just by the screen.
 
-### 4. AI Analysis Update
-- Pass the daily message context to the `analyze-research-tests` edge function to improve cause-and-effect reasoning.
+**2. Finalized invoices can no longer be deleted — only cancelled**
+A finalized tax invoice keeps its number forever. The three-dot menu will show **Cancel invoice** (asks for a reason) instead of Delete. Cancelled invoices stay in the list with a red "Cancelled" badge, are excluded from sales totals, and their number is still accounted for. Drafts (never numbered) can still be deleted freely.
+
+**3. A deletion / change log**
+Every delete, cancellation, and number change is recorded automatically with who did it, when, the reason, and a full snapshot of the document and its line items. Admins get a **Deleted & cancelled documents** view where the snapshot can be inspected and a PDF regenerated if needed.
+
+**4. Number gap report**
+A panel in Sales showing, per financial year, every missing number in the sequence and its explanation: cancelled, deleted (with who/when/reason), or "unaccounted — before audit log". The four existing gaps (56, 67, 68, 75) will be seeded as "unaccounted, predates logging" so the list is honest rather than empty.
+
+**5. Number allocation logging**
+Each time a number is issued it is logged, so if a finalize fails halfway the burnt number is visible in the gap report instead of disappearing.
+
+## Technical notes
+
+- Migration: unique partial index on `(doc_type, financial_year, doc_number)` where `doc_number is not null`; new tables `billing_document_audit` (action, actor, reason, snapshot jsonb, created_at) and `billing_number_allocations`; GRANTs + RLS (insert by authenticated, read by admin/manager) in the same migration.
+- A `before delete` trigger on `billing_documents` writes the snapshot (header + items) to the audit table; a second trigger blocks deletes when `status = 'finalized'` so the rule cannot be bypassed from anywhere.
+- `status` gains `cancelled`; `get_sales_dashboard_stats` and the billing list totals exclude it.
+- `get_next_billing_number` also inserts into `billing_number_allocations`.
+- Client: `useBilling` delete mutation becomes `cancelDocument` for finalized docs; `BillingListPanel` row menu, badges, and a new `NumberGapPanel` + `AuditLogDialog`.
+
+## Out of scope
+
+Recovering the actual content of invoices 56, 67, 68 and 75 — that data was hard-deleted and is not retrievable. They will be listed as unaccounted gaps; if you have the paper/PDF copies you can re-create them under those exact numbers once uniqueness is in place.
