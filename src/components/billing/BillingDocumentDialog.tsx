@@ -185,7 +185,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
   const [terms, setTerms] = useState<string>(DEFAULT_TERMS[initialType]);
   const [notes, setNotes] = useState('');
   const [lines, setLines] = useState<LineRow[]>([blankLine()]);
-  const [status, setStatus] = useState<'draft' | 'finalized'>('draft');
+  const [status, setStatus] = useState<'draft' | 'finalized' | 'cancelled'>('draft');
   const [docNumber, setDocNumber] = useState<string | null>(null);
   const [editableDocNumber, setEditableDocNumber] = useState<string>('');
   const [savedId, setSavedId] = useState<string | null>(documentId ?? null);
