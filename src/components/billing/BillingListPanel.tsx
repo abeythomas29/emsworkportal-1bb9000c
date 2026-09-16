@@ -32,6 +32,7 @@ import {
   useBillingDocuments,
   useCompanySettings,
   useDeleteBillingDocument,
+  useCancelBillingDocument,
   useSaveBillingDocument,
 } from '@/hooks/useBilling';
 import { BillingDocumentDialog } from './BillingDocumentDialog';
