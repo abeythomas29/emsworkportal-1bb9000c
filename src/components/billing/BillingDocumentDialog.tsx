@@ -817,7 +817,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
                         }}
                         disabled={readOnly}
                       >
-                        <SelectTrigger className="w-[44px] p-0 justify-center" aria-label="Pick product" />
+                        <SelectTrigger className="w-11 h-11 shrink-0 p-0 justify-center" aria-label="Pick product" />
                         <SelectContent>
                           {products.map((p) => (
                             <SelectItem key={p.id} value={p.id}>
