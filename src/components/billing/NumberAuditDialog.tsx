@@ -25,7 +25,7 @@ import {
   useNumberAllocations,
   type BillingDocument,
 } from '@/hooks/useBilling';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 const TYPE_LABEL: Record<string, string> = {
   tax_invoice: 'Tax Invoice',
