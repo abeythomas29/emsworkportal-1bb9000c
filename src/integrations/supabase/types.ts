@@ -174,6 +174,7 @@ export type Database = {
       }
       billing_documents: {
         Row: {
+          converted_from_id: string | null
           converted_to_id: string | null
           created_at: string
           created_by: string | null
@@ -202,6 +203,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          converted_from_id?: string | null
           converted_to_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -230,6 +232,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          converted_from_id?: string | null
           converted_to_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -258,6 +261,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "billing_documents_converted_from_id_fkey"
+            columns: ["converted_from_id"]
+            isOneToOne: false
+            referencedRelation: "billing_documents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "billing_documents_converted_to_id_fkey"
             columns: ["converted_to_id"]

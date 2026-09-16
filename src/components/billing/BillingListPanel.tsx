@@ -721,7 +721,8 @@ function ConvertToTaxInvoiceRunner({ sourceId, onDone }: { sourceId: string; onD
           total_in_words: doc.total_in_words,
           tax_summary: doc.tax_summary as never,
           financial_year: doc.financial_year,
-        },
+          converted_from_id: sourceId,
+        } as never,
         items: items.map((i, idx) => ({
           position: idx,
           product_id: i.product_id,
