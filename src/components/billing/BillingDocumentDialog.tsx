@@ -789,6 +789,11 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
                         }}
                         placeholder="Type product code…"
                         disabled={readOnly}
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="characters"
+                        spellCheck={false}
+                        className="flex-1 min-w-0 h-11 text-base font-medium tracking-wide"
                       />
                       <datalist id={`products-list-m-${l.key}`}>
                         {products.map((p) => (
@@ -812,7 +817,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
                         }}
                         disabled={readOnly}
                       >
-                        <SelectTrigger className="w-[44px] p-0 justify-center" aria-label="Pick product" />
+                        <SelectTrigger className="w-11 h-11 shrink-0 p-0 justify-center" aria-label="Pick product" />
                         <SelectContent>
                           {products.map((p) => (
                             <SelectItem key={p.id} value={p.id}>
