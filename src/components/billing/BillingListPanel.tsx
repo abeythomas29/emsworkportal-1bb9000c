@@ -866,6 +866,14 @@ function RowActionsMenu({
         <DropdownMenuItem onSelect={() => onDuplicate(doc.id)}>
           <Copy className="w-4 h-4 mr-2" /> Duplicate
         </DropdownMenuItem>
+        {isQuote && doc.converted_to_id && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => unlink.mutate(doc.id)}>
+              <Unlink className="w-4 h-4 mr-2" /> Not converted
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={() => onDelete(doc)}
