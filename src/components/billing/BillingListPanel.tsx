@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Search, Loader2, Pencil, Trash2, FileText, Receipt, FileCheck2, FilePlus2, Copy, MoreHorizontal, Download, Eye, Printer } from 'lucide-react';
+import { Plus, Search, Loader2, Pencil, Trash2, FileText, Receipt, FileCheck2, FilePlus2, Copy, MoreHorizontal, Download, Eye, Printer, Unlink } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +33,7 @@ import {
   useCompanySettings,
   useDeleteBillingDocument,
   useCancelBillingDocument,
+  useUnlinkConversion,
   useSaveBillingDocument,
 } from '@/hooks/useBilling';
 import { BillingDocumentDialog } from './BillingDocumentDialog';
@@ -834,6 +835,8 @@ function RowActionsMenu({
   onPdfAction: (id: string, action: PdfAction) => void;
 }) {
   const label = doc.doc_number || 'draft';
+  const unlink = useUnlinkConversion();
+  const isQuote = doc.doc_type === 'proforma' || doc.doc_type === 'estimate';
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -863,6 +866,14 @@ function RowActionsMenu({
         <DropdownMenuItem onSelect={() => onDuplicate(doc.id)}>
           <Copy className="w-4 h-4 mr-2" /> Duplicate
         </DropdownMenuItem>
+        {isQuote && doc.converted_to_id && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => unlink.mutate(doc.id)}>
+              <Unlink className="w-4 h-4 mr-2" /> Not converted
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={() => onDelete(doc)}
