@@ -835,6 +835,8 @@ function RowActionsMenu({
   onPdfAction: (id: string, action: PdfAction) => void;
 }) {
   const label = doc.doc_number || 'draft';
+  const unlink = useUnlinkConversion();
+  const isQuote = doc.doc_type === 'proforma' || doc.doc_type === 'estimate';
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
