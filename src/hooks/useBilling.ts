@@ -342,6 +342,37 @@ export function useDeleteBillingDocument() {
   });
 }
 
+/** Clears a wrong conversion link so the quotation can be converted again. */
+export function useUnlinkConversion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (sourceId: string) => {
+      const { data: src } = await supabase
+        .from('billing_documents')
+        .select('converted_to_id')
+        .eq('id', sourceId)
+        .maybeSingle();
+      const targetId = (src as { converted_to_id?: string | null } | null)?.converted_to_id;
+      const { error } = await supabase
+        .from('billing_documents')
+        .update({ converted_to_id: null } as never)
+        .eq('id', sourceId);
+      if (error) throw error;
+      if (targetId) {
+        await supabase
+          .from('billing_documents')
+          .update({ converted_from_id: null } as never)
+          .eq('id', targetId);
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['billing_documents'] });
+      toast.success('Conversion link removed');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
 export function useCancelBillingDocument() {
   const qc = useQueryClient();
   return useMutation({
