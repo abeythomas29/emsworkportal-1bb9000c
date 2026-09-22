@@ -183,9 +183,12 @@ export function CatalogManager() {
 
   const [pName, setPName] = useState('');
   const [pStock, setPStock] = useState('');
+  const [pCost, setPCost] = useState('');
   const [rName, setRName] = useState('');
   const [rUnit, setRUnit] = useState<'kg' | 'lt'>('kg');
   const [rStock, setRStock] = useState('');
+  const [rCost, setRCost] = useState('');
+
 
   return (
     <div className="grid lg:grid-cols-2 gap-6">
