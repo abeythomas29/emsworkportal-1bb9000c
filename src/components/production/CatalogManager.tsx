@@ -102,6 +102,7 @@ function RawMaterialRow({ r }: { r: RawMaterial }) {
   const [name, setName] = useState(r.name);
   const [unit, setUnit] = useState<'kg' | 'lt'>(r.unit);
   const [stock, setStock] = useState(String(r.current_stock));
+  const [cost, setCost] = useState(String(r.cost_price ?? 0));
 
   const save = async () => {
     if (!name.trim()) return;
@@ -110,12 +111,13 @@ function RawMaterialRow({ r }: { r: RawMaterial }) {
       name: name.trim(),
       unit,
       current_stock: parseFloat(stock) || 0,
+      cost_price: parseFloat(cost) || 0,
     });
     setEditing(false);
   };
 
   const cancel = () => {
-    setName(r.name); setUnit(r.unit); setStock(String(r.current_stock));
+    setName(r.name); setUnit(r.unit); setStock(String(r.current_stock)); setCost(String(r.cost_price ?? 0));
     setEditing(false);
   };
 
