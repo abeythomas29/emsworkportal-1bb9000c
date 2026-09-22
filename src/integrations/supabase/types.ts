@@ -1139,6 +1139,7 @@ export type Database = {
       }
       products: {
         Row: {
+          cost_price: number
           created_at: string
           current_stock: number
           id: string
@@ -1148,6 +1149,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cost_price?: number
           created_at?: string
           current_stock?: number
           id?: string
@@ -1157,6 +1159,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cost_price?: number
           created_at?: string
           current_stock?: number
           id?: string
@@ -1597,6 +1600,7 @@ export type Database = {
       }
       raw_materials: {
         Row: {
+          cost_price: number
           created_at: string
           current_stock: number
           id: string
@@ -1606,6 +1610,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cost_price?: number
           created_at?: string
           current_stock?: number
           id?: string
@@ -1615,6 +1620,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cost_price?: number
           created_at?: string
           current_stock?: number
           id?: string
