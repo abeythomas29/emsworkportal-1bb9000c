@@ -197,12 +197,13 @@ export function CatalogManager() {
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2">
             <Input placeholder="Product name" value={pName} onChange={(e) => setPName(e.target.value)} className="flex-1 min-w-[140px]" />
-            <Input type="number" step="0.01" placeholder="Initial stock (kg)" value={pStock} onChange={(e) => setPStock(e.target.value)} className="w-40" />
+            <Input type="number" step="0.01" placeholder="Initial stock (kg)" value={pStock} onChange={(e) => setPStock(e.target.value)} className="w-36" />
+            <Input type="number" step="0.01" placeholder="Cost / unit (₹)" value={pCost} onChange={(e) => setPCost(e.target.value)} className="w-36" />
             <Button
               onClick={async () => {
                 if (!pName) return;
-                await createProduct.mutateAsync({ name: pName, unit: 'kg', current_stock: parseFloat(pStock) || 0 });
-                setPName(''); setPStock('');
+                await createProduct.mutateAsync({ name: pName, unit: 'kg', current_stock: parseFloat(pStock) || 0, cost_price: parseFloat(pCost) || 0 });
+                setPName(''); setPStock(''); setPCost('');
               }}
               disabled={!pName || createProduct.isPending}
             >
@@ -211,12 +212,12 @@ export function CatalogManager() {
           </div>
           <Table>
             <TableHeader>
-              <TableRow><TableHead>Name</TableHead><TableHead>Stock</TableHead><TableHead className="w-24" /></TableRow>
+              <TableRow><TableHead>Name</TableHead><TableHead>Stock</TableHead><TableHead>Cost / unit</TableHead><TableHead className="w-24" /></TableRow>
             </TableHeader>
             <TableBody>
               {products.map((p) => <ProductRow key={p.id} p={p} />)}
               {products.length === 0 && (
-                <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground">No products yet</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">No products yet</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
