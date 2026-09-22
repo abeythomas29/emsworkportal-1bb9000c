@@ -237,11 +237,12 @@ export function CatalogManager() {
               </SelectContent>
             </Select>
             <Input type="number" step="0.01" placeholder="Initial stock" value={rStock} onChange={(e) => setRStock(e.target.value)} className="w-32" />
+            <Input type="number" step="0.01" placeholder="Cost / unit (₹)" value={rCost} onChange={(e) => setRCost(e.target.value)} className="w-36" />
             <Button
               onClick={async () => {
                 if (!rName) return;
-                await createRaw.mutateAsync({ name: rName, unit: rUnit, current_stock: parseFloat(rStock) || 0 });
-                setRName(''); setRStock('');
+                await createRaw.mutateAsync({ name: rName, unit: rUnit, current_stock: parseFloat(rStock) || 0, cost_price: parseFloat(rCost) || 0 });
+                setRName(''); setRStock(''); setRCost('');
               }}
               disabled={!rName || createRaw.isPending}
             >
@@ -250,12 +251,12 @@ export function CatalogManager() {
           </div>
           <Table>
             <TableHeader>
-              <TableRow><TableHead>Name</TableHead><TableHead>Stock</TableHead><TableHead className="w-24" /></TableRow>
+              <TableRow><TableHead>Name</TableHead><TableHead>Stock</TableHead><TableHead>Cost / unit</TableHead><TableHead className="w-24" /></TableRow>
             </TableHeader>
             <TableBody>
               {rawMaterials.map((r) => <RawMaterialRow key={r.id} r={r} />)}
               {rawMaterials.length === 0 && (
-                <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground">No raw materials yet</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">No raw materials yet</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
