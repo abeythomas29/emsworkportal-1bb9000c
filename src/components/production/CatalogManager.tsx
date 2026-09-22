@@ -25,6 +25,7 @@ function ProductRow({ p }: { p: Product }) {
   const [name, setName] = useState(p.name);
   const [unit, setUnit] = useState(p.unit);
   const [stock, setStock] = useState(String(p.current_stock));
+  const [cost, setCost] = useState(String(p.cost_price ?? 0));
 
   const save = async () => {
     if (!name.trim()) return;
@@ -33,12 +34,13 @@ function ProductRow({ p }: { p: Product }) {
       name: name.trim(),
       unit,
       current_stock: parseFloat(stock) || 0,
+      cost_price: parseFloat(cost) || 0,
     });
     setEditing(false);
   };
 
   const cancel = () => {
-    setName(p.name); setUnit(p.unit); setStock(String(p.current_stock));
+    setName(p.name); setUnit(p.unit); setStock(String(p.current_stock)); setCost(String(p.cost_price ?? 0));
     setEditing(false);
   };
 
@@ -60,6 +62,9 @@ function ProductRow({ p }: { p: Product }) {
           </div>
         </TableCell>
         <TableCell>
+          <Input type="number" step="0.01" aria-label="Cost per unit" value={cost} onChange={(e) => setCost(e.target.value)} className="h-8 w-24" />
+        </TableCell>
+        <TableCell>
           <div className="flex gap-1">
             <Button size="icon" variant="ghost" onClick={save} disabled={update.isPending}><Check className="h-4 w-4" /></Button>
             <Button size="icon" variant="ghost" onClick={cancel}><X className="h-4 w-4" /></Button>
@@ -73,6 +78,9 @@ function ProductRow({ p }: { p: Product }) {
     <TableRow>
       <TableCell>{p.name}</TableCell>
       <TableCell>{Number(p.current_stock).toFixed(2)} {p.unit}</TableCell>
+      <TableCell className="tabular-nums">
+        {p.cost_price ? `₹ ${Number(p.cost_price).toFixed(2)}` : <span className="text-muted-foreground">—</span>}
+      </TableCell>
       <TableCell>
         <div className="flex gap-1">
           <Button variant="ghost" size="icon" onClick={() => setEditing(true)}>
