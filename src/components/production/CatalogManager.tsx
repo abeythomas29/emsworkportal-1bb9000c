@@ -138,6 +138,9 @@ function RawMaterialRow({ r }: { r: RawMaterial }) {
           </div>
         </TableCell>
         <TableCell>
+          <Input type="number" step="0.01" aria-label="Cost per unit" value={cost} onChange={(e) => setCost(e.target.value)} className="h-8 w-24" />
+        </TableCell>
+        <TableCell>
           <div className="flex gap-1">
             <Button size="icon" variant="ghost" onClick={save} disabled={update.isPending}><Check className="h-4 w-4" /></Button>
             <Button size="icon" variant="ghost" onClick={cancel}><X className="h-4 w-4" /></Button>
@@ -154,6 +157,9 @@ function RawMaterialRow({ r }: { r: RawMaterial }) {
         <span className={r.current_stock < 0 ? 'text-destructive font-semibold' : ''}>
           {Number(r.current_stock).toFixed(2)} {r.unit}
         </span>
+      </TableCell>
+      <TableCell className="tabular-nums">
+        {r.cost_price ? `₹ ${Number(r.cost_price).toFixed(2)}` : <span className="text-muted-foreground">—</span>}
       </TableCell>
       <TableCell>
         <div className="flex gap-1">
