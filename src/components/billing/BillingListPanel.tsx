@@ -711,7 +711,7 @@ function ConvertToTaxInvoiceRunner({ sourceId, onDone }: { sourceId: string; onD
           party_snapshot: doc.party_snapshot as Record<string, unknown>,
           place_of_supply_state: doc.place_of_supply_state,
           place_of_supply_code: doc.place_of_supply_code,
-          payment_mode: 'Credit',
+          payment_mode: doc.payment_mode || 'Advance',
           terms: doc.terms,
           notes: `Converted from ${doc.doc_number || 'draft'}`,
           sub_total: doc.sub_total,

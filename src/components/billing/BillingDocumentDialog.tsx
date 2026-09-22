@@ -181,7 +181,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
   const [partyId, setPartyId] = useState<string>('');
   const [posState, setPosState] = useState<string>('');
   const [posCode, setPosCode] = useState<string>('');
-  const [paymentMode, setPaymentMode] = useState<string>('Credit');
+  const [paymentMode, setPaymentMode] = useState<string>('Advance');
   const [terms, setTerms] = useState<string>(DEFAULT_TERMS[initialType]);
   const [notes, setNotes] = useState('');
   const [lines, setLines] = useState<LineRow[]>([blankLine()]);
@@ -207,7 +207,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
       setPartyId(d.party_id || '');
       setPosState(d.place_of_supply_state || '');
       setPosCode(d.place_of_supply_code || '');
-      setPaymentMode(d.payment_mode || 'Credit');
+      setPaymentMode(d.payment_mode || 'Advance');
       setTerms(d.terms || DEFAULT_TERMS[d.doc_type]);
       setNotes(d.notes || '');
       setStatus(d.status);
@@ -247,7 +247,7 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
       setPartyId('');
       setPosState('');
       setPosCode('');
-      setPaymentMode('Credit');
+      setPaymentMode('Advance');
       setTerms(DEFAULT_TERMS[initialType]);
       setNotes('');
       setLines([blankLine()]);
