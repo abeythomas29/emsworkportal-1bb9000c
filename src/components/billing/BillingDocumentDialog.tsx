@@ -593,11 +593,12 @@ export function BillingDocumentDialog({ open, onOpenChange, documentId, initialT
               <Select value={paymentMode} onValueChange={setPaymentMode} disabled={readOnly}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Cash">Cash</SelectItem>
-                  <SelectItem value="Credit">Credit</SelectItem>
-                  <SelectItem value="UPI">UPI</SelectItem>
+                  <SelectItem value="Advance">Advance (Paid)</SelectItem>
                   <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="UPI">UPI</SelectItem>
+                  <SelectItem value="Cash">Cash</SelectItem>
                   <SelectItem value="Cheque">Cheque</SelectItem>
+                  <SelectItem value="Credit">Credit (Balance due)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

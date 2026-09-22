@@ -8,6 +8,7 @@ export interface Product {
   name: string;
   unit: string;
   current_stock: number;
+  cost_price: number;
   is_active: boolean;
 }
 
@@ -16,6 +17,7 @@ export interface RawMaterial {
   name: string;
   unit: 'kg' | 'lt';
   current_stock: number;
+  cost_price: number;
   is_active: boolean;
 }
 
@@ -129,11 +131,12 @@ export function useProductionLogs() {
 export function useCreateProduct() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { name: string; unit: string; current_stock?: number }) => {
+    mutationFn: async (input: { name: string; unit: string; current_stock?: number; cost_price?: number }) => {
       const { error } = await supabase.from('products').insert({
         name: input.name,
         unit: input.unit,
         current_stock: input.current_stock ?? 0,
+        cost_price: input.cost_price ?? 0,
       });
       if (error) throw error;
     },
@@ -151,11 +154,12 @@ export function useCreateProduct() {
 export function useCreateRawMaterial() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { name: string; unit: 'kg' | 'lt'; current_stock?: number }) => {
+    mutationFn: async (input: { name: string; unit: 'kg' | 'lt'; current_stock?: number; cost_price?: number }) => {
       const { error } = await supabase.from('raw_materials').insert({
         name: input.name,
         unit: input.unit,
         current_stock: input.current_stock ?? 0,
+        cost_price: input.cost_price ?? 0,
       });
       if (error) throw error;
     },
@@ -173,7 +177,7 @@ export function useCreateRawMaterial() {
 export function useUpdateProduct() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { id: string; name?: string; unit?: string; current_stock?: number }) => {
+    mutationFn: async (input: { id: string; name?: string; unit?: string; current_stock?: number; cost_price?: number }) => {
       const { id, ...patch } = input;
       const { error } = await supabase.from('products').update(patch).eq('id', id);
       if (error) throw error;
@@ -189,7 +193,7 @@ export function useUpdateProduct() {
 export function useUpdateRawMaterial() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { id: string; name?: string; unit?: 'kg' | 'lt'; current_stock?: number }) => {
+    mutationFn: async (input: { id: string; name?: string; unit?: 'kg' | 'lt'; current_stock?: number; cost_price?: number }) => {
       const { id, ...patch } = input;
       const { error } = await supabase.from('raw_materials').update(patch).eq('id', id);
       if (error) throw error;
